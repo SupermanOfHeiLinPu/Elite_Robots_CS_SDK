@@ -50,6 +50,7 @@ set(
     source/Elite/EliteDriver.cpp
     source/Elite/Log.cpp
     source/Elite/Logger.cpp
+    source/Elite/RemoteUpdate.cpp
 )
 
 set(
