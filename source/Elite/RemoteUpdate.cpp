@@ -57,6 +57,7 @@ bool otaControlSoftware(std::string ip, std::string file, std::string password) 
                     break;
                 }
             } else if (script_output.find("password") != std::string::npos) { // Need enter password
+                password += "\n";
                 if(write(master_fd, password.c_str(), password.size()) <= 0) {
                     ELITE_LOG_ERROR("OTA control software fail: write() fail");
                     break;
