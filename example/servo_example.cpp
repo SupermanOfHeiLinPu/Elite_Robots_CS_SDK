@@ -157,7 +157,7 @@ int main(int argc, char** argv) {
         if(!s_driver->writeServoj(target, 100)) {
             return 1;
         }
-        std::this_thread::sleep_for(4ms);
+        std::this_thread::sleep_for(4000us);
     }
     
     if (!s_rtsi_client->start()) {
@@ -174,7 +174,7 @@ int main(int argc, char** argv) {
         if(!s_driver->writeServoj(target, 100)) {
             return 1;
         }
-        std::this_thread::sleep_for(4ms);
+        std::this_thread::sleep_for(4000us);
     }
     
     if (!s_rtsi_client->start()) {
