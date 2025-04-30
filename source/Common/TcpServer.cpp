@@ -1,63 +1,118 @@
 #include "TcpServer.hpp"
-#include "EliteException.hpp"
-#include "Log.hpp"
 #include <iostream>
+#include "Log.hpp"
 
-using namespace ELITE;
+namespace ELITE {
 
-TcpServer::TcpServer(int port) : port_(port) {
-    loop_keep_alive_ = true;
-    server_thread_ = std::make_unique<std::thread>([&]() { 
-        serverLoop(); 
-    });
-}
+TcpServer::TcpServer(int port, int recv_buf_size)
+    : acceptor_(getContext(), boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)), read_buffer_(recv_buf_size) {}
 
 TcpServer::~TcpServer() {
-    loop_keep_alive_ = false;
-    io_context_.stop();
-    if (server_thread_->joinable()) {
-        server_thread_->join();
+    std::lock_guard<std::mutex> lock(socket_mutex_);
+    if (socket_) {
+        boost::system::error_code ec;
+        socket_->close(ec);
     }
-    
+    acceptor_.close();
 }
 
-void TcpServer::doAccept(boost::asio::ip::tcp::acceptor &acceptor) {
-    acceptor.async_accept([&](boost::system::error_code ec, boost::asio::ip::tcp::socket client_socket) {
-        std::shared_ptr<boost::asio::ip::tcp::socket> client_socket_ptr = std::make_shared<boost::asio::ip::tcp::socket>(std::move(client_socket));
-        client_socket_ptr->set_option(boost::asio::ip::tcp::no_delay(true));
-        if (new_connect_function_) {
-            new_connect_function_(client_socket_ptr);
-        }
-        doAccept(acceptor);
-    });
-}
+void TcpServer::setReceiveCallback(ReceiveCallback cb) { receive_cb_ = std::move(cb); }
 
+void TcpServer::startListen() { doAccept(); }
 
-void TcpServer::serverLoop() {
-    boost::asio::ip::tcp::acceptor acceptor(io_context_, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port_));
-    acceptor.listen(1);
-    if (!acceptor.is_open()) {
-        throw EliteException(EliteException::Code::SOCKET_FAIL);
-    }
-    
-    while (loop_keep_alive_) {
-        try {
-            doAccept(acceptor);
-        
-            if(io_context_.stopped()) {
-                io_context_.restart();
+void TcpServer::doAccept() {
+    // Accept call back
+    auto accept_cb = [self = shared_from_this()](boost::system::error_code ec, boost::asio::ip::tcp::socket sock) {
+        if (!ec) {
+            std::lock_guard<std::mutex> lock(self->socket_mutex_);
+            if (self->socket_) {
+                self->socket_->close();
             }
-            io_context_.run();
-        } catch(const boost::system::system_error &error) {
-            ELITE_LOG_INFO("TCP server %d has error: %s", port_, error.what());
-            continue;
+            self->socket_.reset(new boost::asio::ip::tcp::socket(std::move(sock)));
+        } else {
+            std::lock_guard<std::mutex> lock(self->socket_mutex_);
+            self->socket_.reset();
         }
-    }
+        self->doRead();
+        self->doAccept();
+    };
+
+    acceptor_.listen(1);
+    acceptor_.set_option(boost::asio::socket_base::reuse_address(true));
+    acceptor_.async_accept(getContext(), accept_cb);
 }
 
-void TcpServer::releaseClient(std::shared_ptr<boost::asio::ip::tcp::socket> client) {
-    boost::asio::post(io_context_, [client]() {
-        client->shutdown(boost::asio::ip::tcp::socket::shutdown_both);
-        client->close();
+void TcpServer::doRead() {
+    std::lock_guard<std::mutex> lock(socket_mutex_);
+    if (!socket_) {
+        return;
+    }
+    auto read_cb = [self = shared_from_this()](boost::system::error_code ec, std::size_t n) {
+        if (!ec) {
+            if (self->receive_cb_) {
+                self->receive_cb_(self->read_buffer_.data(), n);
+            }
+            self->doRead();
+        } else {
+            std::cout << boost::system::system_error(ec).what() << std::endl;
+            boost::system::error_code ignore_ec;
+            self->socket_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignore_ec);
+            self->socket_->close(ignore_ec);
+        }
+    };
+    boost::asio::async_read(*socket_, boost::asio::buffer(read_buffer_), read_cb);
+}
+
+void TcpServer::start() {
+    if (getServerThread()) {
+        return;
+    }
+    getServerThread().reset(new std::thread([&]() {
+        try {
+            getWorkGurad();
+            getContext().run();
+            ELITE_LOG_INFO("TCP server exit thread");
+        } catch (const boost::system::system_error& e) {
+            ELITE_LOG_INFO("TCP server thread error: %s", e.what());
+        }
+    }));
+}
+
+void TcpServer::stop() {
+    getWorkGurad().reset();
+    getContext().stop();
+    if (getServerThread() && getServerThread()->joinable()) {
+        getServerThread()->join();
+    }
+
+    getServerThread().reset();
+}
+
+void TcpServer::releaseClient() {
+    auto self = shared_from_this();
+    boost::asio::post(getContext(), [self]() {
+        std::lock_guard<std::mutex> lock(self->socket_mutex_);
+        if (self->socket_) {
+            self->socket_->close();
+            self->socket_.reset();
+        }
     });
 }
+
+int TcpServer::writeClient(void* data, int size) {
+    std::lock_guard<std::mutex> lock(socket_mutex_);
+    if (socket_) {
+        return boost::asio::write(*socket_, boost::asio::buffer(data, size));
+    }
+    return -1;
+}
+
+bool TcpServer::isClientConnected() {
+    std::lock_guard<std::mutex> lock(socket_mutex_);
+    if (socket_) {
+        return socket_->is_open();
+    }
+    return false;
+}
+
+}  // namespace ELITE

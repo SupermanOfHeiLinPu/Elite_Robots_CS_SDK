@@ -8,17 +8,8 @@ using namespace ELITE;
 
 
 
-ScriptSender::ScriptSender(int port, const std::string& program) : program_(program) {
-    server_.reset(new TcpServer(port));
-    server_->setConnectCallback([&](std::shared_ptr<boost::asio::ip::tcp::socket> client){ 
-        if (client_ && client->is_open()) {
-            ELITE_LOG_INFO("Script sender has new connection, previous connection will be dropped.");
-            server_->releaseClient(client_);
-        }
-        client_ = client;
-        ELITE_LOG_INFO("Script sender accept new connection.");
-        responseRequest();
-    });
+ScriptSender::ScriptSender(int port, const std::string& program) : program_(program), TcpServer(port, 0) {
+    
 }
 
 
@@ -26,20 +17,41 @@ ScriptSender::~ScriptSender() {
     
 }
 
+void ScriptSender::doAccept() {
+    // Accept call back
+    auto accept_cb = [&](boost::system::error_code ec, boost::asio::ip::tcp::socket sock) {
+        {
+            std::lock_guard<std::mutex> lock(socket_mutex_);
+            if (socket_) {
+                socket_->close();
+            }
+            if (ec) {
+                socket_.reset();
+            } else {
+                socket_.reset(new boost::asio::ip::tcp::socket(std::move(sock)));
+            }   
+        }
+        responseRequest();
+        doAccept();
+    };
+    acceptor_.listen(1);
+    acceptor_.async_accept(getContext(), accept_cb);
+}
 
 void ScriptSender::responseRequest() {
-    if (!client_) {
+    std::lock_guard<std::mutex> lock(socket_mutex_);
+    if (!socket_) {
         return;
     }
     boost::asio::async_read_until(
-        *client_,
+        *socket_,
         recv_request_buffer_,
         '\n',
         [&](boost::system::error_code ec, std::size_t len) {
-            if (ec || len <= 0) {
-                if (client_->is_open()) {
+            if (ec) {
+                if (socket_->is_open()) {
                     ELITE_LOG_INFO("Connection to script sender interface dropped: %s", boost::system::system_error(ec).what());
-                    server_->releaseClient(client_);
+                    releaseClient();
                 }
                 return;
             }
@@ -49,7 +61,7 @@ void ScriptSender::responseRequest() {
             std::getline(response_stream, request);
             if (request == PROGRAM_REQUEST_) {
                 boost::system::error_code wec;
-                client_->write_some(boost::asio::buffer(program_), wec);
+                socket_->write_some(boost::asio::buffer(program_), wec);
                 if (wec) {
                     ELITE_LOG_ERROR("Script sender send script fail: %s", boost::system::system_error(wec).what());
                     return;

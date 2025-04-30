@@ -1,72 +1,56 @@
 #ifndef __TCP_SERVER_HPP__
 #define __TCP_SERVER_HPP__
 
+#include <atomic>
 #include <boost/asio.hpp>
-#include <memory>
 #include <functional>
+#include <memory>
+#include <mutex>
+#include <thread>
 #include <vector>
 
-namespace ELITE
-{
+namespace ELITE {
 
-class TcpServer {
-private:
-    boost::asio::io_context io_context_;
-    bool loop_keep_alive_;
-    int port_;
-    std::unique_ptr<std::thread> server_thread_;
-    std::function<void (std::shared_ptr<boost::asio::ip::tcp::socket>)> new_connect_function_;
+class TcpServer : public std::enable_shared_from_this<TcpServer> {
+   public:
+    using ReceiveCallback = std::function<void(const uint8_t[], int)>;
 
-    /**
-     * @brief TCP server loop. Run boost library async interface.
-     * 
-     */
-    void serverLoop();
-
-    /**
-     * @brief Accept new connection is connected
-     * 
-     * @param acceptor 
-     */
-    void doAccept(boost::asio::ip::tcp::acceptor &acceptor);
-
-public:
-    TcpServer() = delete;
-
-    /**
-     * @brief Construct a new Tcp Server object
-     * 
-     * @param port Server port
-     */
-    TcpServer(int port);
-    
-    /**
-     * @brief Destroy the Tcp Server object. Will join the serverLoop() finish.
-     * 
-     */
+    TcpServer(int port, int recv_buf_size);
     ~TcpServer();
 
-    /**
-     * @brief Set callback function when new connection in.
-     * 
-     * @param func 
-     */
-    void setConnectCallback(std::function<void (std::shared_ptr<boost::asio::ip::tcp::socket>)> func) {
-        new_connect_function_ = func;
+    static void start();
+    static void stop();
+
+    void setReceiveCallback(ReceiveCallback cb);
+    void releaseClient();
+    int writeClient(void* data, int size);
+    void startListen();
+    bool isClientConnected();
+
+   protected:
+    static boost::asio::io_context& getContext() {
+        static boost::asio::io_context io_context;
+        return io_context;
+    }
+    static boost::asio::executor_work_guard<boost::asio::io_context::executor_type>& getWorkGurad() {
+        static boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_guard(
+            boost::asio::make_work_guard(getContext()));
+        return work_guard;
+    }
+    static std::unique_ptr<std::thread>& getServerThread() {
+        static std::unique_ptr<std::thread> server_thread;
+        return server_thread;
     }
 
-    /**
-     * @brief Close the client socket and reset the pointer.
-     * 
-     * @param client client pointer.
-     */
-    void releaseClient(std::shared_ptr<boost::asio::ip::tcp::socket> client);
+    boost::asio::ip::tcp::acceptor acceptor_;
+    std::unique_ptr<boost::asio::ip::tcp::socket> socket_;
+    std::vector<uint8_t> read_buffer_;
+    ReceiveCallback receive_cb_;
+    std::mutex socket_mutex_;
 
+    virtual void doAccept();
+    void doRead();
 };
 
-
-
-} // namespace ELITE
-
-
+}  // namespace ELITE
 #endif

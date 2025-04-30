@@ -8,6 +8,7 @@
 #include "ControlMode.hpp"
 #include "PrimaryPortInterface.hpp"
 #include "Log.hpp"
+#include "TcpServer.hpp"
 #include <boost/asio.hpp>
 #include <fstream>
 #include <sstream>
@@ -33,6 +34,10 @@ public:
     Impl() = delete;
     explicit Impl(const std::string& robot_ip, const std::string& local_ip) 
         : robot_ip_(robot_ip), local_ip_(local_ip) {
+            TcpServer::start();
+    }
+    ~Impl() {
+        TcpServer::stop();
     }
 
     std::string readScriptFile(const std::string& file);

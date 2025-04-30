@@ -4,6 +4,7 @@
 #include "TcpServer.hpp"
 #include "ControlMode.hpp"
 #include "DataType.hpp"
+#include "ReversePort.hpp"
 
 #include <boost/asio.hpp>
 #include <mutex>
@@ -17,27 +18,7 @@ namespace ELITE
  * 
  * 
  */
-class ReverseInterface
-{
-private:
-    int port_;
-    std::unique_ptr<TcpServer> server_;
-    std::shared_ptr<boost::asio::ip::tcp::socket> client_;
-    std::mutex client_mutex_;
-
-    /**
-     * @brief Not real read data. Check connection state.
-     * 
-     */
-    void asyncRead();
-
-    /**
-     * @brief Write buffer to socket.
-     * 
-     * @return int data
-     */
-    int write(int32_t buffer[], int size);
-
+class ReverseInterface : public ReversePort {
 public:
     static const int REVERSE_DATA_SIZE = 8;
 
@@ -86,15 +67,6 @@ public:
      * @return false fail
      */
     bool stopControl();
-
-    /**
-     * @brief Is robot connect to server.
-     * 
-     * @return true connected
-     * @return false don't
-     */
-    bool isRobotConnect();
-
 };
 
 
