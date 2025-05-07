@@ -32,10 +32,9 @@ class TcpServer : public std::enable_shared_from_this<TcpServer> {
         static boost::asio::io_context io_context;
         return io_context;
     }
-    static boost::asio::executor_work_guard<boost::asio::io_context::executor_type>& getWorkGurad() {
-        static boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_guard(
-            boost::asio::make_work_guard(getContext()));
-        return work_guard;
+    static std::shared_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>>& getWorkGurad() {
+        static std::shared_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> work_guard_ptr;
+        return work_guard_ptr;
     }
     static std::unique_ptr<std::thread>& getServerThread() {
         static std::unique_ptr<std::thread> server_thread;
@@ -43,13 +42,13 @@ class TcpServer : public std::enable_shared_from_this<TcpServer> {
     }
 
     boost::asio::ip::tcp::acceptor acceptor_;
-    std::unique_ptr<boost::asio::ip::tcp::socket> socket_;
+    std::shared_ptr<boost::asio::ip::tcp::socket> socket_;
     std::vector<uint8_t> read_buffer_;
     ReceiveCallback receive_cb_;
     std::mutex socket_mutex_;
 
     virtual void doAccept();
-    void doRead();
+    void doRead(std::shared_ptr<boost::asio::ip::tcp::socket> sock);
 };
 
 }  // namespace ELITE
