@@ -121,7 +121,8 @@ TEST(TCP_SERVER, TCP_SERVER_MULIT_CONNECT) {
     
     // New connection
     client2.connect("127.0.0.1", SERVER_TEST_PORT);
-    // while (true) std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+    // Wait connected
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     EXPECT_TRUE(server->isClientConnected());
 

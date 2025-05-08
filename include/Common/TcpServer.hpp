@@ -42,13 +42,14 @@ class TcpServer : public std::enable_shared_from_this<TcpServer> {
     }
 
     boost::asio::ip::tcp::acceptor acceptor_;
+
+    virtual void doAccept();
+    void doRead(std::shared_ptr<boost::asio::ip::tcp::socket> sock);
+   private:
     std::shared_ptr<boost::asio::ip::tcp::socket> socket_;
     std::vector<uint8_t> read_buffer_;
     ReceiveCallback receive_cb_;
     std::mutex socket_mutex_;
-
-    virtual void doAccept();
-    void doRead(std::shared_ptr<boost::asio::ip::tcp::socket> sock);
 };
 
 }  // namespace ELITE

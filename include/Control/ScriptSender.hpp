@@ -16,7 +16,7 @@ private:
     const std::string& program_;
     boost::asio::streambuf recv_request_buffer_;
 
-    void responseRequest();
+    void responseRequest(std::shared_ptr<boost::asio::ip::tcp::socket> sock);
 
     virtual void doAccept() override;
 

@@ -40,6 +40,7 @@ public:
 class ScriptSenderTest : public ::testing::Test {
 protected:
     void SetUp() {
+        TcpServer::start();
         script_sender_.reset(new ScriptSender(TEST_PORT, program_));
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         tcp_client_.reset(new TcpClient("127.0.0.1", TEST_PORT));
@@ -48,6 +49,7 @@ protected:
     void TearDown() {
         tcp_client_.reset();
         script_sender_.reset();
+        TcpServer::stop();
     }
 
     std::unique_ptr<TcpClient> tcp_client_;
