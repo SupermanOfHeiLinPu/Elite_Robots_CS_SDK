@@ -15,9 +15,7 @@ TcpServer::~TcpServer() {
     std::lock_guard<std::mutex> lock(socket_mutex_);
     if (socket_) {
         boost::system::error_code ec;
-        if (socket_->is_open()) {
-            socket_->close(ec);
-        }
+        closeSocket(socket_, ec);
         socket_.reset();
     }
 }
@@ -39,9 +37,7 @@ void TcpServer::doAccept() {
                 if (self->socket_ && self->socket_->is_open()) {
                     auto local_point = self->socket_->local_endpoint(ignore_ec);
                     auto remote_point = self->socket_->remote_endpoint(ignore_ec);
-                    self->socket_->cancel(ignore_ec);
-                    self->socket_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignore_ec);
-                    self->socket_->close(ignore_ec);
+                    self->closeSocket(self->socket_, ignore_ec);
                     ELITE_LOG_INFO("TCP port %d has new connection and close old client: %s:%d %s", local_point.port(),
                                    remote_point.address().to_string().c_str(), remote_point.port(),
                                    boost::system::system_error(ignore_ec).what());
@@ -65,9 +61,7 @@ void TcpServer::doAccept() {
                 if (self->socket_ && self->socket_->is_open()) {
                     auto local_point = self->socket_->local_endpoint(ignore_ec);
                     auto remote_point = self->socket_->remote_endpoint(ignore_ec);
-                    self->socket_->cancel(ignore_ec);
-                    self->socket_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignore_ec);
-                    self->socket_->close(ignore_ec);
+                    self->closeSocket(self->socket_, ignore_ec);
                     ELITE_LOG_ERROR("TCP port %d accept new connection fail(%s), and close old connection %s:%d %s",
                                     local_point.port(), boost::system::system_error(ec).what(),
                                     remote_point.address().to_string().c_str(), remote_point.port(),
@@ -99,9 +93,7 @@ void TcpServer::doRead(std::shared_ptr<boost::asio::ip::tcp::socket> sock) {
                     boost::system::error_code ignore_ec;
                     auto local_point = sock->local_endpoint(ignore_ec);
                     auto remote_point = sock->remote_endpoint(ignore_ec);
-                    sock->cancel(ignore_ec);
-                    sock->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignore_ec);
-                    sock->close(ignore_ec);
+                    self->closeSocket(sock, ignore_ec);
                     ELITE_LOG_INFO("TCP port %d close client: %s:%d %s. Reason: %s", local_point.port(),
                                    remote_point.address().to_string().c_str(), remote_point.port(),
                                    boost::system::system_error(ignore_ec).what(), boost::system::system_error(ec).what());
@@ -113,12 +105,12 @@ void TcpServer::doRead(std::shared_ptr<boost::asio::ip::tcp::socket> sock) {
 }
 
 void TcpServer::start() {
-    if (getServerThread()) {
+    if (s_server_thread_) {
         return;
     }
-    getWorkGurad().reset(
+    s_work_guard_ptr_.reset(
         new boost::asio::executor_work_guard<boost::asio::io_context::executor_type>(boost::asio::make_work_guard(getContext())));
-    getServerThread().reset(new std::thread([&]() {
+    s_server_thread_.reset(new std::thread([]() {
         try {
             if (getContext().stopped()) {
                 getContext().restart();
@@ -132,13 +124,13 @@ void TcpServer::start() {
 }
 
 void TcpServer::stop() {
-    getWorkGurad()->reset();
+    s_work_guard_ptr_->reset();
     getContext().stop();
-    if (getServerThread() && getServerThread()->joinable()) {
-        getServerThread()->join();
+    if (s_server_thread_ && s_server_thread_->joinable()) {
+        s_server_thread_->join();
     }
-    getWorkGurad().reset();
-    getServerThread().reset();
+    s_work_guard_ptr_.reset();
+    s_server_thread_.reset();
 }
 
 void TcpServer::releaseClient() {
@@ -171,5 +163,16 @@ bool TcpServer::isClientConnected() {
     }
     return false;
 }
+
+void TcpServer::closeSocket(std::shared_ptr<boost::asio::ip::tcp::socket> sock, boost::system::error_code& ec) {
+    if (sock->is_open()) {
+        sock->cancel(ec);
+        sock->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        sock->close(ec);
+    }
+}
+
+std::unique_ptr<std::thread> TcpServer::s_server_thread_;
+std::shared_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> TcpServer::s_work_guard_ptr_;
 
 }  // namespace ELITE
