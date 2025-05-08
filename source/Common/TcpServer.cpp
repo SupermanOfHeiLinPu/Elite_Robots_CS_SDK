@@ -46,6 +46,10 @@ void TcpServer::doAccept() {
                                    remote_point.address().to_string().c_str(), remote_point.port(),
                                    boost::system::system_error(ignore_ec).what());
                 }
+                // Socket set option
+                new_socket->set_option(boost::asio::socket_base::reuse_address(true), ignore_ec);
+                new_socket->set_option(boost::asio::ip::tcp::no_delay(true), ignore_ec);
+                new_socket->set_option(boost::asio::socket_base::keep_alive(true), ignore_ec);
                 // Update alive socket
                 self->socket_ = new_socket;
                 auto local_point = self->socket_->local_endpoint(ignore_ec);

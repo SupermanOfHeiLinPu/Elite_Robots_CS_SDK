@@ -13,7 +13,7 @@ TrajectoryInterface::TrajectoryInterface(int port) : ReversePort(port, sizeof(Tr
         }
         TrajectoryMotionResult motion_result = (TrajectoryMotionResult)htonl(*((const uint32_t*)data));
         if (motion_result_func_) {
-            motion_result_func_(motion_result_);
+            motion_result_func_(motion_result);
         }
     });
     server_->startListen();
@@ -29,7 +29,6 @@ bool TrajectoryInterface::writeTrajectoryPoint( const vector6d_t& positions,
                                                 float time, 
                                                 float blend_radius, 
                                                 bool cartesian) {
-    std::lock_guard<std::mutex> lock(client_mutex_);
     int32_t buffer[TRAJECTORY_MESSAGE_LEN] = {0};
     for (size_t i = 0; i < 6; i++) {
         buffer[i] = htonl(round(positions[i] * CONTROL::POS_ZOOM_RATIO));

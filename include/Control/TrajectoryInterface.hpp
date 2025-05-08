@@ -58,8 +58,6 @@ public:
 
 private:
     std::function<void(TrajectoryMotionResult)> motion_result_func_;
-    std::mutex client_mutex_;
-    TrajectoryMotionResult motion_result_;
 };
 
 
