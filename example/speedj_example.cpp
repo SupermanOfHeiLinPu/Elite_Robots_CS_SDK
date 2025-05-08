@@ -43,15 +43,15 @@ int main(int argc, char** argv) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
-    vector6d_t speedl_vector{0, 0, 0, 0, 0, -0.02};
+    vector6d_t speedj_vector{0, 0, 0, 0, 0, -0.02};
     while (true) {
-        speedl_vector = {0, 0, 0, 0, 0, -0.02};
-        s_driver->writeSpeedj(speedl_vector, 0);
+        speedj_vector = {0, 0, 0, 0, 0, -0.1};
+        s_driver->writeSpeedj(speedj_vector, 0);
 
         std::this_thread::sleep_for(std::chrono::seconds(3));
 
-        speedl_vector = {0, 0, 0, 0, 0, 0.02};
-        s_driver->writeSpeedj(speedl_vector, 0);
+        speedj_vector = {0, 0, 0, 0, 0, 0.1};
+        s_driver->writeSpeedj(speedj_vector, 0);
         std::this_thread::sleep_for(std::chrono::seconds(3));
     }
 

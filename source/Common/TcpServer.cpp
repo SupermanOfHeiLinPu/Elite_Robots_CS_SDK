@@ -10,6 +10,7 @@ TcpServer::TcpServer(int port, int recv_buf_size)
 TcpServer::~TcpServer() {
     if (acceptor_.is_open()) {
         boost::system::error_code ec;
+        acceptor_.cancel(ec);
         acceptor_.close(ec);
     }
     std::lock_guard<std::mutex> lock(socket_mutex_);
