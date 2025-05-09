@@ -1,19 +1,29 @@
 #include "TcpServer.hpp"
+#include "EliteException.hpp"
 #include <iostream>
 #include "Log.hpp"
 
 namespace ELITE {
 
-TcpServer::TcpServer(int port, int recv_buf_size)
-    : acceptor_(getContext(), boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)), read_buffer_(recv_buf_size) {}
+TcpServer::TcpServer(int port, int recv_buf_size) : read_buffer_(recv_buf_size) {
+    if (!s_io_context_ptr_) {
+        throw EliteException(EliteException::Code::TCP_SERVER_CONTEXT_NULL);
+    }
+    io_context_ = s_io_context_ptr_;
+
+    acceptor_ = std::make_unique<boost::asio::ip::tcp::acceptor>(
+        *io_context_, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port), true);
+    acceptor_->listen(1);
+}
 
 TcpServer::~TcpServer() {
-    if (acceptor_.is_open()) {
-        boost::system::error_code ec;
-        acceptor_.cancel(ec);
-        acceptor_.close(ec);
-    }
     std::lock_guard<std::mutex> lock(socket_mutex_);
+    if (acceptor_ && acceptor_->is_open()) {
+        boost::system::error_code ec;
+        acceptor_->cancel(ec);
+        acceptor_->close(ec);
+        acceptor_.reset();
+    }
     if (socket_) {
         boost::system::error_code ec;
         closeSocket(socket_, ec);
@@ -26,7 +36,11 @@ void TcpServer::setReceiveCallback(ReceiveCallback cb) { receive_cb_ = std::move
 void TcpServer::startListen() { doAccept(); }
 
 void TcpServer::doAccept() {
-    auto new_socket = std::make_shared<boost::asio::ip::tcp::socket>(getContext());
+    std::lock_guard<std::mutex> lock(socket_mutex_);
+    if (!acceptor_) {
+        return;
+    }
+    auto new_socket = std::make_shared<boost::asio::ip::tcp::socket>(*io_context_);
     std::weak_ptr<TcpServer> weak_self = shared_from_this();
     // Accept call back
     auto accept_cb = [weak_self, new_socket](boost::system::error_code ec) {
@@ -74,9 +88,7 @@ void TcpServer::doAccept() {
         }
     };
 
-    acceptor_.listen(1);
-    acceptor_.set_option(boost::asio::socket_base::reuse_address(true));
-    acceptor_.async_accept(*new_socket, accept_cb);
+    acceptor_->async_accept(*new_socket, accept_cb);
 }
 
 void TcpServer::doRead(std::shared_ptr<boost::asio::ip::tcp::socket> sock) {
@@ -106,17 +118,21 @@ void TcpServer::doRead(std::shared_ptr<boost::asio::ip::tcp::socket> sock) {
 }
 
 void TcpServer::start() {
+    if (!s_io_context_ptr_) {
+        s_io_context_ptr_ = std::make_shared<boost::asio::io_context>();
+    }
+    
     if (s_server_thread_) {
         return;
     }
-    s_work_guard_ptr_.reset(
-        new boost::asio::executor_work_guard<boost::asio::io_context::executor_type>(boost::asio::make_work_guard(getContext())));
+    s_work_guard_ptr_.reset(new boost::asio::executor_work_guard<boost::asio::io_context::executor_type>(
+        boost::asio::make_work_guard(*s_io_context_ptr_)));
     s_server_thread_.reset(new std::thread([]() {
         try {
-            if (getContext().stopped()) {
-                getContext().restart();
+            if (s_io_context_ptr_->stopped()) {
+                s_io_context_ptr_->restart();
             }
-            getContext().run();
+            s_io_context_ptr_->run();
             ELITE_LOG_INFO("TCP server exit thread");
         } catch (const boost::system::system_error& e) {
             ELITE_LOG_FATAL("TCP server thread error: %s", e.what());
@@ -126,17 +142,18 @@ void TcpServer::start() {
 
 void TcpServer::stop() {
     s_work_guard_ptr_->reset();
-    getContext().stop();
+    s_io_context_ptr_->stop();
     if (s_server_thread_ && s_server_thread_->joinable()) {
         s_server_thread_->join();
     }
     s_work_guard_ptr_.reset();
     s_server_thread_.reset();
+    s_io_context_ptr_.reset();
 }
 
 void TcpServer::releaseClient() {
     std::weak_ptr<TcpServer> weak_self = shared_from_this();
-    boost::asio::post(getContext(), [weak_self]() {
+    boost::asio::post(*io_context_, [weak_self]() {
         if (auto self = weak_self.lock()) {
             std::lock_guard<std::mutex> lock(self->socket_mutex_);
             if (self->socket_) {
@@ -175,5 +192,6 @@ void TcpServer::closeSocket(std::shared_ptr<boost::asio::ip::tcp::socket> sock, 
 
 std::unique_ptr<std::thread> TcpServer::s_server_thread_;
 std::shared_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> TcpServer::s_work_guard_ptr_;
+std::shared_ptr<boost::asio::io_context> TcpServer::s_io_context_ptr_;
 
 }  // namespace ELITE

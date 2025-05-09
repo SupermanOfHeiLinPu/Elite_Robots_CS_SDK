@@ -24,8 +24,8 @@ void ScriptSender::doAccept() {
         responseRequest(new_socket);
         ScriptSender::doAccept();
     };
-    acceptor_.listen(1);
-    acceptor_.async_accept(getContext(), accept_cb);
+    acceptor_->listen(1);
+    acceptor_->async_accept(*io_context_, accept_cb);
 }
 
 void ScriptSender::responseRequest(std::shared_ptr<boost::asio::ip::tcp::socket> sock) {

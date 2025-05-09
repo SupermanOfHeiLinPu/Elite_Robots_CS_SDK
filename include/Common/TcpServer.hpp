@@ -28,12 +28,8 @@ class TcpServer : public std::enable_shared_from_this<TcpServer> {
     bool isClientConnected();
 
    protected:
-    boost::asio::ip::tcp::acceptor acceptor_;
-    static boost::asio::io_context& getContext() {
-        // Ensure constructor function had run befor use
-        static boost::asio::io_context io_context;
-        return io_context;
-    }
+    std::unique_ptr<boost::asio::ip::tcp::acceptor> acceptor_;
+    std::shared_ptr<boost::asio::io_context> io_context_;
 
    private:
     std::shared_ptr<boost::asio::ip::tcp::socket> socket_;
@@ -43,6 +39,7 @@ class TcpServer : public std::enable_shared_from_this<TcpServer> {
 
     static std::unique_ptr<std::thread> s_server_thread_;
     static std::shared_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> s_work_guard_ptr_;
+    static std::shared_ptr<boost::asio::io_context> s_io_context_ptr_;
 
     virtual void doAccept();
     void doRead(std::shared_ptr<boost::asio::ip::tcp::socket> sock);
