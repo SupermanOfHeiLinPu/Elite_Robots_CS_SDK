@@ -8,6 +8,7 @@
 #include "ControlMode.hpp"
 #include "PrimaryPortInterface.hpp"
 #include "Log.hpp"
+#include "TcpServer.hpp"
 #include <boost/asio.hpp>
 #include <fstream>
 #include <sstream>
@@ -33,6 +34,10 @@ public:
     Impl() = delete;
     explicit Impl(const std::string& robot_ip, const std::string& local_ip) 
         : robot_ip_(robot_ip), local_ip_(local_ip) {
+            TcpServer::start();
+    }
+    ~Impl() {
+        TcpServer::stop();
     }
 
     std::string readScriptFile(const std::string& file);
@@ -153,7 +158,7 @@ EliteDriver::EliteDriver(const std::string& robot_ip, const std::string& local_i
                 float servoj_lookhead_time, int servoj_gain, float stopj_acc) {
     ELITE_LOG_DEBUG("Initialization Elite Driver");
     
-    impl_ = new EliteDriver::Impl(robot_ip, local_ip);
+    impl_ = std::make_unique<EliteDriver::Impl>(robot_ip, local_ip);
     
     // Generate external control script.
     std::string control_script = impl_->readScriptFile(script_file);
@@ -195,7 +200,7 @@ EliteDriver::EliteDriver(const std::string& robot_ip, const std::string& local_i
 
 
 EliteDriver::~EliteDriver() {
-    delete impl_;
+    impl_.reset();
 }
 
 

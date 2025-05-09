@@ -27,7 +27,7 @@ namespace ELITE {
 class EliteDriver {
    private:
     class Impl;
-    Impl* impl_;
+    std::unique_ptr<Impl> impl_;
 
    public:
     EliteDriver() = delete;
