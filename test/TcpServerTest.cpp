@@ -195,7 +195,6 @@ TEST(TCP_SERVER, TCP_MULIT_SERVERS) {
     
     for (size_t i = 0; i < 5; i++) {
         clients[i]->socket_ptr->close();
-        servers[i]->releaseClient();
     }
 
     TcpServer::stop();

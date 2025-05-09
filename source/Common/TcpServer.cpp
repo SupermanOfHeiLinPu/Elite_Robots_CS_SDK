@@ -1,6 +1,6 @@
 #include "TcpServer.hpp"
-#include "EliteException.hpp"
 #include <iostream>
+#include "EliteException.hpp"
 #include "Log.hpp"
 
 namespace ELITE {
@@ -118,12 +118,11 @@ void TcpServer::doRead(std::shared_ptr<boost::asio::ip::tcp::socket> sock) {
 }
 
 void TcpServer::start() {
-    if (!s_io_context_ptr_) {
-        s_io_context_ptr_ = std::make_shared<boost::asio::io_context>();
-    }
-    
     if (s_server_thread_) {
         return;
+    }
+    if (!s_io_context_ptr_) {
+        s_io_context_ptr_ = std::make_shared<boost::asio::io_context>();
     }
     s_work_guard_ptr_.reset(new boost::asio::executor_work_guard<boost::asio::io_context::executor_type>(
         boost::asio::make_work_guard(*s_io_context_ptr_)));
@@ -149,21 +148,6 @@ void TcpServer::stop() {
     s_work_guard_ptr_.reset();
     s_server_thread_.reset();
     s_io_context_ptr_.reset();
-}
-
-void TcpServer::releaseClient() {
-    std::weak_ptr<TcpServer> weak_self = shared_from_this();
-    boost::asio::post(*io_context_, [weak_self]() {
-        if (auto self = weak_self.lock()) {
-            std::lock_guard<std::mutex> lock(self->socket_mutex_);
-            if (self->socket_) {
-                if (self->socket_->is_open()) {
-                    self->socket_->close();
-                }
-                self->socket_.reset();
-            }
-        }
-    });
 }
 
 int TcpServer::writeClient(void* data, int size) {
