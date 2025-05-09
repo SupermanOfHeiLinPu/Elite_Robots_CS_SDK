@@ -208,10 +208,14 @@ Disables the force control mode.
 
 ### ***Stop External Control***
 ```cpp
-bool stopControl()
+bool stopControl(int wait_ms)
 ```
 - ***Function***
 Sends a stop instruction to the robot. The robot will exit the control script and stop receiving instructions from the PC.
+
+- ***Parameters***
+    - wait_ms: Waiting for the robot to disconnect for a certain amount of time. Range [5, 1000]ms.
+
 - ***Return Value***: Returns true if the instruction is sent successfully, and false if it fails.
 
 ---

@@ -140,10 +140,11 @@ class EliteDriver {
      * @brief Sends a stop command to the socket interface which will signal the program running on
      * the robot to no longer listen for commands sent from the remote pc.
      *
-     * @return true
-     * @return false
+     * @param wait_ms Waiting for the robot to disconnect for a certain amount of time. The minimum value is 5.
+     * @return true success
+     * @return false fail (socket was disconnect or timeout)
      */
-    ELITE_EXPORT bool stopControl();
+    ELITE_EXPORT bool stopControl(int wait_ms = 500);
 
     /**
      * @brief Print generated EliRobot script from template

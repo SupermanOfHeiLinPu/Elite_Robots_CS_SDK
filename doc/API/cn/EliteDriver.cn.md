@@ -249,11 +249,14 @@ bool endForceMode()
 
 ### ***停止外部控制***
 ```cpp
-bool stopControl()
+bool stopControl(int wait_ms = 100)
 ```
 - ***功能***
 
     发送停止指令到机器人，机器人将退出控制脚本，并且将停止接收来自PC的指令。
+
+- ***参数***
+    - wait_ms: 阻塞等待机器人断开连接的时间。范围：[0, 1000]ms。
 
 - ***返回值***：指令发送成功返回 true，失败返回 false。
 
