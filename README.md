@@ -4,7 +4,7 @@
 The SDK for Elite CS series robots.
 
 ## Requirements
- * **CS Controller** (the control software for robots) version >= **2.14.x** (for CS-Series). If the version of the robot's control software is lower than this, it is recommended to upgrade it.
+ * **CS Controller** (the control software for robots) version >= **2.13.x** (for CS-Series). If the version of the robot's control software is lower than this, it is recommended to upgrade it.
  * The socket in the SDK uses **boost::asio**. Therefore, the **boost** library needs to be installed.
  * This SDK requires a compiler that supports C++17 or C++14. Note that if the C++14 standard is used, **boost::variant** will be used.
  * cmake version >= 3.22.1

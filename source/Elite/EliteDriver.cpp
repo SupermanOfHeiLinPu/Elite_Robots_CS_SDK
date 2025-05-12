@@ -8,6 +8,7 @@
 #include "ControlMode.hpp"
 #include "PrimaryPortInterface.hpp"
 #include "Log.hpp"
+#include "TcpServer.hpp"
 #include <boost/asio.hpp>
 #include <fstream>
 #include <sstream>
@@ -33,6 +34,10 @@ public:
     Impl() = delete;
     explicit Impl(const std::string& robot_ip, const std::string& local_ip) 
         : robot_ip_(robot_ip), local_ip_(local_ip) {
+            TcpServer::start();
+    }
+    ~Impl() {
+        TcpServer::stop();
     }
 
     std::string readScriptFile(const std::string& file);
@@ -153,7 +158,7 @@ EliteDriver::EliteDriver(const std::string& robot_ip, const std::string& local_i
                 float servoj_lookhead_time, int servoj_gain, float stopj_acc) {
     ELITE_LOG_DEBUG("Initialization Elite Driver");
     
-    impl_ = new EliteDriver::Impl(robot_ip, local_ip);
+    impl_ = std::make_unique<EliteDriver::Impl>(robot_ip, local_ip);
     
     // Generate external control script.
     std::string control_script = impl_->readScriptFile(script_file);
@@ -195,7 +200,7 @@ EliteDriver::EliteDriver(const std::string& robot_ip, const std::string& local_i
 
 
 EliteDriver::~EliteDriver() {
-    delete impl_;
+    impl_.reset();
 }
 
 
@@ -224,8 +229,25 @@ bool EliteDriver::writeTrajectoryControlAction(TrajectoryControlAction action, c
 }
 
 
-bool EliteDriver::stopControl() {
-    return impl_->reverse_server_->stopControl();
+bool EliteDriver::stopControl(int wait_ms) {
+    if (wait_ms < 5) {
+        wait_ms = 5;
+    }
+    if(!impl_->reverse_server_->stopControl()) {
+        return false;
+    }
+
+    auto start_time = std::chrono::steady_clock::now();
+    auto timeout = std::chrono::milliseconds(wait_ms);
+    while(impl_->script_command_server_->isRobotConnect() || impl_->reverse_server_->isRobotConnect()) {
+        auto elapsed = std::chrono::steady_clock::now() - start_time;
+        if (elapsed >= timeout) {
+            return false;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+
+    return !isRobotConnected();
 }
 
 bool EliteDriver::writeIdle(int timeout_ms) {
