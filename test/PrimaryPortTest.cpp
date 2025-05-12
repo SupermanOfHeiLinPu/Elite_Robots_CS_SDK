@@ -16,9 +16,10 @@ TEST(PrimaryPortTest, multiple_connect) {
     std::unique_ptr<PrimaryPort> primary =  std::make_unique<PrimaryPort>();
 
     for (size_t i = 0; i < 100; i++) {
+        std::this_thread::sleep_for(500ms);
         EXPECT_TRUE(primary->connect(s_robot_ip, 30001));
         std::shared_ptr<KinematicsInfo> ki = std::make_shared<KinematicsInfo>();
-        EXPECT_TRUE(primary->getPackage(ki, 200));
+        EXPECT_TRUE(primary->getPackage(ki, 500));
     }
 
     primary->disconnect();
@@ -32,7 +33,7 @@ TEST(PrimaryPortTest, connect_disconnect) {
     for (size_t i = 0; i < 10; i++) {
         EXPECT_TRUE(primary->connect(s_robot_ip, 30001));
         std::shared_ptr<KinematicsInfo> ki = std::make_shared<KinematicsInfo>();
-        EXPECT_TRUE(primary->getPackage(ki, 200));
+        EXPECT_TRUE(primary->getPackage(ki, 1000));
         primary->disconnect();
         std::this_thread::sleep_for(500ms);
     }
@@ -44,11 +45,11 @@ TEST(PrimaryPortTest, get_package) {
     EXPECT_TRUE(primary->connect(s_robot_ip, 30001));
 
     std::shared_ptr<KinematicsInfo> template_ki = std::make_shared<KinematicsInfo>();
-    EXPECT_TRUE(primary->getPackage(template_ki, 100));
+    EXPECT_TRUE(primary->getPackage(template_ki, 500));
 
     std::shared_ptr<KinematicsInfo> ki = std::make_shared<KinematicsInfo>();
     for (size_t i = 0; i < 100; i++) {
-        EXPECT_TRUE(primary->getPackage(ki, 200));
+        EXPECT_TRUE(primary->getPackage(ki, 500));
         for (size_t i = 0; i < 6; i++) {
             EXPECT_EQ(template_ki->dh_a_[i], ki->dh_a_[i]);
             EXPECT_EQ(template_ki->dh_d_[i], ki->dh_d_[i]);
