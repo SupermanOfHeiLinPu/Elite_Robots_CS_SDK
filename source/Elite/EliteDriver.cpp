@@ -236,18 +236,18 @@ bool EliteDriver::stopControl(int wait_ms) {
     if(!impl_->reverse_server_->stopControl()) {
         return false;
     }
-    if (wait_ms > 0) {
-        auto start_time = std::chrono::steady_clock::now();
-        auto timeout = std::chrono::milliseconds(wait_ms);
-        while(impl_->script_command_server_->isRobotConnect() || impl_->reverse_server_->isRobotConnect()) {
-            auto elapsed = std::chrono::steady_clock::now() - start_time;
-            if (elapsed >= timeout) {
-                return false;
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+
+    auto start_time = std::chrono::steady_clock::now();
+    auto timeout = std::chrono::milliseconds(wait_ms);
+    while(impl_->script_command_server_->isRobotConnect() || impl_->reverse_server_->isRobotConnect()) {
+        auto elapsed = std::chrono::steady_clock::now() - start_time;
+        if (elapsed >= timeout) {
+            return false;
         }
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
-    return !impl_->script_command_server_->isRobotConnect();
+
+    return !isRobotConnected();
 }
 
 bool EliteDriver::writeIdle(int timeout_ms) {
