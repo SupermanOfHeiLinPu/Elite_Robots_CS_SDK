@@ -43,17 +43,15 @@ int main(int argc, char** argv) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
-    vector6d_t speedl_vector{0, 0, -0.02, 0, 0, 0};
-    while (true) {
-        speedl_vector = {0, 0, -0.02, 0, 0, 0};
-        s_driver->writeSpeedl(speedl_vector, 0);
+    vector6d_t speedl_vector = {0, 0, -0.02, 0, 0, 0};
+    s_driver->writeSpeedl(speedl_vector, 0);
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 
-        std::this_thread::sleep_for(std::chrono::seconds(3));
+    speedl_vector = {0, 0, 0.02, 0, 0, 0};
+    s_driver->writeSpeedl(speedl_vector, 0);
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 
-        speedl_vector = {0, 0, 0.02, 0, 0, 0};
-        s_driver->writeSpeedl(speedl_vector, 0);
-        std::this_thread::sleep_for(std::chrono::seconds(3));
-    }
+    s_driver->stopControl();
 
     return 0;
 }
