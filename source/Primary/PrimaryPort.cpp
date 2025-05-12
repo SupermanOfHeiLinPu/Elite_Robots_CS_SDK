@@ -19,39 +19,16 @@ PrimaryPort::~PrimaryPort() {
 
 
 bool PrimaryPort::connect(const std::string& ip, int port) {
-    try {
-        std::lock_guard<std::mutex> lock(socket_mutex_);
-        socket_ptr_.reset(new boost::asio::ip::tcp::socket(io_context_));
-        socket_ptr_->open(boost::asio::ip::tcp::v4());
-        socket_ptr_->set_option(boost::asio::ip::tcp::no_delay(true));
-        socket_ptr_->set_option(boost::asio::socket_base::reuse_address(true));
-        socket_ptr_->set_option(boost::asio::socket_base::keep_alive(false));
-#if defined(__linux) || defined(linux) || defined(__linux__)
-        socket_ptr_->set_option(boost::asio::detail::socket_option::boolean<IPPROTO_TCP, TCP_QUICKACK>(true));
-#endif
-        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(ip), port);
-        boost::system::error_code connect_ec;
-        socket_ptr_->async_connect(endpoint, [&](const boost::system::error_code& ec){
-            connect_ec = ec;
-        });
-        if (io_context_.stopped()) {
-            io_context_.restart();
-        }
-        io_context_.run_for(std::chrono::steady_clock::duration(500ms));
-        if (connect_ec) {
-            ELITE_LOG_ERROR("Connect to robot primary port fail: %s", boost::system::system_error(connect_ec).what());
-            return false;
-        }
-    } catch(const boost::system::system_error &error) {
-        throw EliteException(EliteException::Code::SOCKET_CONNECT_FAIL, error.what());
+    if(!socketConnect(ip, port)) {
         return false;
     }
     if (!socket_async_thread_) {
+        std::lock_guard<std::mutex> lock(socket_mutex_);
         // Start async thread
         socket_async_thread_alive_ = true;
-        socket_async_thread_.reset(new std::thread([&](){
-            socketAsyncLoop();
-        }));
+        socket_async_thread_.reset(new std::thread([&](std::string ip, int port){
+            socketAsyncLoop(ip, port);
+        }, ip, port));
     }
     return true;
 }
@@ -61,6 +38,7 @@ void PrimaryPort::disconnect() {
     {
         std::lock_guard<std::mutex> lock(socket_mutex_);
         socket_async_thread_alive_ = false;
+        socketDisconnect();
         socket_ptr_.reset();
     }
     if (socket_async_thread_ && socket_async_thread_->joinable()) {
@@ -101,15 +79,17 @@ bool PrimaryPort::parserMessage() {
         ELITE_LOG_WARN("Don't connect to robot primary port");
         return false;
     }
-    if (socket_ptr_->available() <= HEAD_LENGTH) {
-        return true;
-    }
     // Receive package head and parser it
     boost::system::error_code ec;
     int head_len = boost::asio::read(*socket_ptr_, boost::asio::buffer(message_head_, HEAD_LENGTH), ec);
     if (ec) {
-        ELITE_LOG_ERROR("Primary port receive package head had expection: %s", boost::system::system_error(ec).what());
-        return false;
+        if (ec == boost::asio::error::would_block) {
+            // Data not ready, non blocking mode returns normally
+            return true;
+        } else {
+            ELITE_LOG_ERROR("Primary port receive package head had expection: %s", boost::system::system_error(ec).what());
+            return false;
+        }
     }
     uint32_t package_len = 0;
     UTILS::EndianUtils::unpack(message_head_.begin(), package_len);
@@ -150,18 +130,70 @@ bool PrimaryPort::parserMessageBody(int type, int package_len) {
     return true;
 }
 
-void PrimaryPort::socketAsyncLoop() {
+void PrimaryPort::socketAsyncLoop(const std::string& ip, int port) {
     while (socket_async_thread_alive_) {
         try {
             if (!parserMessage()) {
-                socket_async_thread_alive_ = false;
+                socketConnect(ip, port);
             }
             std::this_thread::sleep_for(10ms);
         } catch(const std::exception& e) {
-            socket_async_thread_alive_ = false;
+            ELITE_LOG_ERROR("Primary port async loop throw exception:%s", e.what());
         }
     }
 }
 
+bool PrimaryPort::socketConnect(const std::string& ip, int port) {
+    try {
+        std::lock_guard<std::mutex> lock(socket_mutex_);
+        socket_ptr_.reset(new boost::asio::ip::tcp::socket(io_context_));
+        socket_ptr_->open(boost::asio::ip::tcp::v4());
+        socket_ptr_->set_option(boost::asio::ip::tcp::no_delay(true));
+        socket_ptr_->set_option(boost::asio::socket_base::reuse_address(true));
+        socket_ptr_->set_option(boost::asio::socket_base::keep_alive(false));
+        socket_ptr_->non_blocking(true);
+#if defined(__linux) || defined(linux) || defined(__linux__)
+        socket_ptr_->set_option(boost::asio::detail::socket_option::boolean<IPPROTO_TCP, TCP_QUICKACK>(true));
+#endif
+        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(ip), port);
+        boost::system::error_code connect_ec;
+        socket_ptr_->async_connect(endpoint, [&](const boost::system::error_code& ec){
+            connect_ec = ec;
+        });
+        if (io_context_.stopped()) {
+            io_context_.restart();
+        }
+        io_context_.run_for(std::chrono::steady_clock::duration(500ms));
+        if (connect_ec) {
+            socket_ptr_.reset();
+            ELITE_LOG_ERROR("Connect to robot primary port fail: %s", boost::system::system_error(connect_ec).what());
+            return false;
+        }
+        // If the asynchronous operation completed successfully then the io_context
+        // would have been stopped due to running out of work. If it was not
+        // stopped, then the io_context::run_for call must have timed out.
+        if (!io_context_.stopped()) {
+            ELITE_LOG_ERROR("Connect to robot primary port fail: timeout");
+            socketDisconnect();
+            socket_ptr_.reset();
+            io_context_.stop();
+            return false;
+        }
+        
+    } catch(const boost::system::system_error &error) {
+        throw EliteException(EliteException::Code::SOCKET_CONNECT_FAIL, error.what());
+        return false;
+    }
+    return true;
+}
+
+void PrimaryPort::socketDisconnect() {
+    if (socket_ptr_ && socket_ptr_->is_open()) {
+        boost::system::error_code ignore_ec;
+        socket_ptr_->cancel(ignore_ec);
+        socket_ptr_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignore_ec);
+        socket_ptr_->close(ignore_ec);
+    }
+}
 
 }

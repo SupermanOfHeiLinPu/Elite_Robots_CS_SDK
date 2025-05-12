@@ -43,7 +43,7 @@ private:
      * @brief The background thread.
      *  Receive and parser package.
      */
-    void socketAsyncLoop();
+    void socketAsyncLoop(const std::string& ip, int port);
 
     /**
      * @brief Receive and parser package.
@@ -58,6 +58,22 @@ private:
      * @param len 
      */
     bool parserMessageBody(int type, int package_len);
+
+    /**
+     * @brief Connect to robot primary port.
+     * 
+     * @param ip The robot ip
+     * @param port The port(30001 or 30002)
+     * @return true 
+     * @return false 
+     */
+    bool socketConnect(const std::string& ip, int port);
+
+    /**
+     * @brief Close connection socket
+     * 
+     */
+    void socketDisconnect();
 
 public:
     PrimaryPort();
