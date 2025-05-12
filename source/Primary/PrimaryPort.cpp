@@ -19,7 +19,9 @@ PrimaryPort::~PrimaryPort() {
 
 
 bool PrimaryPort::connect(const std::string& ip, int port) {
-    socketConnect(ip, port);
+    if(!socketConnect(ip, port)) {
+        return false;
+    }
     if (!socket_async_thread_) {
         std::lock_guard<std::mutex> lock(socket_mutex_);
         // Start async thread
@@ -36,6 +38,7 @@ void PrimaryPort::disconnect() {
     {
         std::lock_guard<std::mutex> lock(socket_mutex_);
         socket_async_thread_alive_ = false;
+        socketDisconnect();
         socket_ptr_.reset();
     }
     if (socket_async_thread_ && socket_async_thread_->joinable()) {
@@ -76,15 +79,17 @@ bool PrimaryPort::parserMessage() {
         ELITE_LOG_WARN("Don't connect to robot primary port");
         return false;
     }
-    if (socket_ptr_->available() <= HEAD_LENGTH) {
-        return true;
-    }
     // Receive package head and parser it
     boost::system::error_code ec;
     int head_len = boost::asio::read(*socket_ptr_, boost::asio::buffer(message_head_, HEAD_LENGTH), ec);
     if (ec) {
-        ELITE_LOG_ERROR("Primary port receive package head had expection: %s", boost::system::system_error(ec).what());
-        return false;
+        if (ec == boost::asio::error::would_block) {
+            // Data not ready, non blocking mode returns normally
+            return true;
+        } else {
+            ELITE_LOG_ERROR("Primary port receive package head had expection: %s", boost::system::system_error(ec).what());
+            return false;
+        }
     }
     uint32_t package_len = 0;
     UTILS::EndianUtils::unpack(message_head_.begin(), package_len);
@@ -146,6 +151,7 @@ bool PrimaryPort::socketConnect(const std::string& ip, int port) {
         socket_ptr_->set_option(boost::asio::ip::tcp::no_delay(true));
         socket_ptr_->set_option(boost::asio::socket_base::reuse_address(true));
         socket_ptr_->set_option(boost::asio::socket_base::keep_alive(false));
+        socket_ptr_->non_blocking(true);
 #if defined(__linux) || defined(linux) || defined(__linux__)
         socket_ptr_->set_option(boost::asio::detail::socket_option::boolean<IPPROTO_TCP, TCP_QUICKACK>(true));
 #endif
@@ -163,6 +169,17 @@ bool PrimaryPort::socketConnect(const std::string& ip, int port) {
             ELITE_LOG_ERROR("Connect to robot primary port fail: %s", boost::system::system_error(connect_ec).what());
             return false;
         }
+        // If the asynchronous operation completed successfully then the io_context
+        // would have been stopped due to running out of work. If it was not
+        // stopped, then the io_context::run_for call must have timed out.
+        if (!io_context_.stopped()) {
+            ELITE_LOG_ERROR("Connect to robot primary port fail: timeout");
+            socketDisconnect();
+            socket_ptr_.reset();
+            io_context_.stop();
+            return false;
+        }
+        
     } catch(const boost::system::system_error &error) {
         throw EliteException(EliteException::Code::SOCKET_CONNECT_FAIL, error.what());
         return false;
@@ -170,5 +187,13 @@ bool PrimaryPort::socketConnect(const std::string& ip, int port) {
     return true;
 }
 
+void PrimaryPort::socketDisconnect() {
+    if (socket_ptr_ && socket_ptr_->is_open()) {
+        boost::system::error_code ignore_ec;
+        socket_ptr_->cancel(ignore_ec);
+        socket_ptr_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignore_ec);
+        socket_ptr_->close(ignore_ec);
+    }
+}
 
 }

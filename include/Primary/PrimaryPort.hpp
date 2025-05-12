@@ -69,6 +69,12 @@ private:
      */
     bool socketConnect(const std::string& ip, int port);
 
+    /**
+     * @brief Close connection socket
+     * 
+     */
+    void socketDisconnect();
+
 public:
     PrimaryPort();
     ~PrimaryPort();
