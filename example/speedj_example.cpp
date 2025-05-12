@@ -43,17 +43,17 @@ int main(int argc, char** argv) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
-    vector6d_t speedj_vector{0, 0, 0, 0, 0, -0.02};
-    while (true) {
-        speedj_vector = {0, 0, 0, 0, 0, -0.1};
-        s_driver->writeSpeedj(speedj_vector, 0);
+    // Reverse rotation for 10 seconds
+    vector6d_t speedj_vector{0, 0, 0, 0, 0, -0.1};
+    s_driver->writeSpeedj(speedj_vector, 0);
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 
-        std::this_thread::sleep_for(std::chrono::seconds(3));
+    // Rotate forward for 10 seconds
+    speedj_vector = {0, 0, 0, 0, 0, 0.1};
+    s_driver->writeSpeedj(speedj_vector, 0);
+    std::this_thread::sleep_for(std::chrono::seconds(5));
 
-        speedj_vector = {0, 0, 0, 0, 0, 0.1};
-        s_driver->writeSpeedj(speedj_vector, 0);
-        std::this_thread::sleep_for(std::chrono::seconds(3));
-    }
+    s_driver->stopControl();
 
     return 0;
 }
