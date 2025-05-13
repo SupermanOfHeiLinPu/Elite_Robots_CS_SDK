@@ -228,6 +228,9 @@ bool EliteDriver::writeTrajectoryControlAction(TrajectoryControlAction action, c
     return impl_->reverse_server_->writeTrajectoryControlAction(action, point_number, robot_receive_timeout);
 }
 
+bool EliteDriver::writeFreedrive(FreedriveAction action, int timeout_ms) {
+    return impl_->reverse_server_->writeFreedrive(action, timeout_ms);
+}
 
 bool EliteDriver::stopControl(int wait_ms) {
     if (wait_ms < 5) {
@@ -259,7 +262,7 @@ void EliteDriver::printRobotScript() {
 }
 
 bool EliteDriver::isRobotConnected() {
-    return impl_->reverse_server_->isRobotConnect() && impl_->trajectory_server_->isRobotConnect();
+    return impl_->reverse_server_->isRobotConnect() && impl_->trajectory_server_->isRobotConnect() && impl_->script_command_server_->isRobotConnect();
 }
 
 bool EliteDriver::zeroFTSensor() {

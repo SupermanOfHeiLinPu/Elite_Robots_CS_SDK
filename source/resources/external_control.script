@@ -38,6 +38,10 @@ SCRIPT_CMD_SET_TOOL_VOLTAGE = 2
 SCRIPT_CMD_START_FORCE_MODE = 3
 SCRIPT_CMD_END_FORCE_MODE = 4
 
+FREEDRIVE_START = 1
+FREEDRIVE_NOOP = 0
+FREEDRIVE_END = -1
+
 # Data size of the message received on the reverse interface
 REVERSE_DATA_SIZE = {{REVERSE_DATA_SIZE_REPLACE}}
 TRAJECTORY_DATA_SIZE = {{TRAJECTORY_DATA_SIZE_REPLACE}}
@@ -240,6 +244,9 @@ while control_mode > MODE_STOPPED:
                 stopj(STOPJ_ACCELERATION)
                 trajectoryClearPoints()
                 socket_send_int(TRAJECTORY_RESULT_CANCELED, "trajectory_socket")
+            elif control_mode == MODE_FREEDRIVE:
+                textmsg("End freedrive mode")
+                end_freedrive_mode()
             else:
                 stop_thread(move_thread_handle)
                 move_thread_handle = 0
@@ -247,6 +254,7 @@ while control_mode > MODE_STOPPED:
 
             control_mode = params_mult[REVERSE_DATA_SIZE]
             
+            # Start new motion mode
             if control_mode == MODE_SPEEDL:
                 move_thread_handle = start_thread(speedlThread, ())
             elif control_mode == MODE_TRAJECTORY:
@@ -281,6 +289,13 @@ while control_mode > MODE_STOPPED:
                 trajectoryClearPoints()
                 stopj(STOPJ_ACCELERATION)
                 socket_send_int(TRAJECTORY_RESULT_CANCELED, "trajectory_socket")
+        elif control_mode == MODE_FREEDRIVE:
+            if params_mult[2] == FREEDRIVE_START:
+                textmsg("Start freedrive mode")
+                freedrive_mode()
+            elif params_mult[2] == FREEDRIVE_END:
+                textmsg("End freedrive mode")
+                end_freedrive_mode()
     else:
         textmsg("Socket timed out waiting for command on reverse_socket. The script will exit now.")
         control_mode = MODE_STOPPED

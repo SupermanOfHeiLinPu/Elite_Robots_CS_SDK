@@ -37,6 +37,14 @@ bool ReverseInterface::writeTrajectoryControlAction(TrajectoryControlAction acti
     return write(data, sizeof(data)) > 0;
 }
 
+bool ReverseInterface::writeFreedrive(FreedriveAction action, int timeout_ms) {
+    int32_t data[REVERSE_DATA_SIZE] = {0};
+    data[0] = htonl(timeout_ms);
+    data[1] = htonl((int)action);
+    data[REVERSE_DATA_SIZE - 1] = htonl((int)ControlMode::MODE_FREEDRIVE);
+    return write(data, sizeof(data)) > 0;
+}
+
 bool ReverseInterface::stopControl() {
     int32_t data[REVERSE_DATA_SIZE];
     data[0] = 0;

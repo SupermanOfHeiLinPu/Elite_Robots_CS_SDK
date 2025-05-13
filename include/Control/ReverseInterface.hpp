@@ -61,6 +61,16 @@ public:
     bool writeTrajectoryControlAction(TrajectoryControlAction action, const int point_number, int timeout_ms);
 
     /**
+     * @brief Writes a freedrive mode control command to the robot
+     * 
+     * @param action Freedrive mode action assigned to this command. 
+     * @param timeout_ms The read timeout configuration for the reverse socket running in the external control script on the robot.
+     * @return true success
+     * @return false fail
+     */
+    bool writeFreedrive(FreedriveAction action, int timeout_ms);
+
+    /**
      * @brief Finish external control script.
      * 
      * @return true success

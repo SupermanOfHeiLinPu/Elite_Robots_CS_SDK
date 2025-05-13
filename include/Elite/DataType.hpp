@@ -143,6 +143,15 @@ enum class ForceMode : int {
     TCP,
 };
 
+enum class FreedriveAction : int {
+    /// Represents command to stop freedrive mode.
+    FREEDRIVE_END = -1,
+    /// Represents keep running in freedrive mode.
+    FREEDRIVE_NOOP = 0,
+    /// Represents command to start freedrive mode.
+    FREEDRIVE_START = 1
+};
+
 using vector3d_t = std::array<double, 3>;
 using vector6d_t = std::array<double, 6>;
 using vector6int32_t = std::array<int32_t, 6>;

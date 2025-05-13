@@ -106,6 +106,22 @@ bool writeIdle(int timeout_ms)
 
 ---
 
+### ***Freedrive***
+```cpp
+bool writeFreedrive(FreedriveAction action, int timeout_ms)
+```
+- ***功能***
+
+    发送Freedrive模式的指令，如：开启Freedrive，停止Freedrive。
+
+- ***参数***
+    - action：Freedrive动作，有：开启（START）、停止(END)、空操作(NOOP)
+    - timeout_ms：设置机器人读取下一条指令的超时时间，小于等于0时会无限等待。
+
+- ***注意***：写入`START`动作之后，需要在超时时间内写入下一条指令，可以写入`NOOP`。
+
+---
+
 ## 轨迹运动
 
 ### ***设置轨迹运动结果回调***
