@@ -93,6 +93,22 @@ Sends an idle instruction. If the robot is in motion, it will make the robot sto
 
 ---
 
+### ***Freedrive***
+```cpp
+bool writeFreedrive(FreedriveAction action, int timeout_ms)
+```
+- ***Function***
+
+Send commands for Freedrive mode, such as enabling and stopping Freedrive.
+
+- ***Parameters***
+    - action: Freedrive action, including: START, END, NOOP
+    - timeout_ms: Set the timeout for the robot to read the next instruction. If it is less than or equal to 0, it will wait indefinitely.
+
+- *** Note***: After writing the 'START' action, the next instruction needs to be written within the timeout period, which can be written as' NOOP '.
+
+---
+
 ## Trajectory Motion
 
 ### ***Set Trajectory Motion Result Callback***

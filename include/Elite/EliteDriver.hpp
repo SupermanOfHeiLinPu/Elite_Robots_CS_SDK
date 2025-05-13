@@ -137,6 +137,16 @@ class EliteDriver {
     ELITE_EXPORT bool writeIdle(int timeout_ms);
 
     /**
+     * @brief Writes a freedrive mode control command to the robot
+     * 
+     * @param action Freedrive mode action assigned to this command, such as starting or stopping freedrive.
+     * @param timeout_ms The read timeout configuration for the reverse socket running in the external control script on the robot.
+     * @return true success
+     * @return false fail
+     */
+    ELITE_EXPORT bool writeFreedrive(FreedriveAction action, int timeout_ms);
+
+    /**
      * @brief Sends a stop command to the socket interface which will signal the program running on
      * the robot to no longer listen for commands sent from the remote pc.
      *
