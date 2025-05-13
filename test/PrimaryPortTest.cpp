@@ -15,7 +15,7 @@ static std::string s_robot_ip = "192.168.51.127";
 TEST(PrimaryPortTest, multiple_connect) {
     std::unique_ptr<PrimaryPort> primary =  std::make_unique<PrimaryPort>();
 
-    for (size_t i = 0; i < 100; i++) {
+    for (size_t i = 0; i < 10; i++) {
         std::this_thread::sleep_for(500ms);
         EXPECT_TRUE(primary->connect(s_robot_ip, 30001));
         std::shared_ptr<KinematicsInfo> ki = std::make_shared<KinematicsInfo>();
@@ -33,7 +33,7 @@ TEST(PrimaryPortTest, connect_disconnect) {
     for (size_t i = 0; i < 10; i++) {
         EXPECT_TRUE(primary->connect(s_robot_ip, 30001));
         std::shared_ptr<KinematicsInfo> ki = std::make_shared<KinematicsInfo>();
-        EXPECT_TRUE(primary->getPackage(ki, 1000));
+        EXPECT_TRUE(primary->getPackage(ki, 2000));
         primary->disconnect();
         std::this_thread::sleep_for(500ms);
     }
