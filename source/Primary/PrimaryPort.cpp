@@ -104,11 +104,33 @@ bool PrimaryPort::parserMessage() {
 bool PrimaryPort::parserMessageBody(int type, int package_len) {
     boost::system::error_code ec;
     int body_len = package_len - HEAD_LENGTH;
+    int read_len = 0;
     message_body_.resize(body_len);
+    
     // Receive package body
-    boost::asio::read(*socket_ptr_, boost::asio::buffer(message_body_, body_len), ec);
+    boost::asio::async_read(*socket_ptr_, boost::asio::buffer(message_body_, body_len), [&](boost::system::error_code error, std::size_t n){
+        ec = error;
+        read_len = n;
+    });
+    if (io_context_.stopped()) {
+        io_context_.restart();
+    }
+    io_context_.run_for(std::chrono::steady_clock::duration(500ms));
     if (ec) {
         ELITE_LOG_ERROR("Primary port receive package body had expection: %s", boost::system::system_error(ec).what());
+        return false;
+    }
+    if (read_len != body_len) {
+        ELITE_LOG_ERROR("Primary port receive package body data length not match. Receive:%d, expect:%d", read_len, body_len);
+        return false;
+    }
+    
+    // If the asynchronous operation completed successfully then the io_context
+    // would have been stopped due to running out of work. If it was not
+    // stopped, then the io_context::run_for call must have timed out.
+    if(!io_context_.stopped()) {
+        ELITE_LOG_ERROR("Primary port receive package body timeout");
+        io_context_.stop();
         return false;
     }
     // If RobotState message parser others don't do anything.
