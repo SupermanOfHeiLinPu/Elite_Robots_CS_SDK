@@ -74,6 +74,7 @@ int main(int argc, char** argv) {
     config.robot_ip = robot_ip;
     config.script_file_path = "external_control.script";
     config.local_ip = local_ip;
+    config.servoj_time = 0.004;
     s_driver = std::make_unique<EliteDriver>(config);
     s_rtsi_client = std::make_unique<RtsiClientInterface>();
     s_dashboard = std::make_unique<DashboardClient>();
