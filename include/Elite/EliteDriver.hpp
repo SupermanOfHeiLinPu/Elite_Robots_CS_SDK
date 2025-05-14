@@ -48,16 +48,16 @@ class EliteDriverConfig {
     int script_command_port = 50004;
 
     // The duration of servoj motion.
-    int servoj_time = 0.008;
+    float servoj_time = 0.008;
 
     // Time [S], range [0.03,0.2] smoothens the trajectory with this lookahead time
-    int servoj_lookhead_time = 0.08;
+    float servoj_lookhead_time = 0.08;
 
     // Servo gain.
     int servoj_gain = 300;
 
     // Acceleration [rad/s^2]. The acceleration of stopj motion.
-    int stopj_acc = 4;
+    float stopj_acc = 4;
 
     EliteDriverConfig() = default;
     ~EliteDriverConfig() = default;
