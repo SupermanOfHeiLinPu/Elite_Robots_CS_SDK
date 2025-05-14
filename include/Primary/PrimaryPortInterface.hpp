@@ -73,7 +73,7 @@ public:
      * 
      * @return std::string Local IP. If empty, connection had some errors.
      */
-    ELITE_EXPORT std::string PrimaryPortInterface::getLocalIP();
+    ELITE_EXPORT std::string getLocalIP();
 
 };
 
