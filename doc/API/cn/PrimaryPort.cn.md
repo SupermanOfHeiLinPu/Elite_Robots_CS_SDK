@@ -97,6 +97,18 @@ bool getPackage(std::shared_ptr<PrimaryPackage> pkg, int timeout_ms)
 
 ---
 
+### 获取本地的IP地址
+```cpp
+std::string getLocalIP()
+```
+- ***功能***
+
+    获取本机IP地址。
+
+- ***返回值***：本机IP地址。如果为空，与机器人30001的连接则存在问题。
+
+---
+
 # PrimaryPackage 类
 
 ## 简介

@@ -1,10 +1,10 @@
 #include "Elite/EliteDriver.hpp"
 
+#include <atomic>
 #include <boost/asio.hpp>
+#include <chrono>
 #include <iostream>
 #include <thread>
-#include <chrono>
-#include <atomic>
 
 using namespace ELITE;
 using namespace std::chrono;
@@ -14,10 +14,15 @@ using namespace std::chrono;
 static std::atomic<bool> s_is_freedrive_running;
 
 void freeDriveLoop(const std::string& robot_ip, const std::string& local_ip) {
-    auto driver = std::make_unique<EliteDriver>(robot_ip, local_ip, "external_control.script", true);
+    EliteDriverConfig config;
+    config.robot_ip = robot_ip;
+    config.script_file_path = "external_control.script";
+    config.local_ip = local_ip;
+    config.headless_mode = true;
+    auto driver = std::make_unique<EliteDriver>(config);
 
     std::cout << "Wait robot connect" << std::endl;
-    while (!driver->isRobotConnected()) {
+    while (!driver->isRobotConnected() && s_is_freedrive_running) {
         std::this_thread::sleep_for(4ms);
     }
     std::cout << "Robot connected" << std::endl;
@@ -34,19 +39,23 @@ void freeDriveLoop(const std::string& robot_ip, const std::string& local_ip) {
     driver->stopControl();
 }
 
-
 int main(int argc, char* argv[]) {
-    if (argc < 3) {
-        std::cout << "Must provide robot ip or local ip. Command like: ./freedrive_example 192.168.1.250 192.168.1.251" << std::endl;
+    if (argc < 2) {
+        std::cout << "Must provide robot ip or local ip. Command like:"
+                     "\"./freedrive_example robot_ip\" or \"./freedrive_example robot_ip local_ip\""
+                  << std::endl;
         return 1;
+    }
+    std::string robot_ip = argv[1];
+    std::string local_ip = "";
+    if (argc >= 3) {
+        local_ip = argv[2];
     }
 
     s_is_freedrive_running = true;
     // Freediver is running in another thread
-    std::thread freedrive_thread([&](std::string robot_ip, std::string local_ip) {
-        freeDriveLoop(robot_ip, local_ip);
-    }, argv[1], argv[2]);
-    
+    std::thread freedrive_thread([&](std::string robot_ip, std::string local_ip) { freeDriveLoop(robot_ip, local_ip); }, robot_ip, local_ip);
+
     // Capture SIGINT (Ctrl+C) and SIGTERM (kill)
     boost::asio::io_context io_context;
     boost::asio::signal_set signal_set(io_context, SIGINT, SIGTERM);

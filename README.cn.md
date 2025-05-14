@@ -1,7 +1,8 @@
 [English](./README.md)
 # Elite Robots CS SDK
 
-Elite CS 系列机器人的SDK。
+此SDK是艾利特机器人CS系列机械臂的C++库，借助该库，开发者可以基于C++实现驱动程序，从而充分利用艾利特机器人CS系列机械臂的多功能性来开发外部应用程序。
+
 
 ## Requirements
  * **CS Controller* (机器人的控制软件) version >=**2.14.x**(for CS-Series). 如果机器人的控制软件版本低于此，建议升级之。  
