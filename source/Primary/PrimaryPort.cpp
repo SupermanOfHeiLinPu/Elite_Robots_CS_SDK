@@ -218,4 +218,16 @@ void PrimaryPort::socketDisconnect() {
     }
 }
 
+std::string PrimaryPort::getLocalIP() {
+    std::lock_guard<std::mutex> lock(socket_mutex_);
+    if (socket_ptr_ && socket_ptr_->is_open()) {
+        boost::system::error_code ignore_ec;
+        auto address = socket_ptr_->local_endpoint(ignore_ec).address().to_string();
+        if (!ignore_ec) {
+            return address;
+        }
+    }
+    return "";
+}
+
 }

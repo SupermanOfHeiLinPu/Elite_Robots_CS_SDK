@@ -81,6 +81,18 @@ Retrieves and parses the robot's data packet.
 
 ---
 
+### Get local IP
+```cpp
+std::string getLocalIP()
+```
+- ***Function***
+
+    Get local IP address
+
+- ***Return Value***：Local IP address. If empty, connection had some errors.
+
+---
+
 # PrimaryPackage Class
 
 ## Introduction

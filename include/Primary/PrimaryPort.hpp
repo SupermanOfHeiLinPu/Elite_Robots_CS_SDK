@@ -1,4 +1,4 @@
-#ifndef __ELITE__PRIMARY_PORT_HPP__
+﻿#ifndef __ELITE__PRIMARY_PORT_HPP__
 #define __ELITE__PRIMARY_PORT_HPP__
 
 #include "PrimaryPackage.hpp"
@@ -118,6 +118,12 @@ public:
      */
     bool getPackage(std::shared_ptr<PrimaryPackage> pkg, int timeout_ms);
 
+    /**
+     * @brief Get the local IP
+     * 
+     * @return std::string Local IP. If empty, connection had some errors.
+     */
+    std::string getLocalIP();
 };
 
 } // namespace ELITE
