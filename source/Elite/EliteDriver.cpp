@@ -132,9 +132,8 @@ void EliteDriver::init(const EliteDriverConfig& config) {
     // First, need to connect to the robot primary port before attempting to obtain the local IP address
     impl_->primary_port_ = std::make_unique<PrimaryPortInterface>();
     if (!impl_->primary_port_->connect(impl_->robot_ip_, PrimaryPortInterface::PRIMARY_PORT)) {
-        ELITE_LOG_ERROR("Connect robot primary port fail");
-        impl_->primary_port_.reset();
-        return;
+        ELITE_LOG_FATAL("Connect robot primary port fail.");
+        throw EliteException(EliteException::Code::SOCKET_CONNECT_FAIL, "Connect robot primary port fail.");
     }
     if (config.local_ip.length() <= 0) {
         impl_->local_ip_ = impl_->primary_port_->getLocalIP();
