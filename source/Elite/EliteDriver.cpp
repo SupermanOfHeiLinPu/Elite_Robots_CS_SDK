@@ -37,7 +37,7 @@ class EliteDriver::Impl {
 
     std::string readScriptFile(const std::string& file);
     void scriptParamWrite(std::string& file_string, int reverse_port, int trajectory_port, int script_command_port,
-                          float servoj_time, float servoj_lookhead_time, int servoj_gain, float stopj_acc);
+                          float servoj_time, float servoj_lookahead_time, int servoj_gain, float stopj_acc);
     std::string robot_script_;
     std::string robot_ip_;
     std::string local_ip_;
@@ -64,7 +64,7 @@ std::string EliteDriver::Impl::readScriptFile(const std::string& filepath) {
 }
 
 void EliteDriver::Impl::scriptParamWrite(std::string& file_string, int reverse_port, int trajectory_port, int script_command_port,
-                                         float servoj_time, float servoj_lookhead_time, int servoj_gain, float stopj_acc) {
+                                         float servoj_time, float servoj_lookahead_time, int servoj_gain, float stopj_acc) {
     while (file_string.find(SERVER_IP_REPLACE) != std::string::npos) {
         file_string.replace(file_string.find(SERVER_IP_REPLACE), SERVER_IP_REPLACE.length(), local_ip_);
     }
@@ -84,7 +84,7 @@ void EliteDriver::Impl::scriptParamWrite(std::string& file_string, int reverse_p
     }
 
     std::ostringstream servoj_replace_str;
-    servoj_replace_str << "t = " << servoj_time << ", lookahead_time = " << servoj_lookhead_time << ", gain=" << servoj_gain;
+    servoj_replace_str << "t = " << servoj_time << ", lookahead_time = " << servoj_lookahead_time << ", gain=" << servoj_gain;
     while (file_string.find(SERVO_J_REPLACE) != std::string::npos) {
         file_string.replace(file_string.find(SERVO_J_REPLACE), SERVO_J_REPLACE.length(), servoj_replace_str.str());
     }
@@ -144,7 +144,7 @@ void EliteDriver::init(const EliteDriverConfig& config) {
     // Generate external control script.
     std::string control_script = impl_->readScriptFile(config.script_file_path);
     impl_->scriptParamWrite(control_script, config.reverse_port, config.trajectory_port, config.script_command_port,
-                            config.servoj_time, config.servoj_lookhead_time, config.servoj_gain, config.stopj_acc);
+                            config.servoj_time, config.servoj_lookahead_time, config.servoj_gain, config.stopj_acc);
 
     impl_->reverse_server_ = std::make_unique<ReverseInterface>(config.reverse_port);
     ELITE_LOG_DEBUG("Created reverse interface");
@@ -180,7 +180,7 @@ EliteDriver::EliteDriver(const EliteDriverConfig& config) {
 
 EliteDriver::EliteDriver(const std::string& robot_ip, const std::string& local_ip, const std::string& script_file,
     bool headless_mode, int script_sender_port, int reverse_port, int trajectory_port,
-    int script_command_port, float servoj_time, float servoj_lookhead_time,
+    int script_command_port, float servoj_time, float servoj_lookahead_time,
     int servoj_gain, float stopj_acc) {
         EliteDriverConfig config;
         config.robot_ip = robot_ip;
@@ -192,7 +192,7 @@ EliteDriver::EliteDriver(const std::string& robot_ip, const std::string& local_i
         config.trajectory_port = trajectory_port;
         config.script_command_port = script_command_port;
         config.servoj_time = servoj_time;
-        config.servoj_lookhead_time = servoj_lookhead_time;
+        config.servoj_lookahead_time = servoj_lookahead_time;
         config.servoj_gain = servoj_gain;
         config.stopj_acc = stopj_acc;
         init(config);
