@@ -51,7 +51,7 @@ class EliteDriverConfig {
     float servoj_time = 0.008;
 
     // Time [S], range [0.03,0.2] smoothens the trajectory with this lookahead time
-    float servoj_lookhead_time = 0.08;
+    float servoj_lookahead_time = 0.08;
 
     // Servo gain.
     int servoj_gain = 300;
