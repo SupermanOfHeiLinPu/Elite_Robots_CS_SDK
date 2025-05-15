@@ -255,7 +255,7 @@ Sends a stop instruction to the robot. The robot will exit the control script an
 
 ---
 
-### isRobotConnected
+### Is robot connected
 ```cpp
 bool isRobotConnected()
 ```

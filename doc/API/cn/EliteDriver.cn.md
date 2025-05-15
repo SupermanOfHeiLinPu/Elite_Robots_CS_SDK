@@ -296,7 +296,7 @@ bool stopControl(int wait_ms = 500)
 
 ---
 
-### isRobotConnected
+### ***是否与机器人连接***
 ```cpp
 bool isRobotConnected()
 ```
