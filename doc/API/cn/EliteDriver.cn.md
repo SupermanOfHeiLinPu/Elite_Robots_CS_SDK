@@ -13,6 +13,20 @@ EliteDriver 是用于与机器人进行数据交互的主要类。它负责建�
 
 ### ***构造函数***
 ```cpp
+EliteDriver(const EliteDriverConfig& config)
+```
+- ***功能***
+
+    创建 EliteDriver 对象，并初始化与机器人通信的必要连接。  
+    以下情况此函数会抛出异常：  
+    1. TCP server 创建失败，通常是因为端口被占用导致的。
+    2. 连接机器人的primary port失败。
+
+- ***参数***
+    - config：配置，参考[配置](./EliteDriverConfig.cn.md)
+
+### ***构造函数***(此函数已废弃)
+```cpp
 EliteDriver::EliteDriver(
     const std::string& robot_ip, 
     const std::string& local_ip, 
@@ -36,7 +50,7 @@ EliteDriver::EliteDriver(
     - local_ip：本机 IP 地址。
     - script_file：控制脚本模板文件。
     - headless_mode：是否以无界面模式运行。如果此参数为true，那么在构造函数中，将会向机器人的 primary 端口发送一次控制脚本。
-    - script_sender_port：发送脚本的端口。
+    - script_sender_port：用于发送控制脚本的端口。如果无法连接此端口，`External Control`插件将会停止运行。
     - reverse_port：反向通信端口。
     - trajectory_port：发送轨迹点的端口。
     - script_command_port：发送脚本命令的端口。

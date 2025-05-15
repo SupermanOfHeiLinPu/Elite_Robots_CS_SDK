@@ -12,6 +12,21 @@ The EliteDriver is the main class for data interaction with the robot. It is res
 
 ### ***Constructor***
 ```cpp
+EliteDriver(const EliteDriverConfig& config)
+```
+- ***Function***
+
+    Creates an EliteDriver object and initializes necessary connections for robot communication.  
+    This function will throw exceptions in the following cases:  
+    1. TCP server creation fails (typically due to port being occupied).
+    2. Failed to connect to the robot's primary port.
+
+- ***Parameters***
+    - config: Configuration, refer to [Configuration](./EliteDriverConfig.en.md)
+
+
+### ***Constructor***(Deprecated)
+```cpp
 EliteDriver::EliteDriver(
     const std::string& robot_ip, 
     const std::string& local_ip, 
@@ -33,7 +48,7 @@ Creates an EliteDriver object and initializes the necessary connections for comm
     - local_ip: The local IP address.
     - script_file: The template file of the control script.
     - headless_mode: Whether to run in headless mode. If this parameter is true, then in the constructor, a control script will be sent to the robot's primary port once.
-    - script_sender_port: The port for sending the script.
+    - script_sender_port: script_sender_port: Port for sending control scripts. If this port cannot be connected, the `External Control` plugin will stop.
     - reverse_port: The port for reverse communication.
     - trajectory_port: The port for sending trajectory points.
     - script_command_port: The port for sending script commands.
