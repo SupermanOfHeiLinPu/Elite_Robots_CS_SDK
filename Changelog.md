@@ -27,6 +27,7 @@
   - Simplified background thread loop logic in `RtsiIOInterface.hpp`
   - Changed `RtsiIOInterface::getRecipeValue()` and `RtsiIOInterface::setInputRecipeValue()` from private to public, with added explicit instantiation declarations
 - Restructured project Readme documentation
+- The automatic waypoint extrapolation functionality during servoj motion (triggered by delayed data reception) has been eliminated from `external_control.script`.
 
 ### Fixed
 - Fixed crash issue caused by dangling pointers during `EliteDriver` destruction

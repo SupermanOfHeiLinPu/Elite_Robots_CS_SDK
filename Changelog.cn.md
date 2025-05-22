@@ -27,6 +27,7 @@
   - 简化 `RtsiIOInterface.hpp` 的后台线程循环逻辑。
   - `RtsiIOInterface::getRecipeValue()` 与 `RtsiIOInterface::setInputRecipeValue()`接口从private变为public，并且添加了常用的显式实例化声明。
 - 调整了项目Readme的结构。
+- `external_control.script`中删除了servoj运动时当数据没有及时给到便自动推断下一个点位的功能。
 
 ### Fixed
 - 修复 `EliteDriver` 析构时可能因悬垂指针导致的崩溃问题。
