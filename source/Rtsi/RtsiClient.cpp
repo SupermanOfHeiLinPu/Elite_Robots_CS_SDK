@@ -193,9 +193,7 @@ void RtsiClient::sendAll(const PackageType& cmd, const std::vector<uint8_t>& pay
 
     boost::system::error_code ec;
     socket_ptr_->write_some(boost::asio::buffer(message), ec);
-    if (ec == boost::asio::error::operation_aborted) {
-        throw EliteException(EliteException::Code::SOCKET_OPT_CANCEL, ec.message());
-    } else if (ec) {
+    if (ec) {
         throw EliteException(EliteException::Code::SOCKET_FAIL, ec.message());
     }
 }
@@ -211,9 +209,7 @@ int RtsiClient::receiveSocket(std::vector<uint8_t>& buff, int size, int offset, 
     }
     int read_len = 0;
     boost::asio::async_read(*socket_ptr_, boost::asio::buffer(buff.data() + offset, size), [&](const boost::system::error_code &ec, std::size_t nb) {
-        if (ec == boost::asio::error::operation_aborted) {
-            throw EliteException(EliteException::Code::SOCKET_OPT_CANCEL, ec.message());
-        } else if (ec) {
+        if (ec) {
             throw EliteException(EliteException::Code::SOCKET_FAIL, ec.message());
         }
         read_len = nb;

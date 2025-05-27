@@ -29,11 +29,15 @@
 - 调整了项目Readme的结构。
 - `external_control.script`中删除了servoj运动时当数据没有及时给到便自动推断下一个点位的功能。
 
+
 ### Fixed
 - 修复 `EliteDriver` 析构时可能因悬垂指针导致的崩溃问题。
 
 ### Deprecated
 - `EliteDriver` 的旧构造函数已废弃，未来版本将移除，请改用 `EliteDriverConfig`。
+
+### Removed
+- 移除`EliteException::Code::SOCKET_OPT_CANCEL` 
 
 ## [v1.1.0] - 2024-10-30
 ### Initial Release

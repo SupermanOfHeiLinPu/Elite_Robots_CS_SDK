@@ -29,8 +29,6 @@ public:
     enum class Code {
         /// success
         SUCCESS,
-        /// socket operation cancelled.
-        SOCKET_OPT_CANCEL,
         /// connect fail
         SOCKET_CONNECT_FAIL,
         /// socket communicate error

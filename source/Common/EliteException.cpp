@@ -7,8 +7,6 @@ const char* EliteException::exceptionCodeToString(const Code& ec) {
     switch (ec) {
     case Code::SUCCESS:
         return "success";
-    case Code::SOCKET_OPT_CANCEL:
-        return "socket option cancel";
     case Code::SOCKET_CONNECT_FAIL:
         return "socket connect fail";
     case Code::SOCKET_FAIL:

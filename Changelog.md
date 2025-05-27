@@ -35,6 +35,9 @@
 ### Deprecated
 - Legacy `EliteDriver` constructor is now deprecated and will be removed in future versions - migrate to `EliteDriverConfig`
 
+### Removed
+- Removed `EliteException::Code::SOCKET_OPT_CANCEL`.
+
 ## [v1.1.0] - 2024-10-30
 ### Initial Release
 - First public version release
