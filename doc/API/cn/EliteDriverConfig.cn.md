@@ -68,7 +68,7 @@ class EliteDriverConfig {
 
 - `headless_mode`：
     - 类型：`bool`
-    - 描述：是否以无界面模式运行。如果此参数为true，那么在构造函数中，将会向机器人的 primary 端口发送一次控制脚本。
+    - 描述：是否以无界面模式运行，使用此模式后，无需使用`External Control`插件。如果此参数为true，那么在构造函数中，将会向机器人的 primary 端口发送一次控制脚本。
 
 - `script_sender_port`
     - 类型：`int`

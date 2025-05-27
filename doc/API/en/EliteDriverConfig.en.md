@@ -68,7 +68,7 @@ This class serves as the configuration input when constructing the `EliteDriver`
 
 - `headless_mode`:
     - Type: `bool`
-    - Description: Whether to run in headless mode. If true, the constructor will send a control script to the robot's primary port once.
+    - Description: Whether to run in headless mode。 After using this mode, there is no need to use the 'External Control' plugin. If true, the constructor will send a control script to the robot's primary port once.
 
 - `script_sender_port`
     - Type: `int`

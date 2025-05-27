@@ -47,7 +47,7 @@ Creates an EliteDriver object and initializes the necessary connections for comm
     - robot_ip: The IP address of the robot.
     - local_ip: The local IP address.
     - script_file: The template file of the control script.
-    - headless_mode: Whether to run in headless mode. If this parameter is true, then in the constructor, a control script will be sent to the robot's primary port once.
+    - headless_mode: Whether to run in headless mode. After using this mode, there is no need to use the 'External Control' plugin. If this parameter is true, then in the constructor, a control script will be sent to the robot's primary port once.
     - script_sender_port: script_sender_port: Port for sending control scripts. If this port cannot be connected, the `External Control` plugin will stop.
     - reverse_port: The port for reverse communication.
     - trajectory_port: The port for sending trajectory points.

@@ -49,7 +49,7 @@ EliteDriver::EliteDriver(
     - robot_ip：机器人 IP 地址。
     - local_ip：本机 IP 地址。
     - script_file：控制脚本模板文件。
-    - headless_mode：是否以无界面模式运行。如果此参数为true，那么在构造函数中，将会向机器人的 primary 端口发送一次控制脚本。
+    - headless_mode：是否以无界面模式运行，使用此模式后，无需使用`External Control`插件。如果此参数为true，那么在构造函数中，将会向机器人的 primary 端口发送一次控制脚本。
     - script_sender_port：用于发送控制脚本的端口。如果无法连接此端口，`External Control`插件将会停止运行。
     - reverse_port：反向通信端口。
     - trajectory_port：发送轨迹点的端口。
