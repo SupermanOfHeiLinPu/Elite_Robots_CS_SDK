@@ -12,8 +12,10 @@
 
 #include <Elite/PrimaryPackage.hpp>
 #include <Elite/EliteOptions.hpp>
+#include <Elite/RobotException.hpp>
 #include <memory>
 #include <string>
+#include <functional>
 
 namespace ELITE
 {
@@ -74,6 +76,8 @@ public:
      * @return std::string Local IP. If empty, connection had some errors.
      */
     ELITE_EXPORT std::string getLocalIP();
+
+    ELITE_EXPORT void registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)> cb);
 
 };
 

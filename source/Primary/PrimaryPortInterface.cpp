@@ -38,5 +38,9 @@ std::string PrimaryPortInterface::getLocalIP() {
     return impl_->primary_.getLocalIP();
 }
 
+void PrimaryPortInterface::registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)> cb) {
+    impl_->primary_.registerRobotExceptionCallback(cb);
+}
+
 } // namespace ELITE
 
