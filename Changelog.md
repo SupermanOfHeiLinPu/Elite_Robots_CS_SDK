@@ -11,7 +11,9 @@
 - `PrimaryPortInterface::getLocalIP()`: Added interface to retrieve local IP
 - Added comprehensive API documentation (Markdown format)
 - Added compilation guide documentation
-- Added `stopj_acc` parameter to `EliteDriver` constructor
+- New configurations added to the `EliteDriver` constructor:
+  - `stopj_acc` parameter.
+  - `servoj_pre_recv_size` parameter.
 
 ### Changed
 - Refactored `TcpServer` multi-port listening logic to handle these ports in a single thread:
@@ -27,7 +29,7 @@
   - Simplified background thread loop logic in `RtsiIOInterface.hpp`
   - Changed `RtsiIOInterface::getRecipeValue()` and `RtsiIOInterface::setInputRecipeValue()` from private to public, with added explicit instantiation declarations
 - Restructured project Readme documentation
-- The automatic waypoint extrapolation functionality during servoj motion (triggered by delayed data reception) has been eliminated from `external_control.script`.
+- The `external_control.script` has been updated to remove the function that automatically infers the next position when data isn't provided in time during servoj motion. Instead, it now initiates movement only after pre-storing a specified number of positions.
 
 ### Fixed
 - Fixed crash issue caused by dangling pointers during `EliteDriver` destruction

@@ -42,6 +42,10 @@ class EliteDriverConfig {
     // Acceleration [rad/s^2]. The acceleration of stopj motion.
     float stopj_acc = 4;
 
+    // When using `writeServoj()`, a certain amount of data is pre-stored before the motion starts. Note that there is a timeout for
+    // this pre-storage. The timeout duration is calculated as `servoj_pre_recv_size * servoj_time`.
+    int servoj_pre_recv_size = 10;
+
     EliteDriverConfig() = default;
     ~EliteDriverConfig() = default;
 };
@@ -103,3 +107,6 @@ class EliteDriverConfig {
     - 类型：`float`
     - 描述：停止运动的加速度 (rad/s²)。
 
+- servoj_pre_recv_size
+    - 类型：`int`
+    - 描述：使用 writeServoj() 时，会先预存一定长度的数据再开始运动。注意，预存存在超时，超时时间为 servoj_pre_recv_size * servoj_time

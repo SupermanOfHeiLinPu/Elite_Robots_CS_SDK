@@ -11,7 +11,9 @@
 - `PrimaryPortInterface::getLocalIP()`：新增获取本地 IP 的接口。
 - 新增完整的 API 文档（Markdown）。
 - 新增编译向导文档。
-- `EliteDriver`构造函数新增`stopj_acc`参数。
+- `EliteDriver`构造函数新增配置
+  - `stopj_acc`参数。
+  - `servoj_pre_recv_size`参数。
 
 ### Changed
 - 重构 `TcpServer` 的多端口监听逻辑，统一在单线程中处理以下端口：
@@ -27,7 +29,7 @@
   - 简化 `RtsiIOInterface.hpp` 的后台线程循环逻辑。
   - `RtsiIOInterface::getRecipeValue()` 与 `RtsiIOInterface::setInputRecipeValue()`接口从private变为public，并且添加了常用的显式实例化声明。
 - 调整了项目Readme的结构。
-- `external_control.script`中删除了servoj运动时当数据没有及时给到便自动推断下一个点位的功能。
+- `external_control.script`中删除了servoj运动时当数据没有及时给到便自动推断下一个点位的功能，调整为：预存指定数量的点位后开始运动。
 
 
 ### Fixed
