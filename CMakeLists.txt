@@ -92,6 +92,7 @@ set(
     Elite/Log.hpp
     Elite/RemoteUpgrade.hpp
     Elite/ControllerLog.hpp
+    Elite/RobotException.hpp
 )
 
 # Set output library default name

@@ -3,6 +3,7 @@
 
 #include "PrimaryPackage.hpp"
 #include "DataType.hpp"
+#include "RobotException.hpp"
 
 #include <boost/asio.hpp>
 #include <string>
@@ -23,11 +24,15 @@ private:
     static constexpr int HEAD_LENGTH = 5;
     // The type of 'RobotState' package
     static constexpr int ROBOT_STATE_MSG_TYPE = 16;
+    // The type of 'RobotException' package
+    static constexpr int ROBOT_EXCEPTION_MSG_TYPE = 20;
 
     std::mutex socket_mutex_;
     boost::asio::io_context io_context_;
     std::unique_ptr<boost::asio::ip::tcp::socket> socket_ptr_;
     
+    std::function<void(RobotExceptionSharedPtr)> robot_exception_cb_;
+
     // The buffer of package head
     std::vector<uint8_t> message_head_;
     // The buffer of package body
@@ -74,6 +79,12 @@ private:
      * 
      */
     void socketDisconnect();
+
+    RobotExceptionSharedPtr parserException(const std::vector<uint8_t>& msg_body);
+
+    RobotErrorSharedPtr parserRobotError(uint64_t timestamp, RobotError::Source source, const std::vector<uint8_t>& msg_body, int offset);
+
+    RobotRuntimeExceptionSharedPtr paraserRuntimeException(uint64_t timestamp, const std::vector<uint8_t>& msg_body, int offset);
 
 public:
     PrimaryPort();
@@ -124,6 +135,19 @@ public:
      * @return std::string Local IP. If empty, connection had some errors.
      */
     std::string getLocalIP();
+
+    /**
+     * @brief Registers a callback for robot exceptions.
+     *
+     * This function registers a callback that will be invoked whenever
+     * a robot exception message is received from the primary port.
+     *
+     * @param cb A callback function that takes a RobotExceptionSharedPtr
+     *           representing the received exception.
+     */
+    void registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)> cb) {
+        robot_exception_cb_ = cb;
+    }
 };
 
 } // namespace ELITE

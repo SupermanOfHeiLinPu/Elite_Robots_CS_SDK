@@ -359,3 +359,18 @@ bool primaryReconnect()
     重新建立连接到机器人的30001端口。
 
 - ***返回值***：成功返回 true，失败返回 false。
+
+---
+
+### ***注册机器人异常回调***
+```cpp
+void registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)> cb)
+```
+
+- ***功能***
+    注册机器人异常回调函数。当从机器人的 primary 端口接收到异常报文时，将调用该回调函数。回调函数接收一个 RobotExceptionSharedPtr 类型的参数，表示发生的异常信息。
+
+- ***参数***
+    - registerRobotExceptionCallback: 回调函数，用于处理接收到的机器人异常。参数为机器人异常的共享指针(参考：[RobotException](./RobotException.cn.md))。
+    
+

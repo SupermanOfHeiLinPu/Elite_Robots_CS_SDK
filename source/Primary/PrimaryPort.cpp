@@ -1,34 +1,27 @@
 #include "PrimaryPort.hpp"
 #include "EliteException.hpp"
-#include "Utils.hpp"
 #include "Log.hpp"
+#include "Utils.hpp"
+
 
 using namespace std::chrono;
 
-namespace ELITE
-{
+namespace ELITE {
 using namespace std::chrono;
 
-PrimaryPort::PrimaryPort() {
-    message_head_.resize(HEAD_LENGTH);
-}
+PrimaryPort::PrimaryPort() { message_head_.resize(HEAD_LENGTH); }
 
-PrimaryPort::~PrimaryPort() {
-    disconnect();
-}
-
+PrimaryPort::~PrimaryPort() { disconnect(); }
 
 bool PrimaryPort::connect(const std::string& ip, int port) {
-    if(!socketConnect(ip, port)) {
+    if (!socketConnect(ip, port)) {
         return false;
     }
     if (!socket_async_thread_) {
         std::lock_guard<std::mutex> lock(socket_mutex_);
         // Start async thread
         socket_async_thread_alive_ = true;
-        socket_async_thread_.reset(new std::thread([&](std::string ip, int port){
-            socketAsyncLoop(ip, port);
-        }, ip, port));
+        socket_async_thread_.reset(new std::thread([&](std::string ip, int port) { socketAsyncLoop(ip, port); }, ip, port));
     }
     return true;
 }
@@ -101,17 +94,105 @@ bool PrimaryPort::parserMessage() {
     return parserMessageBody(message_head_[4], package_len);
 }
 
+RobotErrorSharedPtr PrimaryPort::parserRobotError(uint64_t timestamp, RobotError::Source source, const std::vector<uint8_t>& msg_body, int offset) {
+    int32_t code = 0;
+    UTILS::EndianUtils::unpack(msg_body.begin() + offset, code);
+    offset += sizeof(int32_t);
+
+    int32_t sub_code = 0;
+    UTILS::EndianUtils::unpack(msg_body.begin() + offset, sub_code);
+    offset += sizeof(int32_t);
+
+    int32_t level = 0;
+    UTILS::EndianUtils::unpack(msg_body.begin() + offset, sub_code);
+    offset += sizeof(int32_t);
+
+    uint32_t data_type;
+    UTILS::EndianUtils::unpack(msg_body.begin() + offset, data_type);
+    offset += sizeof(uint32_t);
+
+    switch ((RobotError::DataType)data_type) {
+        case RobotError::DataType::NONE:
+        case RobotError::DataType::UNSIGNED:
+        case RobotError::DataType::HEX: {
+            uint32_t data;
+            UTILS::EndianUtils::unpack(msg_body.begin() + offset, data);
+            return std::make_shared<RobotError>(timestamp, code, sub_code, static_cast<RobotError::Source>(source),
+                              static_cast<RobotError::Level>(level), static_cast<RobotError::DataType>(data_type), data);
+
+        } break;
+        case RobotError::DataType::SIGNED:
+        case RobotError::DataType::JOINT: {
+            int32_t data;
+            UTILS::EndianUtils::unpack(msg_body.begin() + offset, data);
+            return std::make_shared<RobotError>(timestamp, code, sub_code, static_cast<RobotError::Source>(source),
+                              static_cast<RobotError::Level>(level), static_cast<RobotError::DataType>(data_type), data);
+        } break;
+        case RobotError::DataType::STRING: {
+            std::string data;
+            for (size_t i = offset; i < msg_body.size(); i++) {
+                data.push_back(msg_body[i]);
+            }
+
+            return std::make_shared<RobotError>(timestamp, code, sub_code, static_cast<RobotError::Source>(source),
+                              static_cast<RobotError::Level>(level), static_cast<RobotError::DataType>(data_type), data);
+        } break;
+    }
+    return nullptr;
+}
+
+
+RobotRuntimeExceptionSharedPtr PrimaryPort::paraserRuntimeException(uint64_t timestamp, const std::vector<uint8_t>& msg_body, int offset) {
+    int32_t line;
+    UTILS::EndianUtils::unpack(msg_body.begin() + offset, line);
+    offset += sizeof(int32_t);
+
+    int32_t column;
+    UTILS::EndianUtils::unpack(msg_body.begin() + offset, column);
+    offset += sizeof(int32_t);
+
+    std::string text_msg;
+    for (size_t i = offset; i < msg_body.size(); i++) {
+        text_msg.push_back(msg_body[i]);
+    }
+
+    return std::make_shared<RobotRuntimeException>(timestamp, line, column, std::move(text_msg));
+}
+
+RobotExceptionSharedPtr PrimaryPort::parserException(const std::vector<uint8_t>& msg_body) {
+    uint64_t timestamp;
+    int offset = 0;
+    UTILS::EndianUtils::unpack<uint64_t>(msg_body.begin(), timestamp);
+    offset += sizeof(uint64_t);
+
+    // Only robot error message
+    RobotError::Source source = static_cast<RobotError::Source>(msg_body[offset]);
+    offset++;
+
+    RobotException::Type type = static_cast<RobotException::Type>(msg_body[offset]);
+    offset++;
+
+    if (type == RobotException::Type::ERROR) {
+        return parserRobotError(timestamp, source, msg_body, offset);
+    } else if (type == RobotException::Type::RUNTIME) {
+        return paraserRuntimeException(timestamp, msg_body, offset);
+    } else {
+        return nullptr;
+    }
+}
+
 bool PrimaryPort::parserMessageBody(int type, int package_len) {
     boost::system::error_code ec;
     int body_len = package_len - HEAD_LENGTH;
     int read_len = 0;
     message_body_.resize(body_len);
-    
+
     // Receive package body
-    boost::asio::async_read(*socket_ptr_, boost::asio::buffer(message_body_, body_len), [&](boost::system::error_code error, std::size_t n){
-        ec = error;
-        read_len = n;
-    });
+    boost::asio::async_read(*socket_ptr_, boost::asio::buffer(message_body_, body_len),
+                            [&](boost::system::error_code error, std::size_t n) {
+                                ec = error;
+                                read_len = n;
+                            });
     if (io_context_.stopped()) {
         io_context_.restart();
     }
@@ -124,11 +205,11 @@ bool PrimaryPort::parserMessageBody(int type, int package_len) {
         ELITE_LOG_ERROR("Primary port receive package body data length not match. Receive:%d, expect:%d", read_len, body_len);
         return false;
     }
-    
+
     // If the asynchronous operation completed successfully then the io_context
     // would have been stopped due to running out of work. If it was not
     // stopped, then the io_context::run_for call must have timed out.
-    if(!io_context_.stopped()) {
+    if (!io_context_.stopped()) {
         ELITE_LOG_ERROR("Primary port receive package body timeout");
         io_context_.stop();
         return false;
@@ -148,6 +229,13 @@ bool PrimaryPort::parserMessageBody(int type, int package_len) {
                 parser_sub_msg_.erase(sub_type);
             }
         }
+    } else if (type == ROBOT_EXCEPTION_MSG_TYPE) {
+        if (robot_exception_cb_) {
+            RobotExceptionSharedPtr ex = parserException(message_body_);
+            if (ex) {
+                robot_exception_cb_(ex);
+            }
+        }
     }
     return true;
 }
@@ -159,7 +247,7 @@ void PrimaryPort::socketAsyncLoop(const std::string& ip, int port) {
                 socketConnect(ip, port);
             }
             std::this_thread::sleep_for(10ms);
-        } catch(const std::exception& e) {
+        } catch (const std::exception& e) {
             ELITE_LOG_ERROR("Primary port async loop throw exception:%s", e.what());
         }
     }
@@ -179,9 +267,7 @@ bool PrimaryPort::socketConnect(const std::string& ip, int port) {
 #endif
         boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(ip), port);
         boost::system::error_code connect_ec;
-        socket_ptr_->async_connect(endpoint, [&](const boost::system::error_code& ec){
-            connect_ec = ec;
-        });
+        socket_ptr_->async_connect(endpoint, [&](const boost::system::error_code& ec) { connect_ec = ec; });
         if (io_context_.stopped()) {
             io_context_.restart();
         }
@@ -201,8 +287,8 @@ bool PrimaryPort::socketConnect(const std::string& ip, int port) {
             io_context_.stop();
             return false;
         }
-        
-    } catch(const boost::system::system_error &error) {
+
+    } catch (const boost::system::system_error& error) {
         throw EliteException(EliteException::Code::SOCKET_CONNECT_FAIL, error.what());
         return false;
     }
@@ -230,4 +316,4 @@ std::string PrimaryPort::getLocalIP() {
     return "";
 }
 
-}
+}  // namespace ELITE
