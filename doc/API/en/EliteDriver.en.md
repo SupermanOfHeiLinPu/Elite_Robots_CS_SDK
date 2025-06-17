@@ -307,3 +307,16 @@ bool primaryReconnect()
 - ***Function***
 Re-establishes the connection to port 30001 of the robot.
 - ***Return Value***: Returns true if successful, and false if it fails. 
+
+---
+
+### ***Register Robot Exception Callback***
+```cpp
+void registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)> cb)
+```
+
+- ***Functionality***
+    Registers a callback function for robot exceptions. This callback will be invoked when an exception message is received from the robot's primary port. The callback function takes a parameter of type `RobotExceptionSharedPtr`, representing the exception information.
+
+- ***Parameters***
+    - `cb`: The callback function to handle received robot exceptions. The parameter is a shared pointer to a robot exception (see: [RobotException](./RobotException.en.md)).

@@ -13,6 +13,7 @@ using namespace std::chrono;
 // better configuration system such as Boost.Program_options
 const std::string DEFAULT_ROBOT_IP = "192.168.51.244";
 
+// When the robot encounters an exception, this callback will be called
 void robotExceptionCb(ELITE::RobotExceptionSharedPtr ex) {
     if (ex->getType() == ELITE::RobotException::Type::RUNTIME) {
         auto r_ex = std::static_pointer_cast<ELITE::RobotRuntimeException>(ex);

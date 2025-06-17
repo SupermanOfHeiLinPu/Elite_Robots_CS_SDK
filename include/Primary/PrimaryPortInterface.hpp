@@ -77,6 +77,15 @@ public:
      */
     ELITE_EXPORT std::string getLocalIP();
 
+    /**
+     * @brief Registers a callback for robot exceptions.
+     *
+     * This function registers a callback that will be invoked whenever
+     * a robot exception message is received from the primary port.
+     *
+     * @param cb A callback function that takes a RobotExceptionSharedPtr
+     *           representing the received exception.
+     */
     ELITE_EXPORT void registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)> cb);
 
 };

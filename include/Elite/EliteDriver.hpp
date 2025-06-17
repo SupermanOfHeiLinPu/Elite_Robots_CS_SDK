@@ -13,6 +13,7 @@
 #include <Elite/DataType.hpp>
 #include <Elite/EliteOptions.hpp>
 #include <Elite/PrimaryPackage.hpp>
+#include <Elite/PrimaryPortInterface.hpp>
 
 #include <functional>
 #include <memory>
@@ -331,6 +332,17 @@ class EliteDriver {
      * @return false fail
      */
     ELITE_EXPORT bool primaryReconnect();
+
+    /**
+     * @brief Registers a callback for robot exceptions.
+     *
+     * This function registers a callback that will be invoked whenever
+     * a robot exception message is received from the primary port.
+     *
+     * @param cb A callback function that takes a RobotExceptionSharedPtr
+     *           representing the received exception.
+     */
+    void registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)> cb);
 };
 
 }  // namespace ELITE
