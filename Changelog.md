@@ -14,6 +14,10 @@
 - `PrimaryPortInterface`:
   - `getLocalIP()`: New interface for retrieving the local IP address.
   - `registerRobotExceptionCallback()`: New interface for registering robot exception callbacks.
+- New robot exception interfaces added:
+  - `RobotException`: Base class.
+  - `RobotError`: Robot errors.
+  - `RobotRuntimeException`: Runtime errors in robot scripts.
 - Complete API documentation (Markdown) added.
 - Compilation guide documentation added.
 

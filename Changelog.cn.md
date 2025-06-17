@@ -14,6 +14,10 @@
 - `PrimaryPortInterface`：
   - `getLocalIP()`：新增获取本地 IP 的接口。
   - `registerRobotExceptionCallback()`： 新增机器人异常回调注册接口
+- 新增机器人异常接口：
+  - `RobotException`：基类。
+  - `RobotError`：机器人错误。
+  - `RobotRuntimeException`：机器人脚本运行时错误。
 - 新增完整的 API 文档（Markdown）。
 - 新增编译向导文档。
 
