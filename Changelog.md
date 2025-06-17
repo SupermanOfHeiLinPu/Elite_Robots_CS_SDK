@@ -3,15 +3,19 @@
 ## [Unreleased]
 
 ### Added
-- `ControllerLog::downloadSystemLog()`: Added interface for downloading robot system logs
-- `UPGRADE::upgradeControlSoftware()`: Added interface for remote control software upgrades
-- `EliteDriver::writeFreedrive()`: New Freedrive control interface
-- `EliteDriverConfig`: New configuration class for more flexible initialization
-  - Local IP is no longer mandatory when using `EliteDriver(const EliteDriverConfig& config)`
-- `PrimaryPortInterface::getLocalIP()`: Added interface to retrieve local IP
-- Added comprehensive API documentation (Markdown format)
-- Added compilation guide documentation
-- Added `stopj_acc` parameter to `EliteDriver` constructor
+- `ControllerLog::downloadSystemLog()`: Interface for downloading robot system logs.
+- `UPGRADE::upgradeControlSoftware()`: Interface for remotely upgrading robot control software.
+- `EliteDriver`:
+  - `writeFreedrive()`: New interface for Freedrive control.
+  - `registerRobotExceptionCallback()`: New interface for registering robot exception callbacks.
+  - `EliteDriver()`: Constructor updated with new `stopj_acc` parameter (acceleration for stopping motion).
+- `EliteDriverConfig`: New configuration class for more flexible initialization.
+  - Local IP is no longer required when constructing via `EliteDriver(const EliteDriverConfig& config)`.
+- `PrimaryPortInterface`:
+  - `getLocalIP()`: New interface for retrieving the local IP address.
+  - `registerRobotExceptionCallback()`: New interface for registering robot exception callbacks.
+- Complete API documentation (Markdown) added.
+- Compilation guide documentation added.
 
 ### Changed
 - Refactored `TcpServer` multi-port listening logic to handle these ports in a single thread:

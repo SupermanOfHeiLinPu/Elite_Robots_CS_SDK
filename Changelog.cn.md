@@ -5,13 +5,17 @@
 ### Added
 - `ControllerLog::downloadSystemLog()`：下载机器人系统日志的接口。
 - `UPGRADE::upgradeControlSoftware()`：远程升级机器人控制软件的接口。
-- `EliteDriver::writeFreedrive()`：新增 Freedrive 控制接口。
+- `EliteDriver`：
+  - `writeFreedrive()`：新增 Freedrive 控制接口。
+  - `registerRobotExceptionCallback()`： 新增机器人异常回调注册接口
+  - `EliteDriver()`: 构造函数新增`stopj_acc`参数（停止运动的加速度）。
 - `EliteDriverConfig`：新增构造配置类，支持更灵活的初始化。
   - 通过 `EliteDriver(const EliteDriverConfig& config)` 构造时，不再强制要求本地 IP。
-- `PrimaryPortInterface::getLocalIP()`：新增获取本地 IP 的接口。
+- `PrimaryPortInterface`：
+  - `getLocalIP()`：新增获取本地 IP 的接口。
+  - `registerRobotExceptionCallback()`： 新增机器人异常回调注册接口
 - 新增完整的 API 文档（Markdown）。
 - 新增编译向导文档。
-- `EliteDriver`构造函数新增`stopj_acc`参数。
 
 ### Changed
 - 重构 `TcpServer` 的多端口监听逻辑，统一在单线程中处理以下端口：
