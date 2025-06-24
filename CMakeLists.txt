@@ -45,6 +45,7 @@ set(
     source/Primary/PrimaryPort.cpp
     source/Primary/PrimaryPortInterface.cpp
     source/Primary/RobotConfPackage.cpp
+    source/InterpreterPort/InterpreterInterface.cpp
     source/Rtsi/RtsiClient.cpp
     source/Rtsi/RtsiClientInterface.cpp
     source/Rtsi/RtsiRecipeInternal.cpp
@@ -67,6 +68,7 @@ set(
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/include/Common
     ${PROJECT_SOURCE_DIR}/include/Primary
+    ${PROJECT_SOURCE_DIR}/include/InterpreterPort
     ${PROJECT_SOURCE_DIR}/include/Rtsi
     ${PROJECT_SOURCE_DIR}/include/Dashboard
     ${PROJECT_SOURCE_DIR}/include/Elite
@@ -87,6 +89,7 @@ set(
     Primary/PrimaryPackage.hpp
     Primary/RobotConfPackage.hpp
     Primary/PrimaryPortInterface.hpp
+    InterpreterPort/InterpreterInterface.hpp
     EliteException.hpp
     Elite/EliteDriver.hpp
     Elite/Log.hpp
