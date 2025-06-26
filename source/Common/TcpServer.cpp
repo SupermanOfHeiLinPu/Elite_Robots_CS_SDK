@@ -153,7 +153,12 @@ void TcpServer::stop() {
 int TcpServer::writeClient(void* data, int size) {
     std::lock_guard<std::mutex> lock(socket_mutex_);
     if (socket_) {
-        return boost::asio::write(*socket_, boost::asio::buffer(data, size));
+        boost::system::error_code ec;
+        int wb = boost::asio::write(*socket_, boost::asio::buffer(data, size), ec);
+        if(wb < 0 || ec) {
+            return -1;
+        }
+        return wb;
     }
     return -1;
 }
