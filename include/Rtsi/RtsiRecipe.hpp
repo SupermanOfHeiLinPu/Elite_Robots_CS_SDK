@@ -104,6 +104,26 @@ protected:
     std::mutex update_mutex_;
 
 private:
+#if (ELITE_SDK_COMPILE_STANDARD >= 17)
+    template<typename T>
+    struct RtsiTypeVariantVisitor {
+        T& out;
+        bool& success;
+
+        template<typename U>
+        void operator()(const U& value) const {
+            if constexpr (std::is_convertible<U, T>::value) {
+                out = static_cast<T>(value);
+                success = true;
+            }
+        }
+    };
+#elif (ELITE_SDK_COMPILE_STANDARD == 14)
+    // TODO:
+
+#endif
+
+
     template<typename T>
     bool setVariantValue(RtsiTypeVariant& out_value, T value) {
         static_assert(std::is_fundamental<T>::value, "must use base type");
@@ -213,6 +233,21 @@ private:
 #endif
         return false;
     }
+
+    
+
+    template<typename T>
+    bool getVariantValue(const RtsiTypeVariant& variant, T& out_value) {
+#if (ELITE_SDK_COMPILE_STANDARD >= 17)
+        bool matched = false;
+        std::visit(RtsiTypeVariantVisitor<T>{out_value, matched}, variant);
+        return matched;
+#elif (ELITE_SDK_COMPILE_STANDARD == 14)
+
+#endif
+    }
+
+
 
 };
 
