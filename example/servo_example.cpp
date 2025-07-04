@@ -6,10 +6,11 @@
 #include <iostream>
 #include <memory>
 #include <thread>
-#include <cmath>
+#include <boost/program_options.hpp>
 
 using namespace ELITE;
 using namespace std::chrono;
+namespace po = boost::program_options;
 
 static std::unique_ptr<EliteDriver> s_driver;
 static std::unique_ptr<RtsiClientInterface> s_rtsi_client;
@@ -62,20 +63,47 @@ void waitRobotArrive(std::vector<std::shared_ptr<RtsiRecipe>> recipe_list, const
 }
 
 int main(int argc, char** argv) {
-    if (argc < 3) {
-        std::cout << "Must provide robot ip or local ip. Command like: ./servo_example 192.168.1.250 192.168.1.251" << std::endl;
+    EliteDriverConfig config;
+
+    // Parser param
+    po::options_description desc("Usage:\n"
+        "\t./servo_example <--robot-ip=ip> [--local-ip=\"\"] [--use-headless-mode=true]\n"
+        "Parameters:");
+    desc.add_options()
+        ("help,h", "Print help message")
+        ("robot-ip", po::value<std::string>(&config.robot_ip)->required(), "\tRequired. IP address of the robot.")
+        ("use-headless-mode", po::value<bool>(&config.headless_mode)->required()->implicit_value(true), "\tRequired. Use headless mode.")
+        ("local-ip", po::value<std::string>(&config.local_ip)->default_value(""), "\tOptional. IP address of the local network interface.");
+
+    po::variables_map vm;
+    try {
+        po::store(po::parse_command_line(argc, argv, desc), vm);
+
+        if (vm.count("help")) {
+            std::cout << desc << std::endl;
+            return 0;
+        }
+
+        po::notify(vm);
+    } catch(const po::error& e) {
+        std::cerr << "Argument error: " << e.what() << "\n\n";
+        std::cerr << desc << "\n";
         return 1;
     }
-    s_driver = std::make_unique<EliteDriver>(argv[1], argv[2], "external_control.script");
+    
+
+    config.script_file_path = "external_control.script";
+    config.servoj_time = 0.004;
+    s_driver = std::make_unique<EliteDriver>(config);
     s_rtsi_client = std::make_unique<RtsiClientInterface>();
     s_dashboard = std::make_unique<DashboardClient>();
-    
-    if (!s_dashboard->connect(argv[1])) {
+
+    if (!s_dashboard->connect(config.robot_ip)) {
         return 1;
     }
     std::cout << "Dashboard connected" << std::endl;
 
-    s_rtsi_client->connect(argv[1]);
+    s_rtsi_client->connect(config.robot_ip);
     std::cout << "RTSI connected" << std::endl;
 
     if (!s_rtsi_client->negotiateProtocolVersion()) {
@@ -84,32 +112,42 @@ int main(int argc, char** argv) {
     
     std::cout << "Controller version is " << s_rtsi_client->getControllerVersion().toString() << std::endl;
 
-    auto recipe = s_rtsi_client->setupOutputRecipe({"actual_joint_positions"}, 125);
+    auto recipe = s_rtsi_client->setupOutputRecipe({"actual_joint_positions"}, 250);
     if (!recipe) {
+        std::cout << "RTSI setup output recipe fail" << std::endl;
         return 1;
     }
-    
-    if(!s_dashboard->powerOn()) {
+
+    if (!s_dashboard->powerOn()) {
+        std::cout << "Dashboard power on fail" << std::endl;
         return 1;
     }
     std::cout << "Robot power on" << std::endl;
 
     if (!s_dashboard->brakeRelease()) {
+        std::cout << "Dashboard brake release fail" << std::endl;
         return 1;
     }
     std::cout << "Robot brake released" << std::endl;
 
-    if (!s_dashboard->playProgram()) {
-        return 1;
+    if (config.headless_mode) {
+        if (!s_driver->isRobotConnected()) {
+            if (!s_driver->sendExternalControlScript()){
+                std::cout << "Send external control script fail." << std::endl;
+                return 1;
+            }
+        }
+    } else {
+        if (!config.headless_mode && !s_dashboard->playProgram()) {
+            std::cout << "Dashboard play program fail" << std::endl;
+            return 1;
+        }
     }
-    std::cout << "Program run" << std::endl;
 
     while (!s_driver->isRobotConnected()) {
         std::this_thread::sleep_for(10ms);
     }
-    
-    // wait robot
-    std::this_thread::sleep_for(1s);
+    std::cout << "External control script run" << std::endl;
 
     if (!s_rtsi_client->start()) {
         return 1;
