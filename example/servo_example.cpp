@@ -128,6 +128,7 @@ int main(int argc, char** argv) {
     vector6d_t acutal_joint;
     vector6d_t target_joint;
     double increment = 0;
+    bool first_point = true;
     while (!(positive_rotation && negative_rotation)) {
         if (!s_rtsi_client->receiveData(recipe, true)) {
             ELITE_LOG_FATAL("Fail to receive RTSI recipe");
@@ -137,8 +138,13 @@ int main(int argc, char** argv) {
             ELITE_LOG_FATAL("RTSI recipe don't has actual_joint_positions variable");
             return 1;
         }
+        // If first point init target_joint
+        if (first_point) {
+            target_joint = acutal_joint;
+            first_point = false;
+        }
 
-        target_joint = acutal_joint;
+        // Set the increment of positive rotation and negative rotation
         if (positive_rotation == false) {
             increment = 0.0005;
             if (acutal_joint[5] >= 3) {
@@ -150,7 +156,7 @@ int main(int argc, char** argv) {
                 negative_rotation = true;
             }
         }
-        target_joint[5] = acutal_joint[5] + increment;
+        target_joint[5] += increment;
 
         if (!s_driver->writeServoj(target_joint, 100)) {
             ELITE_LOG_FATAL("Send servoj command to robot fail");
