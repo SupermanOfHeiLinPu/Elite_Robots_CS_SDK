@@ -12,6 +12,21 @@ The EliteDriver is the main class for data interaction with the robot. It is res
 
 ### ***Constructor***
 ```cpp
+EliteDriver(const EliteDriverConfig& config)
+```
+- ***Function***
+
+    Creates an EliteDriver object and initializes necessary connections for robot communication.  
+    This function will throw exceptions in the following cases:  
+    1. TCP server creation fails (typically due to port being occupied).
+    2. Failed to connect to the robot's primary port.
+
+- ***Parameters***
+    - config: Configuration, refer to [Configuration](./EliteDriverConfig.en.md)
+
+
+### ***Constructor***(Deprecated)
+```cpp
 EliteDriver::EliteDriver(
     const std::string& robot_ip, 
     const std::string& local_ip, 
@@ -32,8 +47,8 @@ Creates an EliteDriver object and initializes the necessary connections for comm
     - robot_ip: The IP address of the robot.
     - local_ip: The local IP address.
     - script_file: The template file of the control script.
-    - headless_mode: Whether to run in headless mode. If this parameter is true, then in the constructor, a control script will be sent to the robot's primary port once.
-    - script_sender_port: The port for sending the script.
+    - headless_mode: Whether to run in headless mode. After using this mode, there is no need to use the 'External Control' plugin. If this parameter is true, then in the constructor, a control script will be sent to the robot's primary port once.
+    - script_sender_port: script_sender_port: Port for sending control scripts. If this port cannot be connected, the `External Control` plugin will stop.
     - reverse_port: The port for reverse communication.
     - trajectory_port: The port for sending trajectory points.
     - script_command_port: The port for sending script commands.
@@ -90,6 +105,22 @@ Sends an idle instruction. If the robot is in motion, it will make the robot sto
 - ***Parameters***
     - timeout_ms: Sets the timeout for the robot to read the next instruction. If it is less than or equal to 0, it will wait indefinitely.
 - ***Return Value***: Returns true if the instruction is sent successfully, and false if it fails.
+
+---
+
+### ***Freedrive***
+```cpp
+bool writeFreedrive(FreedriveAction action, int timeout_ms)
+```
+- ***Function***
+
+Send commands for Freedrive mode, such as enabling and stopping Freedrive.
+
+- ***Parameters***
+    - action: Freedrive action, including: START, END, NOOP
+    - timeout_ms: Set the timeout for the robot to read the next instruction. If it is less than or equal to 0, it will wait indefinitely.
+
+- *** Note***: After writing the 'START' action, the next instruction needs to be written within the timeout period, which can be written as' NOOP '.
 
 ---
 
@@ -208,15 +239,23 @@ Disables the force control mode.
 
 ### ***Stop External Control***
 ```cpp
-bool stopControl()
+bool stopControl(int wait_ms = 500)
 ```
 - ***Function***
 Sends a stop instruction to the robot. The robot will exit the control script and stop receiving instructions from the PC.
-- ***Return Value***: Returns true if the instruction is sent successfully, and false if it fails.
+
+- ***Parameters***
+    - wait_ms: Waiting for the robot to disconnect for a certain amount of time(ms). Range >5ms.
+
+- ***Return Value***: 
+
+    Return true for successful instruction sending and false for failure. The following situations will return false:
+    - Disconnected from the robot.
+    - Not disconnected from the robot during the waiting time.
 
 ---
 
-### isRobotConnected
+### Is robot connected
 ```cpp
 bool isRobotConnected()
 ```
@@ -268,3 +307,16 @@ bool primaryReconnect()
 - ***Function***
 Re-establishes the connection to port 30001 of the robot.
 - ***Return Value***: Returns true if successful, and false if it fails. 
+
+---
+
+### ***Register Robot Exception Callback***
+```cpp
+void registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)> cb)
+```
+
+- ***Functionality***
+    Registers a callback function for robot exceptions. This callback will be invoked when an exception message is received from the robot's primary port. The callback function takes a parameter of type `RobotExceptionSharedPtr`, representing the exception information.
+
+- ***Parameters***
+    - `cb`: The callback function to handle received robot exceptions. The parameter is a shared pointer to a robot exception (see: [RobotException](./RobotException.en.md)).

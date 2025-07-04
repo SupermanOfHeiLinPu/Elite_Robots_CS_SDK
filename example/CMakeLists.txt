@@ -10,6 +10,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     remove_definitions(-DELITE_EXPORT_LIBRARY)
 endif()
 
+find_package(Boost REQUIRED)
+
 foreach(SOURCE ${SOURCES})
     get_filename_component(ELITE_SDK_EXAMPLE_NAME ${SOURCE} NAME_WE)
     add_executable(${ELITE_SDK_EXAMPLE_NAME} ${SOURCE})
@@ -21,7 +23,13 @@ foreach(SOURCE ${SOURCES})
     )
     target_link_directories(
         ${ELITE_SDK_EXAMPLE_NAME} 
-        PRIVATE ${CMAKE_BINARY_DIR}
+        PRIVATE 
+        ${CMAKE_BINARY_DIR}
+    )
+    target_include_directories(
+        ${ELITE_SDK_EXAMPLE_NAME}
+        PRIVATE 
+        ${Boost_INCLUDE_DIRS}
     )
 endforeach()
 

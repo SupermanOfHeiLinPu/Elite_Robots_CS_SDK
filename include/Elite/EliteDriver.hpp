@@ -13,12 +13,56 @@
 #include <Elite/DataType.hpp>
 #include <Elite/EliteOptions.hpp>
 #include <Elite/PrimaryPackage.hpp>
+#include <Elite/PrimaryPortInterface.hpp>
 
 #include <functional>
 #include <memory>
 #include <string>
 
 namespace ELITE {
+
+class EliteDriverConfig {
+   public:
+    // IP-address under which the robot is reachable.
+    std::string robot_ip;
+
+    // EliRobot template script file that should be used to generate scripts that can be run.
+    std::string script_file_path;
+
+    // Local IP-address that the reverse_port and trajectory_port will bound.
+    std::string local_ip = "";
+
+    // If the driver should be started in headless mode.
+    bool headless_mode = false;
+
+    // The driver will offer an interface to receive the program's script on this port.
+    // If the robot cannot connect to this port, `External Control` will stop immediately.
+    int script_sender_port = 50002;
+
+    // Port that will be opened by the driver to allow direct communication between the driver and the robot controller.
+    int reverse_port = 50001;
+
+    // Port used for sending trajectory points to the robot in case of trajectory forwarding.
+    int trajectory_port = 50003;
+
+    // Port used for forwarding script commands to the robot. The script commands will be executed locally on the robot.
+    int script_command_port = 50004;
+
+    // The duration of servoj motion.
+    float servoj_time = 0.008;
+
+    // Time [S], range [0.03,0.2] smoothens the trajectory with this lookahead time
+    float servoj_lookahead_time = 0.08;
+
+    // Servo gain.
+    int servoj_gain = 300;
+
+    // Acceleration [rad/s^2]. The acceleration of stopj motion.
+    float stopj_acc = 4;
+
+    EliteDriverConfig() = default;
+    ~EliteDriverConfig() = default;
+};
 
 /**
  * @brief This is the main class for interfacing the driver.
@@ -27,10 +71,18 @@ namespace ELITE {
 class EliteDriver {
    private:
     class Impl;
-    Impl* impl_;
+    std::unique_ptr<Impl> impl_;
+    void init(const EliteDriverConfig& config);
 
    public:
     EliteDriver() = delete;
+
+    /**
+     * @brief Construct a new Elite Driver object
+     *
+     * @param config Configuration class for the EliteDriver. See it's code annotation for details.
+     */
+    ELITE_EXPORT EliteDriver(const EliteDriverConfig& config);
 
     /**
      * @brief Construct a new Elite Driver object
@@ -47,14 +99,17 @@ class EliteDriver {
      * @param script_command_port Port used for forwarding script commands to the robot. The script commands will be
      * executed locally on the robot.
      * @param servoj_time The duration of servoj motion.
-     * @param servoj_lookhead_time Time [S], range [0.03,0.2] smoothens the trajectory with this lookahead time
+     * @param servoj_lookahead_time Time [S], range [0.03,0.2] smoothens the trajectory with this lookahead time
      * @param servoj_gain servo gain.
      * @param stopj_acc acceleration [rad/s^2]. The acceleration of stopj motion.
      */
-    ELITE_EXPORT EliteDriver(const std::string& robot_ip, const std::string& local_ip, const std::string& script_file,
-                             bool headless_mode = false, int script_sender_port = 50002, int reverse_port = 50001,
-                             int trajectory_port = 50003, int script_command_port = 50004, float servoj_time = 0.008,
-                             float servoj_lookhead_time = 0.08, int servoj_gain = 300, float stopj_acc = 4.0);
+    [[deprecated(
+        "Construct a EliteDriver object with an argument list is deprecated. Please use"
+        "EliteDriver(const EliteDriverConfig& config) instead. This function will be removed in June 2026.")]] ELITE_EXPORT
+    EliteDriver(const std::string& robot_ip, const std::string& local_ip, const std::string& script_file,
+                bool headless_mode = false, int script_sender_port = 50002, int reverse_port = 50001, int trajectory_port = 50003,
+                int script_command_port = 50004, float servoj_time = 0.008, float servoj_lookahead_time = 0.08,
+                int servoj_gain = 300, float stopj_acc = 4.0);
 
     /**
      * @brief Destroy the Elite Driver object
@@ -137,13 +192,24 @@ class EliteDriver {
     ELITE_EXPORT bool writeIdle(int timeout_ms);
 
     /**
+     * @brief Writes a freedrive mode control command to the robot
+     *
+     * @param action Freedrive mode action assigned to this command, such as starting or stopping freedrive.
+     * @param timeout_ms The read timeout configuration for the reverse socket running in the external control script on the robot.
+     * @return true success
+     * @return false fail
+     */
+    ELITE_EXPORT bool writeFreedrive(FreedriveAction action, int timeout_ms);
+
+    /**
      * @brief Sends a stop command to the socket interface which will signal the program running on
      * the robot to no longer listen for commands sent from the remote pc.
      *
-     * @return true
-     * @return false
+     * @param wait_ms Waiting for the robot to disconnect for a certain amount of time. The minimum value is 5.
+     * @return true success
+     * @return false fail (socket was disconnect or timeout)
      */
-    ELITE_EXPORT bool stopControl();
+    ELITE_EXPORT bool stopControl(int wait_ms = 500);
 
     /**
      * @brief Print generated EliRobot script from template
@@ -266,6 +332,17 @@ class EliteDriver {
      * @return false fail
      */
     ELITE_EXPORT bool primaryReconnect();
+
+    /**
+     * @brief Registers a callback for robot exceptions.
+     *
+     * This function registers a callback that will be invoked whenever
+     * a robot exception message is received from the primary port.
+     *
+     * @param cb A callback function that takes a RobotExceptionSharedPtr
+     *           representing the received exception.
+     */
+    void registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)> cb);
 };
 
 }  // namespace ELITE

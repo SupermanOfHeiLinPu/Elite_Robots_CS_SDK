@@ -1,5 +1,6 @@
 #include <Elite/PrimaryPortInterface.hpp>
 #include <Elite/RobotConfPackage.hpp>
+#include <Elite/RobotException.hpp>
 #include <string>
 #include <memory>
 #include <iostream>
@@ -11,6 +12,14 @@ using namespace std::chrono;
 // In a real-world example it would be better to get those values from command line parameters / a
 // better configuration system such as Boost.Program_options
 const std::string DEFAULT_ROBOT_IP = "192.168.51.244";
+
+// When the robot encounters an exception, this callback will be called
+void robotExceptionCb(ELITE::RobotExceptionSharedPtr ex) {
+    if (ex->getType() == ELITE::RobotException::Type::RUNTIME) {
+        auto r_ex = std::static_pointer_cast<ELITE::RobotRuntimeException>(ex);
+        std::cout << r_ex->getMessage() << std::endl;
+    }
+}
 
 int main(int argc, const char **argv) {
     // Parse the ip arguments if given
@@ -24,6 +33,8 @@ int main(int argc, const char **argv) {
     auto kin = std::make_shared<ELITE::KinematicsInfo>();
     
     primary->connect(robot_ip, 30001);
+
+    primary->registerRobotExceptionCallback(robotExceptionCb);
 
     primary->getPackage(kin, 200);
 
@@ -49,7 +60,8 @@ int main(int argc, const char **argv) {
 
     primary->sendScript(script);
 
-    std::this_thread::sleep_for(1s);
+    script = "def exFunc():\n\t1abcd\nend\n";
+    primary->sendScript(script);    
 
     primary->disconnect();
 

@@ -19,14 +19,14 @@ touch elite_driver_example.cpp
 
 Copy the following code and paste it into `elite_driver_example.cpp` using your preferred text editor:
 ```cpp
+#include <Elite/DashboardClient.hpp>
+#include <Elite/DataType.hpp>
 #include <Elite/EliteDriver.hpp>
 #include <Elite/RtsiIOInterface.hpp>
-#include <Elite/DataType.hpp>
-#include <Elite/DashboardClient.hpp>
 
+#include <iostream>
 #include <memory>
 #include <thread>
-#include <iostream>
 
 using namespace ELITE;
 
@@ -35,14 +35,26 @@ static std::unique_ptr<RtsiIOInterface> s_rtsi_client;
 static std::unique_ptr<DashboardClient> s_dashboard;
 
 int main(int argc, const char** argv) {
-    if (argc < 3) {
-        std::cout << "Must provide robot ip or local ip. Command like:./trajectory_example 192.168.1.250 192.168.1.251" << std::endl;
+    if (argc < 2) {
+        std::cout << "Must provide robot ip or local ip. Command like: \"./trajectory_example robot_ip\" or \"./trajectory_example "
+                     "robot_ip local_ip\""
+                  << std::endl;
         return 1;
     }
-    s_driver = std::make_unique<EliteDriver>(argv[1], argv[2], "/usr/local/share/Elite/external_control.script");
+    std::string robot_ip = argv[1];
+    std::string local_ip = "";
+    if (argc >= 3) {
+        local_ip = argv[2];
+    }
+    EliteDriverConfig config;
+    config.robot_ip = robot_ip;
+    config.script_file_path = "external_control.script";
+    config.local_ip = local_ip;
+    s_driver = std::make_unique<EliteDriver>(config);
+
     s_rtsi_client = std::make_unique<RtsiIOInterface>("output_recipe.txt", "input_recipe.txt", 250);
     s_dashboard = std::make_unique<DashboardClient>();
-    
+
     if (!s_dashboard->connect(argv[1])) {
         return 1;
     }
@@ -52,13 +64,13 @@ int main(int argc, const char** argv) {
     std::cout << "RTSI connected" << std::endl;
 
     bool is_move_finish = false;
-    s_driver->setTrajectoryResultCallback([&](TrajectoryMotionResult result){
+    s_driver->setTrajectoryResultCallback([&](TrajectoryMotionResult result) {
         if (result == TrajectoryMotionResult::SUCCESS) {
             is_move_finish = true;
         }
     });
 
-    if(!s_dashboard->powerOn()) {
+    if (!s_dashboard->powerOn()) {
         return 1;
     }
     std::cout << "Robot power on" << std::endl;
@@ -72,11 +84,11 @@ int main(int argc, const char** argv) {
         return 1;
     }
     std::cout << "Program run" << std::endl;
-    
+
     while (!s_driver->isRobotConnected()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
-    
+
     vector6d_t actual_joints = s_rtsi_client->getActualJointPositions();
 
     s_driver->writeTrajectoryControlAction(ELITE::TrajectoryControlAction::START, 1, 200);
@@ -95,7 +107,7 @@ int main(int argc, const char** argv) {
     is_move_finish = false;
 
     s_driver->writeTrajectoryControlAction(ELITE::TrajectoryControlAction::START, 3, 200);
-    
+
     actual_pose[2] -= 0.2;
     s_driver->writeTrajectoryPoint(actual_pose, 3, 0.05, true);
 
@@ -154,19 +166,30 @@ static std::unique_ptr<DashboardClient> s_dashboard;
 ```
 
 
-The main function is where the program starts. The function of the beginning part of the main function is: if there are no robot IP and local IP provided when running `elite_driver_example`, print a prompt message and exit the program abnormally.
+The main function is where the program starts. The functionality of the very beginning part of the main function is: when running `elite_driver_example`, if no robot IP is provided after it, print a prompt message and exit the program abnormally. If the local IP is not input, the local IP will take the default value: an empty string (the EliteDriver will attempt to automatically obtain the local IP internally).
 
 ```cpp
 int main(int argc, const char** argv) {
-    if (argc < 3) {
-        std::cout << "Must provide robot ip or local ip. Command like:./trajectory_example 192.168.1.250 192.168.1.251" << std::endl;
+    if (argc < 2) {
+        std::cout << "Must provide robot ip or local ip. Command like: \"./trajectory_example robot_ip\" or \"./trajectory_example "
+                     "robot_ip local_ip\""
+                  << std::endl;
         return 1;
+    }
+    std::string robot_ip = argv[1];
+    std::string local_ip = "";
+    if (argc >= 3) {
+        local_ip = argv[2];
     }
 ```
 
-Create instances of the classes `EliteDriver`, `RtsiIOInterface`, and `DashboardClient`, and assign values to the pointers. The constructor of `EliteDriver` requires three parameters to be provided, which are the robot IP, the local IP, and the control script (the control script will be installed under the `/usr/local/share/Elite/` directory during installation).
+Create instances of the three classes `EliteDriver`, `RtsiIOInterface`, and `DashboardClient`, and assign values to the pointers. The constructor configuration of `EliteDriver` mainly has three parts, namely the robot IP, local IP, and control script (the control script will be installed in the `/usr/local/share/Elite/` directory during installation).
 ```cpp
-    s_driver = std::make_unique<EliteDriver>(argv[1], argv[2], "/usr/local/share/Elite/external_control.script");
+    EliteDriverConfig config;
+    config.robot_ip = robot_ip;
+    config.script_file_path = "/usr/local/share/Elite/external_control.script";
+    config.local_ip = local_ip;
+    s_driver = std::make_unique<EliteDriver>(config);
     s_rtsi_client = std::make_unique<RtsiIOInterface>("output_recipe.txt", "input_recipe.txt", 250);
     s_dashboard = std::make_unique<DashboardClient>();
 ```
