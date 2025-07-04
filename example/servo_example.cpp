@@ -2,7 +2,9 @@
 #include <Elite/DataType.hpp>
 #include <Elite/EliteDriver.hpp>
 #include <Elite/RtsiClientInterface.hpp>
+#include <Elite/Log.hpp>
 
+#include <chrono>
 #include <cmath>
 #include <iostream>
 #include <memory>
@@ -16,49 +18,6 @@ namespace po = boost::program_options;
 static std::unique_ptr<EliteDriver> s_driver;
 static std::unique_ptr<RtsiClientInterface> s_rtsi_client;
 static std::unique_ptr<DashboardClient> s_dashboard;
-
-// 定义一个合适的 epsilon 值，这个值可以根据具体情况调整
-const double EPSILON = 1e-4;
-
-bool areAlmostEqual(double a, double b) { return std::fabs(a - b) < EPSILON; }
-
-bool areAlmostEqual(const vector6d_t& a, const vector6d_t& b) {
-    for (size_t i = 0; i < a.size(); i++) {
-        if (!areAlmostEqual(a[i], b[i])) {
-            return false;
-        }
-    }
-    return true;
-}
-
-template <typename T>
-void printArray(T& l) {
-    for (auto& i : l) {
-        std::cout << i << " ";
-    }
-    std::cout << std::endl;
-}
-
-void waitRobotArrive(std::vector<std::shared_ptr<RtsiRecipe>> recipe_list, const ELITE::vector6d_t& target) {
-    vector6d_t acutal_joint;
-    while (true) {
-        if (s_rtsi_client->receiveData(recipe_list) > 0) {
-            if (!recipe_list[0]->getValue("actual_joint_positions", acutal_joint)) {
-                std::cout << "Recipe has wrong" << std::endl;
-                continue;
-            }
-            if (areAlmostEqual(acutal_joint, target)) {
-                break;
-            } else {
-                if (!s_driver->writeServoj(target, 100)) {
-                    return;
-                }
-            }
-        } else {
-            std::cout << "Couldn't receive data" << std::endl;
-        }
-    }
-}
 
 int main(int argc, char** argv) {
     EliteDriverConfig config;
@@ -89,55 +48,67 @@ int main(int argc, char** argv) {
         return 1;
     }
     
+    if (config.headless_mode) {
+        ELITE_LOG_WARN("Use headless mode. Please ensure the robot is not in local mode.");
+    } else {
+        ELITE_LOG_WARN("It needs to be correctly configured, and the External Control plugin should be inserted into the task tree.");
+    }
 
     config.script_file_path = "external_control.script";
     config.servoj_time = 0.004;
     s_driver = std::make_unique<EliteDriver>(config);
     s_rtsi_client = std::make_unique<RtsiClientInterface>();
     s_dashboard = std::make_unique<DashboardClient>();
-
+    ELITE_LOG_INFO("Connecting to the dashboard");
     if (!s_dashboard->connect(config.robot_ip)) {
+        ELITE_LOG_FATAL("Failed to connect to the dashboard.");
         return 1;
     }
-    std::cout << "Dashboard connected" << std::endl;
+    ELITE_LOG_INFO("Successfully connected to the dashboard");
 
+    ELITE_LOG_INFO("Connecting to the RTSI");
     s_rtsi_client->connect(config.robot_ip);
-    std::cout << "RTSI connected" << std::endl;
+    ELITE_LOG_INFO("Successfully connected to the RTSI");
 
     if (!s_rtsi_client->negotiateProtocolVersion()) {
+        ELITE_LOG_FATAL("Failed to verify the RTSI version.");
         return 1;
     }
+    ELITE_LOG_INFO("Successfully verify the RTSI version");
 
-    std::cout << "Controller version is " << s_rtsi_client->getControllerVersion().toString() << std::endl;
+    VersionInfo version = s_rtsi_client->getControllerVersion();
+    ELITE_LOG_INFO("Controller version is %s", version.toString().c_str());
 
-    auto recipe = s_rtsi_client->setupOutputRecipe({"actual_joint_positions"}, 250);
+    auto recipe = s_rtsi_client->setupOutputRecipe({"actual_joint_positions"});
     if (!recipe) {
-        std::cout << "RTSI setup output recipe fail" << std::endl;
+        ELITE_LOG_FATAL("RTSI subscription failed.");
         return 1;
     }
 
+    ELITE_LOG_INFO("Start powering on...");
     if (!s_dashboard->powerOn()) {
-        std::cout << "Dashboard power on fail" << std::endl;
+        ELITE_LOG_FATAL("Power-on failed");
         return 1;
     }
-    std::cout << "Robot power on" << std::endl;
+    ELITE_LOG_INFO("Power-on succeeded");
 
+     ELITE_LOG_INFO("Start releasing brake...");
     if (!s_dashboard->brakeRelease()) {
-        std::cout << "Dashboard brake release fail" << std::endl;
+        ELITE_LOG_FATAL("Release brake fail");
         return 1;
     }
-    std::cout << "Robot brake released" << std::endl;
+   ELITE_LOG_INFO("Brake released");
 
     if (config.headless_mode) {
         if (!s_driver->isRobotConnected()) {
             if (!s_driver->sendExternalControlScript()){
-                std::cout << "Send external control script fail." << std::endl;
+                ELITE_LOG_FATAL("Fail to send external control script");
                 return 1;
             }
         }
     } else {
         if (!config.headless_mode && !s_dashboard->playProgram()) {
-            std::cout << "Dashboard play program fail" << std::endl;
+            ELITE_LOG_FATAL("Fail to play program");
             return 1;
         }
     }
@@ -145,80 +116,48 @@ int main(int argc, char** argv) {
     while (!s_driver->isRobotConnected()) {
         std::this_thread::sleep_for(10ms);
     }
-    std::cout << "External control script run" << std::endl;
+    ELITE_LOG_INFO("External control script is running");
 
     if (!s_rtsi_client->start()) {
+        ELITE_LOG_FATAL("Fail to start RTSI");
         return 1;
     }
-    std::vector<std::shared_ptr<RtsiRecipe>> recipe_list{recipe};
+
+    bool positive_rotation = false;
+    bool negative_rotation = false;
     vector6d_t acutal_joint;
-
-    if (s_rtsi_client->receiveData(recipe_list) <= 0) {
-        std::cout << "RTSI recipe receive none" << std::endl;
-        return 1;
-    }
-
-    if (!recipe_list[0]->getValue("actual_joint_positions", acutal_joint)) {
-        std::cout << "Recipe has wrong" << std::endl;
-        return 1;
-    }
-
-    if (!s_rtsi_client->pause()) {
-        return 1;
-    }
-
-    // Make target points
-    std::vector<vector6d_t> target_positions_1;
-    vector6d_t target_joint = acutal_joint;
-
-    if (acutal_joint[5] <= 3) {
-        for (double target = acutal_joint[5]; target < 3; target += 0.001) {
-            target_joint[5] = target;
-            target_positions_1.push_back(target_joint);
-        }
-    } else {
-        for (double target = acutal_joint[5]; target > 3; target -= 0.001) {
-            target_joint[5] = target;
-            target_positions_1.push_back(target_joint);
-        }
-    }
-
-    std::vector<vector6d_t> target_positions_2;
-    for (double target = (*(target_positions_1.end() - 1))[5]; target > -3; target -= 0.002) {
-        target_joint[5] = target;
-        target_positions_2.push_back(target_joint);
-    }
-
-    for (auto& target : target_positions_1) {
-        if (!s_driver->writeServoj(target, 100)) {
+    vector6d_t target_joint;
+    double increment = 0;
+    while (!(positive_rotation && negative_rotation)) {
+        if (!s_rtsi_client->receiveData(recipe, true)) {
+            ELITE_LOG_FATAL("Fail to receive RTSI recipe");
             return 1;
         }
-        std::this_thread::sleep_for(4000us);
-    }
-
-    if (!s_rtsi_client->start()) {
-        return 1;
-    }
-
-    waitRobotArrive(recipe_list, *(target_positions_1.end() - 1));
-
-    if (!s_rtsi_client->pause()) {
-        return 1;
-    }
-
-    for (auto& target : target_positions_2) {
-        if (!s_driver->writeServoj(target, 100)) {
+        if (!recipe->getValue("actual_joint_positions", acutal_joint)) {
+            ELITE_LOG_FATAL("RTSI recipe don't has actual_joint_positions variable");
             return 1;
         }
-        std::this_thread::sleep_for(4000us);
+
+        target_joint = acutal_joint;
+        if (positive_rotation == false) {
+            increment = 0.0005;
+            if (acutal_joint[5] >= 3) {
+                positive_rotation = true;
+            }
+        } else if(negative_rotation == false) {
+            increment = -0.0005;
+            if (acutal_joint[5] <= -3) {
+                negative_rotation = true;
+            }
+        }
+        target_joint[5] = acutal_joint[5] + increment;
+
+        if (!s_driver->writeServoj(target_joint, 100)) {
+            ELITE_LOG_FATAL("Send servoj command to robot fail");
+            return 1;
+        }
     }
-
-    if (!s_rtsi_client->start()) {
-        return 1;
-    }
-
-    waitRobotArrive(recipe_list, *(target_positions_2.end() - 1));
-
+    ELITE_LOG_INFO("Motion finish");
     s_driver->stopControl();
 
     return 0;
