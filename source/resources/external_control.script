@@ -274,6 +274,7 @@ while control_mode > MODE_STOPPED:
             # Clear remaining trajectory points
             if control_mode == MODE_TRAJECTORY:
                 stop_thread(trajectory_thread_handle)
+                join_thread(trajectory_thread_handle)
                 trajectory_thread_handle = 0
                 stopj(STOPJ_ACCELERATION)
                 trajectoryClearPoints()
@@ -283,6 +284,7 @@ while control_mode > MODE_STOPPED:
                 end_freedrive_mode()
             else:
                 stop_thread(move_thread_handle)
+                join_thread(move_thread_handle)
                 move_thread_handle = 0
                 stopj(STOPJ_ACCELERATION)
 
@@ -293,6 +295,7 @@ while control_mode > MODE_STOPPED:
                 move_thread_handle = start_thread(speedlThread, ())
             elif control_mode == MODE_TRAJECTORY:
                 stop_thread(move_thread_handle)
+                join_thread(move_thread_handle)
                 move_thread_handle = 0
                 stopj(STOPJ_ACCELERATION)
             elif control_mode == MODE_SPEEDJ:
@@ -312,6 +315,7 @@ while control_mode > MODE_STOPPED:
         elif control_mode == MODE_TRAJECTORY:
             if params_mult[2] == TRAJECTORY_ACTION_START:
                 stop_thread(trajectory_thread_handle)
+                join_thread(trajectory_thread_handle)
                 trajectory_thread_handle = 0
                 trajectoryClearPoints()
                 trajectory_point_num = params_mult[3]
@@ -319,6 +323,7 @@ while control_mode > MODE_STOPPED:
             elif params_mult[2] == TRAJECTORY_ACTION_CANCEL:
                 textmsg("Trajectory cancel received")
                 stop_thread(trajectory_thread_handle)
+                join_thread(trajectory_thread_handle)
                 trajectory_thread_handle = 0
                 trajectoryClearPoints()
                 stopj(STOPJ_ACCELERATION)
