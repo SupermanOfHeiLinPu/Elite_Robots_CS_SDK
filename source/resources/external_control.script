@@ -1,5 +1,7 @@
 # HEADER_BEGIN
 
+import threading
+
 # Constants
 TRAJECTORY_RESULT_SUCCESS = 0
 TRAJECTORY_RESULT_CANCELED = 1
@@ -51,6 +53,8 @@ JOINT_IGNORE_SPEED = 15.0
 SERVO_UNINITIALIZED = -1
 SERVO_IDLE = 0
 SERVO_RUNNING = 1
+
+SERVO_MUTEX = threading.Lock()
 
 #Global variables are also showed in the Teach pendants variable list
 global control_mode
@@ -143,14 +147,11 @@ def extrapolate():
         cmd_servo_joints[i] = cmd_servo_joints[i] + (joint_speed[i] * steptime)
     return cmd_servo_joints
 
-def servoThread():
+def getServoPoints():
     global cmd_servo_joints, cmd_servo_state
-    global control_mode
     global extrapolate_count, extrapolate_max_count
-    textmsg("ExternalControl: Starting servo thread")
-    state = SERVO_IDLE
-    while control_mode == MODE_SERVOJ:
-        joint = cmd_servo_joints
+    with SERVO_MUTEX:
+        joints = cmd_servo_joints
         # If cmd_servo_state is IDLE, it proves that there is no new control command, so it is necessary to infer the next point.
         do_extrapolate = False
         if cmd_servo_state == SERVO_IDLE:
@@ -164,15 +165,24 @@ def servoThread():
             extrapolate_count += 1
             extrapolate_max_count = max(extrapolate_count, extrapolate_max_count)
 
-            joint = extrapolate()
-            servoj(joints, {{SERVO_J_REPLACE}})
-
+            joints = extrapolate()
+            return joints
         elif state == SERVO_RUNNING:
             extrapolate_count = 0
-            servoj(joints, {{SERVO_J_REPLACE}})
+            return joints
         else:
             extrapolate_count = 0
+            return None
+
+def servoThread():
+    global control_mode
+    textmsg("ExternalControl: Starting servo thread")
+    while control_mode == MODE_SERVOJ:
+        joints = getServoPoints()
+        if joints is None:
             sync()
+        else:
+            servoj(joints)
 
     textmsg("ExternalControl: servo thread ended")
     stopj(STOPJ_ACCELERATION)
@@ -307,7 +317,8 @@ while control_mode > MODE_STOPPED:
         # Update the motion commands with new parameters
         if control_mode == MODE_SERVOJ:
             joints = [params_mult[2]/ POS_ZOOM_RATIO, params_mult[3]/ POS_ZOOM_RATIO, params_mult[4]/ POS_ZOOM_RATIO, params_mult[5]/ POS_ZOOM_RATIO, params_mult[6]/ POS_ZOOM_RATIO, params_mult[7]/ POS_ZOOM_RATIO]
-            setServoSetpoint(joints)
+            with SERVO_MUTEX:
+                setServoSetpoint(joints)
         elif control_mode == MODE_SPEEDL:
             setSpeedl([params_mult[2] / POS_ZOOM_RATIO, params_mult[3] / POS_ZOOM_RATIO, params_mult[4] / POS_ZOOM_RATIO, params_mult[5] / POS_ZOOM_RATIO, params_mult[6] / POS_ZOOM_RATIO, params_mult[7] / POS_ZOOM_RATIO])
         elif control_mode == MODE_SPEEDJ:
