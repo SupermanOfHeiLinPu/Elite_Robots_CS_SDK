@@ -19,6 +19,7 @@ foreach(SOURCE ${SOURCES})
         ${ELITE_SDK_EXAMPLE_NAME} 
         elite-cs-series-sdk::shared
         ${SYSTEM_LIB}
+        boost_program_options
     )
     target_link_directories(
         ${ELITE_SDK_EXAMPLE_NAME} 

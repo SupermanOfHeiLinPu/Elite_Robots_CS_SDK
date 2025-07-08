@@ -1,6 +1,5 @@
 # HEADER_BEGIN
 
-# Import module
 import threading
 
 # Constants
@@ -50,8 +49,12 @@ SCRIPT_COMMAND_DATA_SIZE = {{SCRIPT_COMMAND_DATA_SIZE_REPLACE}}
 # Any motion commands resulting in a velocity higher than that will be ignored.
 JOINT_IGNORE_SPEED = 15.0
 
-# Ensure that the cmd_servo_joints variable is synchronized under multi-threaded conditions
-SERVOJ_DATA_MUTEX = threading.Lock()
+# servoj point update state
+SERVO_UNINITIALIZED = -1
+SERVO_IDLE = 0
+SERVO_RUNNING = 1
+
+SERVO_MUTEX = threading.Lock()
 
 #Global variables are also showed in the Teach pendants variable list
 global control_mode
@@ -61,6 +64,9 @@ global steptime
 global trajectory_point_num
 global cmd_servo_joints
 global violation_popup_counter
+global cmd_servo_state
+global extrapolate_count
+global extrapolate_max_count
 
 """
 @brief Function to verify whether the specified target can be reached within the defined time frame while staying within the robot's speed limits
@@ -122,27 +128,62 @@ def trajectoryThread():
     socket_send_int(TRAJECTORY_RESULT_SUCCESS, "trajectory_socket")
 
 def setServoSetpoint(joints):
-    global cmd_servo_joints
+    global cmd_servo_joints, cmd_servo_state
+    cmd_servo_state = SERVO_RUNNING
     if targetWithinLimits(cmd_servo_joints, joints, steptime):
-        with SERVOJ_DATA_MUTEX:
-            cmd_servo_joints = joints
+        cmd_servo_joints = joints
     # If the target has been interpolating too far away from the robot, so it would trigger the limit
     # check, but the target is close to where the robot currently is, also accept the command.
     # This can, for example, happen if a command series was too fast for the robot to follow, which
     # triggers a path deviation on the commanding side and that is mitigated by a hold-position
     # command.
     elif targetWithinLimits(get_actual_joint_positions(), joints, steptime):
-        with SERVOJ_DATA_MUTEX:
-            cmd_servo_joints = joints
+        cmd_servo_joints = joints
+
+def extrapolate():
+    global cmd_servo_joints
+    joint_speed = get_target_joint_speeds()
+    for i in range(len(joint_speed)):
+        cmd_servo_joints[i] = cmd_servo_joints[i] + (joint_speed[i] * steptime)
+    return cmd_servo_joints
+
+def getServoPoints():
+    global cmd_servo_joints, cmd_servo_state
+    global extrapolate_count, extrapolate_max_count
+    with SERVO_MUTEX:
+        joints = cmd_servo_joints
+        # If cmd_servo_state is IDLE, it proves that there is no new control command, so it is necessary to infer the next point.
+        do_extrapolate = False
+        if cmd_servo_state == SERVO_IDLE:
+            do_extrapolate = True
+        state = cmd_servo_state
+        # Reset the value of cmd_servo_state, which means the latest point has been taken away.
+        if cmd_servo_state > SERVO_UNINITIALIZED:
+            cmd_servo_state = SERVO_IDLE
+        
+        if do_extrapolate:
+            extrapolate_count += 1
+            extrapolate_max_count = max(extrapolate_count, extrapolate_max_count)
+
+            joints = extrapolate()
+            return joints
+        elif state == SERVO_RUNNING:
+            extrapolate_count = 0
+            return joints
+        else:
+            extrapolate_count = 0
+            return None
 
 def servoThread():
-    global cmd_servo_joints
+    global control_mode
     textmsg("ExternalControl: Starting servo thread")
     while control_mode == MODE_SERVOJ:
-        joints = get_actual_joint_positions()
-        with SERVOJ_DATA_MUTEX:
-            joints = cmd_servo_joints
-        servoj(joints, {{SERVO_J_REPLACE}})
+        joints = getServoPoints()
+        if joints is None:
+            sync()
+        else:
+            servoj(joints)
+
     textmsg("ExternalControl: servo thread ended")
     stopj(STOPJ_ACCELERATION)
 
@@ -228,6 +269,9 @@ move_thread_handle = 0
 trajectory_thread_handle = 0
 read_timeout = 0.0 # First read is blocking
 violation_popup_counter = 0
+cmd_servo_state = SERVO_UNINITIALIZED
+extrapolate_count = 0
+extrapolate_max_count = 0
 
 while control_mode > MODE_STOPPED:
     params_mult = socket_read_binary_integer(REVERSE_DATA_SIZE, "reverse_socket", read_timeout)
@@ -273,7 +317,8 @@ while control_mode > MODE_STOPPED:
         # Update the motion commands with new parameters
         if control_mode == MODE_SERVOJ:
             joints = [params_mult[2]/ POS_ZOOM_RATIO, params_mult[3]/ POS_ZOOM_RATIO, params_mult[4]/ POS_ZOOM_RATIO, params_mult[5]/ POS_ZOOM_RATIO, params_mult[6]/ POS_ZOOM_RATIO, params_mult[7]/ POS_ZOOM_RATIO]
-            setServoSetpoint(joints)
+            with SERVO_MUTEX:
+                setServoSetpoint(joints)
         elif control_mode == MODE_SPEEDL:
             setSpeedl([params_mult[2] / POS_ZOOM_RATIO, params_mult[3] / POS_ZOOM_RATIO, params_mult[4] / POS_ZOOM_RATIO, params_mult[5] / POS_ZOOM_RATIO, params_mult[6] / POS_ZOOM_RATIO, params_mult[7] / POS_ZOOM_RATIO])
         elif control_mode == MODE_SPEEDJ:
