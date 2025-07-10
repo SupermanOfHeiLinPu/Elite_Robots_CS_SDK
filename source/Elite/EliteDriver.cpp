@@ -180,28 +180,25 @@ void EliteDriver::init(const EliteDriverConfig& config) {
     ELITE_LOG_DEBUG("Initialization done");
 }
 
-EliteDriver::EliteDriver(const EliteDriverConfig& config) {
-    init(config);
-}
+EliteDriver::EliteDriver(const EliteDriverConfig& config) { init(config); }
 
 EliteDriver::EliteDriver(const std::string& robot_ip, const std::string& local_ip, const std::string& script_file,
-    bool headless_mode, int script_sender_port, int reverse_port, int trajectory_port,
-    int script_command_port, float servoj_time, float servoj_lookahead_time,
-    int servoj_gain, float stopj_acc) {
-        EliteDriverConfig config;
-        config.robot_ip = robot_ip;
-        config.local_ip = local_ip;
-        config.script_file_path = script_file;
-        config.headless_mode = headless_mode;
-        config.script_sender_port = script_sender_port;
-        config.reverse_port = reverse_port;
-        config.trajectory_port = trajectory_port;
-        config.script_command_port = script_command_port;
-        config.servoj_time = servoj_time;
-        config.servoj_lookahead_time = servoj_lookahead_time;
-        config.servoj_gain = servoj_gain;
-        config.stopj_acc = stopj_acc;
-        init(config);
+                         bool headless_mode, int script_sender_port, int reverse_port, int trajectory_port, int script_command_port,
+                         float servoj_time, float servoj_lookahead_time, int servoj_gain, float stopj_acc) {
+    EliteDriverConfig config;
+    config.robot_ip = robot_ip;
+    config.local_ip = local_ip;
+    config.script_file_path = script_file;
+    config.headless_mode = headless_mode;
+    config.script_sender_port = script_sender_port;
+    config.reverse_port = reverse_port;
+    config.trajectory_port = trajectory_port;
+    config.script_command_port = script_command_port;
+    config.servoj_time = servoj_time;
+    config.servoj_lookahead_time = servoj_lookahead_time;
+    config.servoj_gain = servoj_gain;
+    config.stopj_acc = stopj_acc;
+    init(config);
 }
 
 EliteDriver::~EliteDriver() { impl_.reset(); }
