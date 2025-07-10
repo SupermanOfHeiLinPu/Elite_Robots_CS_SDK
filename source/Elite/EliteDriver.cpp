@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <string>
 #include "ControlCommon.hpp"
 #include "ControlMode.hpp"
 #include "EliteException.hpp"
@@ -28,6 +29,7 @@ static const std::string REVERSE_DATA_SIZE_REPLACE = "{{REVERSE_DATA_SIZE_REPLAC
 static const std::string TRAJECTORY_DATA_SIZE_REPLACE = "{{TRAJECTORY_DATA_SIZE_REPLACE}}";
 static const std::string SCRIPT_COMMAND_DATA_SIZE_REPLACE = "{{SCRIPT_COMMAND_DATA_SIZE_REPLACE}}";
 static const std::string STOP_J_REPLACE = "{{STOP_J_REPLACE}}";
+static const std::string SERVOJ_TIME_REPLACE = "{{SERVOJ_TIME_REPLACE}}";
 
 class EliteDriver::Impl {
    public:
@@ -84,9 +86,13 @@ void EliteDriver::Impl::scriptParamWrite(std::string& file_string, int reverse_p
     }
 
     std::ostringstream servoj_replace_str;
-    servoj_replace_str << "t = " << servoj_time << ", lookahead_time = " << servoj_lookahead_time << ", gain=" << servoj_gain;
+    servoj_replace_str << "lookahead_time = " << servoj_lookahead_time << ", gain=" << servoj_gain;
     while (file_string.find(SERVO_J_REPLACE) != std::string::npos) {
         file_string.replace(file_string.find(SERVO_J_REPLACE), SERVO_J_REPLACE.length(), servoj_replace_str.str());
+    }
+
+    while (file_string.find(SERVOJ_TIME_REPLACE) != std::string::npos) {
+        file_string.replace(file_string.find(SERVOJ_TIME_REPLACE), SERVOJ_TIME_REPLACE.length(), std::to_string(servoj_time));
     }
 
     while (file_string.find(POS_ZOOM_RATIO_REPLACE) != std::string::npos) {
@@ -174,28 +180,25 @@ void EliteDriver::init(const EliteDriverConfig& config) {
     ELITE_LOG_DEBUG("Initialization done");
 }
 
-EliteDriver::EliteDriver(const EliteDriverConfig& config) {
-    init(config);
-}
+EliteDriver::EliteDriver(const EliteDriverConfig& config) { init(config); }
 
 EliteDriver::EliteDriver(const std::string& robot_ip, const std::string& local_ip, const std::string& script_file,
-    bool headless_mode, int script_sender_port, int reverse_port, int trajectory_port,
-    int script_command_port, float servoj_time, float servoj_lookahead_time,
-    int servoj_gain, float stopj_acc) {
-        EliteDriverConfig config;
-        config.robot_ip = robot_ip;
-        config.local_ip = local_ip;
-        config.script_file_path = script_file;
-        config.headless_mode = headless_mode;
-        config.script_sender_port = script_sender_port;
-        config.reverse_port = reverse_port;
-        config.trajectory_port = trajectory_port;
-        config.script_command_port = script_command_port;
-        config.servoj_time = servoj_time;
-        config.servoj_lookahead_time = servoj_lookahead_time;
-        config.servoj_gain = servoj_gain;
-        config.stopj_acc = stopj_acc;
-        init(config);
+                         bool headless_mode, int script_sender_port, int reverse_port, int trajectory_port, int script_command_port,
+                         float servoj_time, float servoj_lookahead_time, int servoj_gain, float stopj_acc) {
+    EliteDriverConfig config;
+    config.robot_ip = robot_ip;
+    config.local_ip = local_ip;
+    config.script_file_path = script_file;
+    config.headless_mode = headless_mode;
+    config.script_sender_port = script_sender_port;
+    config.reverse_port = reverse_port;
+    config.trajectory_port = trajectory_port;
+    config.script_command_port = script_command_port;
+    config.servoj_time = servoj_time;
+    config.servoj_lookahead_time = servoj_lookahead_time;
+    config.servoj_gain = servoj_gain;
+    config.stopj_acc = stopj_acc;
+    init(config);
 }
 
 EliteDriver::~EliteDriver() { impl_.reset(); }
