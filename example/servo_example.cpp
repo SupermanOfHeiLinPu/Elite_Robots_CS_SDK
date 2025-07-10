@@ -1,15 +1,15 @@
 ﻿#include <Elite/DashboardClient.hpp>
 #include <Elite/DataType.hpp>
 #include <Elite/EliteDriver.hpp>
-#include <Elite/RtsiClientInterface.hpp>
 #include <Elite/Log.hpp>
+#include <Elite/RtsiClientInterface.hpp>
 
+#include <boost/program_options.hpp>
 #include <chrono>
 #include <cmath>
 #include <iostream>
 #include <memory>
 #include <thread>
-#include <boost/program_options.hpp>
 
 using namespace ELITE;
 using namespace std::chrono;
@@ -23,14 +23,18 @@ int main(int argc, char** argv) {
     EliteDriverConfig config;
 
     // Parser param
-    po::options_description desc("Usage:\n"
+    po::options_description desc(
+        "Usage:\n"
         "\t./servo_example <--robot-ip=ip> [--local-ip=\"\"] [--use-headless-mode=true]\n"
         "Parameters:");
     desc.add_options()
         ("help,h", "Print help message")
-        ("robot-ip", po::value<std::string>(&config.robot_ip)->required(), "\tRequired. IP address of the robot.")
-        ("use-headless-mode", po::value<bool>(&config.headless_mode)->required()->implicit_value(true), "\tRequired. Use headless mode.")
-        ("local-ip", po::value<std::string>(&config.local_ip)->default_value(""), "\tOptional. IP address of the local network interface.");
+        ("robot-ip", po::value<std::string>(&config.robot_ip)->required(),
+            "\tRequired. IP address of the robot.")
+        ("use-headless-mode", po::value<bool>(&config.headless_mode)->required()->implicit_value(true),
+            "\tRequired. Use headless mode.")
+        ("local-ip", po::value<std::string>(&config.local_ip)->default_value(""),
+            "\tOptional. IP address of the local network interface.");
 
     po::variables_map vm;
     try {
@@ -42,16 +46,17 @@ int main(int argc, char** argv) {
         }
 
         po::notify(vm);
-    } catch(const po::error& e) {
+    } catch (const po::error& e) {
         std::cerr << "Argument error: " << e.what() << "\n\n";
         std::cerr << desc << "\n";
         return 1;
     }
-    
+
     if (config.headless_mode) {
         ELITE_LOG_WARN("Use headless mode. Please ensure the robot is not in local mode.");
     } else {
-        ELITE_LOG_WARN("It needs to be correctly configured, and the External Control plugin should be inserted into the task tree.");
+        ELITE_LOG_WARN(
+            "It needs to be correctly configured, and the External Control plugin should be inserted into the task tree.");
     }
 
     config.script_file_path = "external_control.script";
@@ -92,16 +97,16 @@ int main(int argc, char** argv) {
     }
     ELITE_LOG_INFO("Power-on succeeded");
 
-     ELITE_LOG_INFO("Start releasing brake...");
+    ELITE_LOG_INFO("Start releasing brake...");
     if (!s_dashboard->brakeRelease()) {
         ELITE_LOG_FATAL("Release brake fail");
         return 1;
     }
-   ELITE_LOG_INFO("Brake released");
+    ELITE_LOG_INFO("Brake released");
 
     if (config.headless_mode) {
         if (!s_driver->isRobotConnected()) {
-            if (!s_driver->sendExternalControlScript()){
+            if (!s_driver->sendExternalControlScript()) {
                 ELITE_LOG_FATAL("Fail to send external control script");
                 return 1;
             }
@@ -113,6 +118,7 @@ int main(int argc, char** argv) {
         }
     }
 
+    ELITE_LOG_INFO("Wait external control script run...");
     while (!s_driver->isRobotConnected()) {
         std::this_thread::sleep_for(10ms);
     }
@@ -150,7 +156,7 @@ int main(int argc, char** argv) {
             if (acutal_joint[5] >= 3) {
                 positive_rotation = true;
             }
-        } else if(negative_rotation == false) {
+        } else if (negative_rotation == false) {
             increment = -0.0005;
             if (acutal_joint[5] <= -3) {
                 negative_rotation = true;

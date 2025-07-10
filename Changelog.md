@@ -36,7 +36,7 @@
   - Changed `RtsiIOInterface::getRecipeValue()` and `RtsiIOInterface::setInputRecipeValue()` from private to public, with added explicit instantiation declarations
 - Restructured project Readme documentation
 - Enhance the thread safety of `external_control.script`.
-- Adjust the input parameter method of the example program.
+- Use `boost::program_options` to parse the input parameters of the sample program.
 
 ### Fixed
 - Fixed crash issue caused by dangling pointers during `EliteDriver` destruction

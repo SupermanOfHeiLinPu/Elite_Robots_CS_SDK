@@ -1,5 +1,7 @@
+#include <Elite/Log.hpp>
 #include <Elite/PrimaryPortInterface.hpp>
 #include <boost/asio.hpp>
+#include <boost/program_options.hpp>
 #include <future>
 #include <iostream>
 #include <memory>
@@ -10,12 +12,9 @@
 using boost::asio::ip::tcp;
 using namespace std::chrono;
 using namespace ELITE;
+namespace po = boost::program_options;
 
 #define SERVER_PORT 50002
-
-// In a real-world example it would be better to get those values from command line parameters / a
-// better configuration system such as Boost.Program_options
-const std::string DEFAULT_ROBOT_IP = "192.168.51.244";
 
 // The robot will send string
 #define ROBOT_SOCKET_SEND_STRING "hello"
@@ -83,13 +82,35 @@ class TcpServer {
 };
 
 int main(int argc, char** argv) {
-    std::string robot_ip = DEFAULT_ROBOT_IP;
+    std::string robot_ip = "";
     std::string local_ip = "";
-    if (argc >= 2) {
-        robot_ip = argv[1];
-    }
-    if (argc >= 3) {
-        local_ip = argv[2];
+
+    // Parser param
+    po::options_description desc(
+        "Usage:\n"
+        "\t./connect_robot_test <--robot-ip=ip> [--local-ip=\"\"]\n"
+        "Parameters:");
+    desc.add_options()
+        ("help,h", "Print help message")
+        ("robot-ip", po::value<std::string>(&robot_ip)->required(),
+            "\tRequired. IP address of the robot.")
+        ("local-ip", po::value<std::string>(&local_ip)->default_value(""), 
+            "\tOptional. IP address of the local network interface.");
+
+    po::variables_map vm;
+    try {
+        po::store(po::parse_command_line(argc, argv, desc), vm);
+
+        if (vm.count("help")) {
+            std::cout << desc << std::endl;
+            return 0;
+        }
+
+        po::notify(vm);
+    } catch (const po::error& e) {
+        std::cerr << "Argument error: " << e.what() << "\n\n";
+        std::cerr << desc << "\n";
+        return 1;
     }
 
     try {
@@ -101,7 +122,7 @@ int main(int argc, char** argv) {
             try {
                 io_context.run();
             } catch (const std::exception& e) {
-                std::cerr << "IO context error: " << e.what() << std::endl;
+                ELITE_LOG_FATAL("IO context error: %s", e.what());
             }
         });
         // Connect to robot primary port
@@ -116,8 +137,7 @@ int main(int argc, char** argv) {
         robot_script += "\tsocket_send_string(\"" ROBOT_SOCKET_SEND_STRING "\\n\")\n";
         robot_script += "end\n";
         // Print script
-        std::cout << "Will send the script to robot primary port:" << std::endl;
-        std::cout << robot_script;
+        ELITE_LOG_INFO("Will send the script to robot primary port:\n %s", robot_script.c_str());
         // Send script to robot primary port
         primary.sendScript(robot_script);
 
@@ -126,19 +146,19 @@ int main(int argc, char** argv) {
         if (future_recv.wait_for(5s) == std::future_status::ready) {
             auto str = future_recv.get();
             if (str == ROBOT_SOCKET_SEND_STRING) {
-                std::cout << "Success, robot connected to PC" << std::endl;
+                ELITE_LOG_INFO("Success, robot connected to PC");
             } else {
-                std::cout << "Fail, robot connected to PC but not send right string" << std::endl;
+                ELITE_LOG_ERROR("Fail, robot connected to PC but not send right string");
             }
         } else {
-            std::cout << "Error: Time out, robot not connect to PC" << std::endl;
+            ELITE_LOG_ERROR("Time out, robot not connect to PC");
         }
 
         io_context.stop();
         thread.join();
 
     } catch (std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
+        ELITE_LOG_FATAL("Exception: %s", e.what());
     }
 
     return 0;
