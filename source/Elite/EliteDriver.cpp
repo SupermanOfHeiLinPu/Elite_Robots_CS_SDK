@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <string>
 #include "ControlCommon.hpp"
 #include "ControlMode.hpp"
 #include "EliteException.hpp"
@@ -28,6 +29,7 @@ static const std::string REVERSE_DATA_SIZE_REPLACE = "{{REVERSE_DATA_SIZE_REPLAC
 static const std::string TRAJECTORY_DATA_SIZE_REPLACE = "{{TRAJECTORY_DATA_SIZE_REPLACE}}";
 static const std::string SCRIPT_COMMAND_DATA_SIZE_REPLACE = "{{SCRIPT_COMMAND_DATA_SIZE_REPLACE}}";
 static const std::string STOP_J_REPLACE = "{{STOP_J_REPLACE}}";
+static const std::string SERVOJ_TIME_REPLACE = "{{SERVOJ_TIME_REPLACE}}";
 
 class EliteDriver::Impl {
    public:
@@ -84,9 +86,13 @@ void EliteDriver::Impl::scriptParamWrite(std::string& file_string, int reverse_p
     }
 
     std::ostringstream servoj_replace_str;
-    servoj_replace_str << "t = " << servoj_time << ", lookahead_time = " << servoj_lookahead_time << ", gain=" << servoj_gain;
+    servoj_replace_str << "lookahead_time = " << servoj_lookahead_time << ", gain=" << servoj_gain;
     while (file_string.find(SERVO_J_REPLACE) != std::string::npos) {
         file_string.replace(file_string.find(SERVO_J_REPLACE), SERVO_J_REPLACE.length(), servoj_replace_str.str());
+    }
+
+    while (file_string.find(SERVOJ_TIME_REPLACE) != std::string::npos) {
+        file_string.replace(file_string.find(SERVOJ_TIME_REPLACE), SERVOJ_TIME_REPLACE.length(), std::to_string(servoj_time));
     }
 
     while (file_string.find(POS_ZOOM_RATIO_REPLACE) != std::string::npos) {
