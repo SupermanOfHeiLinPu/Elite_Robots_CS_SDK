@@ -209,7 +209,7 @@ class EliteDriver {
      * @return true success
      * @return false fail (socket was disconnect or timeout)
      */
-    ELITE_EXPORT bool stopControl(int wait_ms = 500);
+    ELITE_EXPORT bool stopControl(int wait_ms = 10000);
 
     /**
      * @brief Print generated EliRobot script from template
