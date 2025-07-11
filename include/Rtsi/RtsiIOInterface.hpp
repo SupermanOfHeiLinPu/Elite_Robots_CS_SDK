@@ -28,7 +28,7 @@ namespace ELITE {
  * @brief The RTSI interface has been functionally encapsulated.
  *
  */
-class RtsiIOInterface : public RtsiClientInterface {
+class RtsiIOInterface : protected RtsiClientInterface {
    public:
     RtsiIOInterface() = delete;
 
