@@ -23,6 +23,7 @@ void RtsiClient::connect(const std::string& ip, int port) {
         socket_ptr_->set_option(boost::asio::socket_base::keep_alive(false));
 #if defined(__linux) || defined(linux) || defined(__linux__)
         socket_ptr_->set_option(boost::asio::detail::socket_option::boolean<IPPROTO_TCP, TCP_QUICKACK>(true));
+        socket_ptr_->set_option(boost::asio::detail::socket_option::integer<SOL_SOCKET, SO_PRIORITY>(6));
 #endif
         boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(ip), port);
         socket_ptr_->async_connect(endpoint, [&](const boost::system::error_code& error) {
