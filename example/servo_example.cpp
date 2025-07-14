@@ -136,7 +136,7 @@ int main(int argc, char** argv) {
     double increment = 0;
     bool first_point = true;
     while (!(positive_rotation && negative_rotation)) {
-        if (!s_rtsi_client->receiveData(recipe, true)) {
+        if (!s_rtsi_client->receiveData(recipe)) {
             ELITE_LOG_FATAL("Fail to receive RTSI recipe");
             return 1;
         }
