@@ -60,6 +60,15 @@ class EliteDriverConfig {
     // Acceleration [rad/s^2]. The acceleration of stopj motion.
     float stopj_acc = 8;
 
+    // When using the `writeServojQueue()` and `writeServojPoseQueue` interfaces, the number of points pre-saved in the queue before
+    // starting the movement.
+    int servoj_queue_pre_recv_size = 10;
+
+    // When using the `writeServojQueue()` and `writeServojPoseQueue` interfaces, the timeout duration for the queue waiting for
+    // pre-stored points. If the value is less than or equal to 0, the timeout duration will be calculated based on
+    // `servoj_queue_pre_recv_size * servoj_time`.
+    float servoj_queue_pre_recv_timeout = -1;
+
     EliteDriverConfig() = default;
     ~EliteDriverConfig() = default;
 };
@@ -126,6 +135,17 @@ class EliteDriver {
      * @return false
      */
     ELITE_EXPORT bool writeServoj(const vector6d_t& pos, int timeout_ms);
+
+    /**
+     * @brief Write servoj() points to robot. 
+     *      When calling this interface, a specified number of points will first be saved in a queue before the movement starts.
+     * 
+     * @param pos points
+     * @param timeout_ms The read timeout configuration for the reverse socket running in the external control script on the robot.
+     * @return true
+     * @return false
+     */
+    ELITE_EXPORT bool writeServojQueue(const vector6d_t& pos, int timeout_ms);
 
     /**
      * @brief Write speedl() velocity to robot
@@ -215,7 +235,9 @@ class EliteDriver {
      * @brief Print generated EliRobot script from template
      *
      */
-    [[deprecated("Print script is deprecated, instead use ExternalControl plugin or send script to robot.")]] ELITE_EXPORT void
+    [[deprecated(
+        "Print script is deprecated, instead use ExternalControl plugin or send script to robot. This function will be removed in "
+        "June 2027.")]] ELITE_EXPORT void
     printRobotScript();
 
     /**

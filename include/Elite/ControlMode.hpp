@@ -14,9 +14,10 @@ enum class ControlMode : int {
     MODE_SPEEDJ = 2,            // Set when speedj control is active.
     MODE_TRAJECTORY = 3,        // Set when trajectory forwarding is active.
     MODE_SPEEDL = 4,            // Set when cartesian velocity control is active.
-    MODE_POSE = 5,              // Set when cartesian pose control is active.(Not use now, coming soon)
-    MODE_FREEDRIVE = 6,         // Set when freedrive mode is active.(Not use now, coming soon)
-    MODE_TOOL_IN_CONTACT = 7    // Set tool in contact.(Not use now, coming soon)
+    MODE_POSE = 5,              // Set when cartesian pose control is active.
+    MODE_FREEDRIVE = 6,         // Set when freedrive mode is active.
+    MODE_TOOL_IN_CONTACT = 7,   // Set tool in contact.(Not use now, coming soon)
+    MODE_SERVOJ_QUEUE = 8,      // Set when servoj queue control is active.
 };
 
 
