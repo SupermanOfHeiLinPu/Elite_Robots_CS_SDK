@@ -1,41 +1,37 @@
 #include "RtsiIOInterface.hpp"
+#include <cstring>
+#include <fstream>
+#include <future>
+#include <iostream>
+#include <sstream>
 #include "EliteException.hpp"
 #include "Log.hpp"
 #include "RtUtils.hpp"
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <cstring>
-#include <future>  
 
 using namespace ELITE;
 
-RtsiIOInterface::RtsiIOInterface(const std::string& output_recipe_file, const std::string& input_recipe_file, double frequency) 
-    : output_recipe_string_(readRecipe(output_recipe_file))
-    , input_recipe_string_(readRecipe(input_recipe_file))
-    , target_frequency_(frequency){
+RtsiIOInterface::RtsiIOInterface(const std::string& output_recipe_file, const std::string& input_recipe_file, double frequency)
+    : output_recipe_string_(readRecipe(output_recipe_file)),
+      input_recipe_string_(readRecipe(input_recipe_file)),
+      target_frequency_(frequency) {}
 
-}
-
-RtsiIOInterface::~RtsiIOInterface() {
-    disconnect();
-}
+RtsiIOInterface::~RtsiIOInterface() { disconnect(); }
 
 bool RtsiIOInterface::connect(const std::string& ip) {
     if (isConnected() || recv_thread_) {
         disconnect();
     }
-    
+
     RtsiClientInterface::connect(ip);
-    
-    if(!negotiateProtocolVersion()) {
+
+    if (!negotiateProtocolVersion()) {
         ELITE_LOG_FATAL("RTSI negitiate protocol version fail.");
         return false;
     }
 
     controller_version_ = RtsiClientInterface::getControllerVersion();
 
-    // Setup input and output recipe. 
+    // Setup input and output recipe.
     // Send start signal
     try {
         setupRecipe();
@@ -43,7 +39,7 @@ bool RtsiIOInterface::connect(const std::string& ip) {
             ELITE_LOG_FATAL("RTSI start signal send fail.");
             return false;
         }
-    } catch(const EliteException& e) {
+    } catch (const EliteException& e) {
         if (e == EliteException::Code::RTSI_UNKNOW_VARIABLE_TYPE) {
             ELITE_LOG_FATAL("RTSI setup recipe fail. Check recipe files.");
             disconnect();
@@ -53,10 +49,10 @@ bool RtsiIOInterface::connect(const std::string& ip) {
         }
     }
 
-    // The recv thread must create after setup recipe, because 'output_recipe_' get in setup 
+    // The recv thread must create after setup recipe, because 'output_recipe_' get in setup
     is_recv_thread_alive_ = true;
     std::promise<bool> thread_prom;
-    recv_thread_.reset(new std::thread([&](){
+    recv_thread_.reset(new std::thread([&]() {
         thread_prom.set_value(true);
         recvLoop();
     }));
@@ -76,46 +72,44 @@ void RtsiIOInterface::disconnect() {
     RtsiClientInterface::disconnect();
 }
 
-VersionInfo RtsiIOInterface::getControllerVersion() {
-    return controller_version_;
-}
+VersionInfo RtsiIOInterface::getControllerVersion() { return controller_version_; }
 
 bool RtsiIOInterface::setSpeedScaling(double slider) {
     if (input_recipe_) {
-        if(!setInputRecipeValue("speed_slider_mask", 1)) {
+        if (!setInputRecipeValue("speed_slider_mask", 1)) {
             return false;
         }
-        if(!setInputRecipeValue("speed_slider_fraction", slider)) {
+        if (!setInputRecipeValue("speed_slider_fraction", slider)) {
             return false;
         }
     }
-    
+
     return true;
 }
 
 bool RtsiIOInterface::setStandardDigital(int index, bool level) {
     if (input_recipe_) {
         uint16_t digital_mask = 1 << index;
-        if(!setInputRecipeValue("standard_digital_output_mask", digital_mask)) {
+        if (!setInputRecipeValue("standard_digital_output_mask", digital_mask)) {
             return false;
         }
         uint16_t digital = level << index;
-        if(!setInputRecipeValue("standard_digital_output", digital)) {
+        if (!setInputRecipeValue("standard_digital_output", digital)) {
             return false;
         }
     }
-    
+
     return true;
 }
 
 bool RtsiIOInterface::setConfigureDigital(int index, bool level) {
     if (input_recipe_) {
         uint8_t digital_mask = 1 << index;
-        if(!setInputRecipeValue("configurable_digital_output_mask", digital_mask)) {
+        if (!setInputRecipeValue("configurable_digital_output_mask", digital_mask)) {
             return false;
         }
         uint8_t digital = level << index;
-        if(!setInputRecipeValue("configurable_digital_output", digital)) {
+        if (!setInputRecipeValue("configurable_digital_output", digital)) {
             return false;
         }
     }
@@ -128,27 +122,27 @@ bool RtsiIOInterface::setAnalogOutputVoltage(int index, double value) {
         // value = (max - min) * level + min
         // level = (value - min) / (max - min)
         double level = value / 10.0;
-        if(!setInputRecipeValue("standard_analog_output_type", 3)) {
+        if (!setInputRecipeValue("standard_analog_output_type", 3)) {
             return false;
         }
         if (index == 0) {
-            if(!setInputRecipeValue("standard_analog_output_mask", 1)) {
+            if (!setInputRecipeValue("standard_analog_output_mask", 1)) {
                 return false;
             }
 
-            if(!setInputRecipeValue("standard_analog_output_0", level)) {
+            if (!setInputRecipeValue("standard_analog_output_0", level)) {
                 return false;
             }
-        } else if(index == 1) {
-            if(!setInputRecipeValue("standard_analog_output_mask", 2)) {
+        } else if (index == 1) {
+            if (!setInputRecipeValue("standard_analog_output_mask", 2)) {
                 return false;
             }
 
-            if(!setInputRecipeValue("standard_analog_output_1", level)) {
+            if (!setInputRecipeValue("standard_analog_output_1", level)) {
                 return false;
             }
         } else {
-            if(!setInputRecipeValue("standard_analog_output_mask", 0)) {
+            if (!setInputRecipeValue("standard_analog_output_mask", 0)) {
                 return false;
             }
         }
@@ -162,27 +156,27 @@ bool RtsiIOInterface::setAnalogOutputCurrent(int index, double value) {
         // value = (max - min) * level + min
         // level = (value - min) / (max - min)
         double level = (value - 0.004) / (0.02 - 0.004);
-        if(!setInputRecipeValue("standard_analog_output_type", 0)) {
+        if (!setInputRecipeValue("standard_analog_output_type", 0)) {
             return false;
         }
         if (index == 0) {
-            if(!setInputRecipeValue("standard_analog_output_mask", 1)) {
+            if (!setInputRecipeValue("standard_analog_output_mask", 1)) {
                 return false;
             }
 
-            if(!setInputRecipeValue("standard_analog_output_0", level)) {
+            if (!setInputRecipeValue("standard_analog_output_0", level)) {
                 return false;
             }
-        } else if(index == 1) {
-            if(!setInputRecipeValue("standard_analog_output_mask", 2)) {
+        } else if (index == 1) {
+            if (!setInputRecipeValue("standard_analog_output_mask", 2)) {
                 return false;
             }
 
-            if(!setInputRecipeValue("standard_analog_output_1", level)) {
+            if (!setInputRecipeValue("standard_analog_output_1", level)) {
                 return false;
             }
         } else {
-            if(!setInputRecipeValue("standard_analog_output_mask", 0)) {
+            if (!setInputRecipeValue("standard_analog_output_mask", 0)) {
                 return false;
             }
         }
@@ -192,7 +186,7 @@ bool RtsiIOInterface::setAnalogOutputCurrent(int index, double value) {
 
 bool RtsiIOInterface::setExternalForceTorque(const vector6d_t& value) {
     if (input_recipe_) {
-        if(!setInputRecipeValue("external_force_torque", value)) {
+        if (!setInputRecipeValue("external_force_torque", value)) {
             return false;
         }
     }
@@ -202,11 +196,11 @@ bool RtsiIOInterface::setExternalForceTorque(const vector6d_t& value) {
 bool RtsiIOInterface::setToolDigitalOutput(int index, bool level) {
     if (input_recipe_) {
         uint8_t mask = 1 << index;
-        if(!setInputRecipeValue("tool_digital_output_mask", mask)) {
+        if (!setInputRecipeValue("tool_digital_output_mask", mask)) {
             return false;
         }
         uint8_t digital = level << index;
-        if(!setInputRecipeValue("tool_digital_output", digital)) {
+        if (!setInputRecipeValue("tool_digital_output", digital)) {
             return false;
         }
     }
@@ -433,7 +427,6 @@ ToolMode RtsiIOInterface::getToolMode() {
     return static_cast<ToolMode>(result);
 }
 
-
 uint32_t RtsiIOInterface::getToolAnalogInputType() {
     uint32_t result{0};
     getRecipeValue("tool_analog_input_types", result);
@@ -487,13 +480,13 @@ ToolDigitalOutputMode RtsiIOInterface::getToolDigitalOutputMode(int index) {
     if (index == 0) {
         getRecipeValue("tool_digital0_mode", result);
         return static_cast<ToolDigitalOutputMode>(result);
-    } else if(index == 1) {
+    } else if (index == 1) {
         getRecipeValue("tool_digital1_mode", result);
         return static_cast<ToolDigitalOutputMode>(result);
-    } else if(index == 2) {
+    } else if (index == 2) {
         getRecipeValue("tool_digital2_mode", result);
         return static_cast<ToolDigitalOutputMode>(result);
-    } else if(index == 3) {
+    } else if (index == 3) {
         getRecipeValue("tool_digital3_mode", result);
         return static_cast<ToolDigitalOutputMode>(result);
     }
@@ -599,7 +592,7 @@ void RtsiIOInterface::recvLoop() {
                 send(input_recipe_);
                 input_new_cmd_ = false;
             }
-        } catch(const std::exception& e) {
+        } catch (const std::exception& e) {
             is_recv_thread_alive_ = false;
         }
     }
