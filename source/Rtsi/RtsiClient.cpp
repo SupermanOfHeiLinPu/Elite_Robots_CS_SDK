@@ -1,8 +1,8 @@
 #include "RtsiClient.hpp"
-#include "VersionInfo.hpp"
 #include "EliteException.hpp"
-#include "Utils.hpp"
 #include "RtsiRecipeInternal.hpp"
+#include "Utils.hpp"
+#include "VersionInfo.hpp"
 
 #include <array>
 #include <iostream>
@@ -32,8 +32,8 @@ void RtsiClient::connect(const std::string& ip, int port) {
             }
         });
         io_context_.run();
-        
-    } catch(const boost::system::system_error &error) {
+
+    } catch (const boost::system::system_error& error) {
         throw EliteException(EliteException::Code::SOCKET_CONNECT_FAIL, error.what());
     }
 }
@@ -49,7 +49,7 @@ bool RtsiClient::negotiateProtocolVersion(uint16_t version) {
     std::vector<uint8_t> payload{(uint8_t)(version >> 8), (uint8_t)version};
     sendAll(PackageType::REQUEST_PROTOCOL_VERSION, payload);
     bool is_accept = false;
-    receive(PackageType::REQUEST_PROTOCOL_VERSION, [&](int len, const std::vector<uint8_t>& package){
+    receive(PackageType::REQUEST_PROTOCOL_VERSION, [&](int len, const std::vector<uint8_t>& package) {
         // According to the RTSI document, does the fourth byte of the message represent whether the version check is successful.
         is_accept = package[3];
     });
@@ -81,9 +81,8 @@ RtsiRecipeSharedPtr RtsiClient::setupOutputRecipe(const std::vector<std::string>
     sendAll(PackageType::CONTROL_PACKAGE_SETUP_OUTPUTS, payload);
 
     RtsiRecipeInternal* recipe = new RtsiRecipeInternal(recipe_list);
-    receive(PackageType::CONTROL_PACKAGE_SETUP_OUTPUTS, [&](int len, const std::vector<uint8_t>& package){
-        recipe->parserTypePackage(len, package);
-    });
+    receive(PackageType::CONTROL_PACKAGE_SETUP_OUTPUTS,
+            [&](int len, const std::vector<uint8_t>& package) { recipe->parserTypePackage(len, package); });
     RtsiRecipeSharedPtr result(static_cast<RtsiRecipe*>(recipe));
     return result;
 }
@@ -99,9 +98,8 @@ RtsiRecipeSharedPtr RtsiClient::setupInputRecipe(const std::vector<std::string>&
     sendAll(PackageType::CONTROL_PACKAGE_SETUP_INPUTS, payload);
 
     RtsiRecipeInternal* recipe = new RtsiRecipeInternal(recipe_list);
-    receive(PackageType::CONTROL_PACKAGE_SETUP_INPUTS, [&](int len, const std::vector<uint8_t>& package){
-        recipe->parserTypePackage(len, package);
-    });
+    receive(PackageType::CONTROL_PACKAGE_SETUP_INPUTS,
+            [&](int len, const std::vector<uint8_t>& package) { recipe->parserTypePackage(len, package); });
     RtsiRecipeSharedPtr result(static_cast<RtsiRecipe*>(recipe));
     return result;
 }
@@ -109,8 +107,9 @@ RtsiRecipeSharedPtr RtsiClient::setupInputRecipe(const std::vector<std::string>&
 bool RtsiClient::start() {
     sendAll(PackageType::CONTROL_PACKAGE_START);
     bool is_start = false;
-    receive(PackageType::CONTROL_PACKAGE_START, [&](int len, const std::vector<uint8_t>& package){
-        // According to the RTSI document, does the fourth byte of the message represent whether data transmission has started successfully.
+    receive(PackageType::CONTROL_PACKAGE_START, [&](int len, const std::vector<uint8_t>& package) {
+        // According to the RTSI document, does the fourth byte of the message represent whether data transmission has started
+        // successfully.
         is_start = package[3];
         if (is_start) {
             connection_state = ConnectionState::STARTED;
@@ -123,7 +122,8 @@ bool RtsiClient::pause() {
     sendAll(PackageType::CONTROL_PACKAGE_PAUSE);
     bool is_pause = false;
     receive(PackageType::CONTROL_PACKAGE_PAUSE, [&](int len, const std::vector<uint8_t>& package) {
-        // According to the RTSI document, does the fourth byte of the message represent whether data transmission has paused successfully.
+        // According to the RTSI document, does the fourth byte of the message represent whether data transmission has paused
+        // successfully.
         is_pause = package[3];
         if (is_pause) {
             connection_state = ConnectionState::STOPED;
@@ -132,17 +132,11 @@ bool RtsiClient::pause() {
     return is_pause;
 }
 
-bool RtsiClient::isConnected() {
-    return connection_state != ConnectionState::DISCONNECTED;
-}
+bool RtsiClient::isConnected() { return connection_state != ConnectionState::DISCONNECTED; }
 
-bool RtsiClient::isStarted() {
-    return connection_state == ConnectionState::STARTED;
-}
+bool RtsiClient::isStarted() { return connection_state == ConnectionState::STARTED; }
 
-bool RtsiClient::isReadAvailable() {
-    return socket_ptr_ ? socket_ptr_->available() : false;
-}
+bool RtsiClient::isReadAvailable() { return socket_ptr_ ? socket_ptr_->available() : false; }
 
 void RtsiClient::send(RtsiRecipeSharedPtr& recipe) {
     sendAll(PackageType::DATA_PACKAGE, static_cast<RtsiRecipeInternal*>(recipe.get())->packToBytes());
@@ -150,34 +144,40 @@ void RtsiClient::send(RtsiRecipeSharedPtr& recipe) {
 
 int RtsiClient::receiveData(std::vector<RtsiRecipeSharedPtr>& recipes, bool read_newest) {
     int result_id = -1;
-    receive(PackageType::DATA_PACKAGE, [&](int len, const std::vector<uint8_t>& package) {
-        // Referring to the RTSI document, the fourth byte of the message is the recipe ID.
-        int recipe_id = package[3];
-        for (size_t i = 0; i < recipes.size(); i++) {
-            if (!recipes[i]) {
-                break;
+    receive(
+        PackageType::DATA_PACKAGE,
+        [&](int len, const std::vector<uint8_t>& package) {
+            // Referring to the RTSI document, the fourth byte of the message is the recipe ID.
+            int recipe_id = package[3];
+            for (size_t i = 0; i < recipes.size(); i++) {
+                if (!recipes[i]) {
+                    break;
+                }
+                if (recipes[i]->getID() == recipe_id) {
+                    static_cast<RtsiRecipeInternal*>(recipes[i].get())->parserDataPackage(len, package);
+                    result_id = recipe_id;
+                    break;
+                }
             }
-            if (recipes[i]->getID() == recipe_id) {
-                static_cast<RtsiRecipeInternal*>(recipes[i].get())->parserDataPackage(len, package);
-                result_id = recipe_id;
-                break;
-            }
-        }
-    }, read_newest);
+        },
+        read_newest);
     return result_id;
 }
 
 bool RtsiClient::receiveData(RtsiRecipeSharedPtr recipe, bool read_newest) {
     bool result = false;
-    receive(PackageType::DATA_PACKAGE, [&](int len, const std::vector<uint8_t>& package) {
-        // Referring to the RTSI document, the fourth byte of the message is the recipe ID.
-        int recipe_id = package[3];
-        if (recipe->getID() == recipe_id) {
-            static_cast<RtsiRecipeInternal*>(recipe.get())->parserDataPackage(len, package);
-            result = true;
-        }
-    }, read_newest);
-    
+    receive(
+        PackageType::DATA_PACKAGE,
+        [&](int len, const std::vector<uint8_t>& package) {
+            // Referring to the RTSI document, the fourth byte of the message is the recipe ID.
+            int recipe_id = package[3];
+            if (recipe->getID() == recipe_id) {
+                static_cast<RtsiRecipeInternal*>(recipe.get())->parserDataPackage(len, package);
+                result = true;
+            }
+        },
+        read_newest);
+
     return result;
 }
 
@@ -189,7 +189,7 @@ void RtsiClient::sendAll(const PackageType& cmd, const std::vector<uint8_t>& pay
     message[0] = (uint8_t)(message_len >> 8);
     message[1] = (uint8_t)message_len;
     message[2] = static_cast<uint8_t>(cmd);
-    // Push back payload 
+    // Push back payload
     std::copy(payload.begin(), payload.end(), std::back_inserter(message));
 
     boost::system::error_code ec;
@@ -209,12 +209,13 @@ int RtsiClient::receiveSocket(std::vector<uint8_t>& buff, int size, int offset, 
         buff.resize(size + offset);
     }
     int read_len = 0;
-    boost::asio::async_read(*socket_ptr_, boost::asio::buffer(buff.data() + offset, size), [&](const boost::system::error_code &ec, std::size_t nb) {
-        if (ec) {
-            throw EliteException(EliteException::Code::SOCKET_FAIL, ec.message());
-        }
-        read_len = nb;
-    });
+    boost::asio::async_read(*socket_ptr_, boost::asio::buffer(buff.data() + offset, size),
+                            [&](const boost::system::error_code& ec, std::size_t nb) {
+                                if (ec) {
+                                    throw EliteException(EliteException::Code::SOCKET_FAIL, ec.message());
+                                }
+                                read_len = nb;
+                            });
 
     // Restart the io_context, as it may have been left in the "stopped" state
     // by a previous operation.
@@ -245,9 +246,7 @@ int RtsiClient::receiveSocket(std::vector<uint8_t>& buff, int size, int offset, 
     return read_len;
 }
 
-
-void RtsiClient::receive(const PackageType& target_type, 
-                         std::function<void(int, const std::vector<uint8_t>&)> parser_func, 
+void RtsiClient::receive(const PackageType& target_type, std::function<void(int, const std::vector<uint8_t>&)> parser_func,
                          bool read_newest) {
     std::vector<uint8_t> buff(4069);
     // Receive RTSI package head
@@ -256,12 +255,12 @@ void RtsiClient::receive(const PackageType& target_type,
         uint16_t pkg_len;
         EndianUtils::unpack(buff.begin(), pkg_len);
         PackageType pkg_type = static_cast<PackageType>(buff[2]);
-        
+
         // Receive RTSI package body
-        if(receiveSocket(buff, (pkg_len - RTSI_HEADR_SIZE), RTSI_HEADR_SIZE) <= 0) {
+        if (receiveSocket(buff, (pkg_len - RTSI_HEADR_SIZE), RTSI_HEADR_SIZE) <= 0) {
             break;
         }
-        
+
         if (target_type == pkg_type) {
             parser_func(pkg_len, buff);
             if (!read_newest) {
