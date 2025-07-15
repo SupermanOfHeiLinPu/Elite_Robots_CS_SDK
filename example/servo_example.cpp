@@ -2,7 +2,8 @@
 #include <Elite/DataType.hpp>
 #include <Elite/EliteDriver.hpp>
 #include <Elite/Log.hpp>
-#include <Elite/RtsiClientInterface.hpp>
+#include <Elite/RtsiIOInterface.hpp>
+#include <Elite/RtUtils.hpp>
 
 #include <boost/program_options.hpp>
 #include <chrono>
@@ -11,15 +12,26 @@
 #include <memory>
 #include <thread>
 
+#if defined(__linux) || defined(linux) || defined(__linux__)
+#include <sys/mman.h>
+#endif
+
 using namespace ELITE;
 using namespace std::chrono;
 namespace po = boost::program_options;
 
 static std::unique_ptr<EliteDriver> s_driver;
-static std::unique_ptr<RtsiClientInterface> s_rtsi_client;
+static std::unique_ptr<RtsiIOInterface> s_rtsi_client;
 static std::unique_ptr<DashboardClient> s_dashboard;
 
 int main(int argc, char** argv) {
+#if defined(__linux) || defined(linux) || defined(__linux__)
+    mlockall(MCL_CURRENT | MCL_FUTURE);
+    pthread_t handle = pthread_self();
+    RT_UTILS::setThreadFiFoScheduling(handle, RT_UTILS::getThreadFiFoMaxPriority());
+    RT_UTILS::bindThreadToCpus(handle, 2);
+#endif
+
     EliteDriverConfig config;
 
     // Parser param
@@ -62,7 +74,7 @@ int main(int argc, char** argv) {
     config.script_file_path = "external_control.script";
     config.servoj_time = 0.004;
     s_driver = std::make_unique<EliteDriver>(config);
-    s_rtsi_client = std::make_unique<RtsiClientInterface>();
+    s_rtsi_client = std::make_unique<RtsiIOInterface>("output_recipe.txt", "input_recipe.txt", 250);
     s_dashboard = std::make_unique<DashboardClient>();
     ELITE_LOG_INFO("Connecting to the dashboard");
     if (!s_dashboard->connect(config.robot_ip)) {
@@ -72,23 +84,14 @@ int main(int argc, char** argv) {
     ELITE_LOG_INFO("Successfully connected to the dashboard");
 
     ELITE_LOG_INFO("Connecting to the RTSI");
-    s_rtsi_client->connect(config.robot_ip);
-    ELITE_LOG_INFO("Successfully connected to the RTSI");
-
-    if (!s_rtsi_client->negotiateProtocolVersion()) {
-        ELITE_LOG_FATAL("Failed to verify the RTSI version.");
+    if (!s_rtsi_client->connect(config.robot_ip)) {
+        ELITE_LOG_FATAL("Failed to connect to the RTSI.");
         return 1;
     }
-    ELITE_LOG_INFO("Successfully verify the RTSI version");
+    ELITE_LOG_INFO("Successfully connected to the RTSI");
 
     VersionInfo version = s_rtsi_client->getControllerVersion();
     ELITE_LOG_INFO("Controller version is %s", version.toString().c_str());
-
-    auto recipe = s_rtsi_client->setupOutputRecipe({"actual_joint_positions"});
-    if (!recipe) {
-        ELITE_LOG_FATAL("RTSI subscription failed.");
-        return 1;
-    }
 
     ELITE_LOG_INFO("Start powering on...");
     if (!s_dashboard->powerOn()) {
@@ -124,26 +127,15 @@ int main(int argc, char** argv) {
     }
     ELITE_LOG_INFO("External control script is running");
 
-    if (!s_rtsi_client->start()) {
-        ELITE_LOG_FATAL("Fail to start RTSI");
-        return 1;
-    }
-
     bool positive_rotation = false;
     bool negative_rotation = false;
     vector6d_t acutal_joint;
     vector6d_t target_joint;
     double increment = 0;
     bool first_point = true;
+    auto next = steady_clock::now();
     while (!(positive_rotation && negative_rotation)) {
-        if (!s_rtsi_client->receiveData(recipe)) {
-            ELITE_LOG_FATAL("Fail to receive RTSI recipe");
-            return 1;
-        }
-        if (!recipe->getValue("actual_joint_positions", acutal_joint)) {
-            ELITE_LOG_FATAL("RTSI recipe don't has actual_joint_positions variable");
-            return 1;
-        }
+        acutal_joint = s_rtsi_client->getActualJointPositions();
         // If first point init target_joint
         if (first_point) {
             target_joint = acutal_joint;
@@ -168,6 +160,8 @@ int main(int argc, char** argv) {
             ELITE_LOG_FATAL("Send servoj command to robot fail");
             return 1;
         }
+        next += 4ms;
+        std::this_thread::sleep_until(next);
     }
     ELITE_LOG_INFO("Motion finish");
     s_driver->stopControl();

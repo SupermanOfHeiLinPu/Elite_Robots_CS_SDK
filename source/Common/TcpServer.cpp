@@ -2,6 +2,7 @@
 #include <iostream>
 #include "EliteException.hpp"
 #include "Log.hpp"
+#include "Common/RtUtils.hpp"
 
 namespace ELITE {
 
@@ -141,6 +142,9 @@ void TcpServer::start() {
             ELITE_LOG_FATAL("TCP server thread error: %s", e.what());
         }
     }));
+
+    std::thread::native_handle_type thread_headle = s_server_thread_->native_handle();
+    RT_UTILS::setThreadFiFoScheduling(thread_headle, RT_UTILS::getThreadFiFoMaxPriority());
 }
 
 void TcpServer::stop() {

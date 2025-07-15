@@ -86,9 +86,7 @@ def targetWithinLimits(step_start, step_end, time):
     for i in range(6):
         velocity = norm(step_end[i] - step_start[i]) / time
         if velocity > JOINT_IGNORE_SPEED:
-            str_msg = "Velocity {}  required in joint {}  to go from {} to {}  within {} seconds \
-                       is exceeding the joint velocity limits. \
-                       Ignoring commands until a valid command is received.".format(velocity, i, step_start[i], step_end[i], time)
+            str_msg = "Velocity {}  required in joint {}  to go from {} to {}  within {} seconds is exceeding the joint velocity limits. Ignoring commands until a valid command is received.".format(velocity, i, step_start[i], step_end[i], time)
             if violation_popup_counter == 0:
                 # We want a popup when an invalid commant is sent. As long as we keep sending invalid
                 # commands, we do not want to repeat the popup.

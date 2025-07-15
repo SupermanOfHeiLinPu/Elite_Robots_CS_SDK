@@ -1,10 +1,12 @@
 #include "RtsiIOInterface.hpp"
 #include "EliteException.hpp"
 #include "Log.hpp"
+#include "RtUtils.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <cstring>
+#include <future>  
 
 using namespace ELITE;
 
@@ -53,12 +55,17 @@ bool RtsiIOInterface::connect(const std::string& ip) {
 
     // The recv thread must create after setup recipe, because 'output_recipe_' get in setup 
     is_recv_thread_alive_ = true;
+    std::promise<bool> thread_prom;
     recv_thread_.reset(new std::thread([&](){
+        thread_prom.set_value(true);
         recvLoop();
     }));
+    std::thread::native_handle_type handle = recv_thread_->native_handle();
+    RT_UTILS::setThreadFiFoScheduling(handle, RT_UTILS::getThreadFiFoMaxPriority());
+
     // Wait for recv_thread_ run
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    return true;
+    std::future<bool> thread_fut = thread_prom.get_future();
+    return thread_fut.get();
 }
 
 void RtsiIOInterface::disconnect() {

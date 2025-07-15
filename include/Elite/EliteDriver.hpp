@@ -52,13 +52,13 @@ class EliteDriverConfig {
     float servoj_time = 0.008;
 
     // Time [S], range [0.03,0.2] smoothens the trajectory with this lookahead time
-    float servoj_lookahead_time = 0.08;
+    float servoj_lookahead_time = 0.1;
 
     // Servo gain.
     int servoj_gain = 300;
 
     // Acceleration [rad/s^2]. The acceleration of stopj motion.
-    float stopj_acc = 4;
+    float stopj_acc = 8;
 
     EliteDriverConfig() = default;
     ~EliteDriverConfig() = default;
@@ -105,11 +105,11 @@ class EliteDriver {
      */
     [[deprecated(
         "Construct a EliteDriver object with an argument list is deprecated. Please use"
-        "EliteDriver(const EliteDriverConfig& config) instead. This function will be removed in June 2026.")]] ELITE_EXPORT
+        "EliteDriver(const EliteDriverConfig& config) instead. This function will be removed in June 2027.")]] ELITE_EXPORT
     EliteDriver(const std::string& robot_ip, const std::string& local_ip, const std::string& script_file,
                 bool headless_mode = false, int script_sender_port = 50002, int reverse_port = 50001, int trajectory_port = 50003,
-                int script_command_port = 50004, float servoj_time = 0.008, float servoj_lookahead_time = 0.08,
-                int servoj_gain = 300, float stopj_acc = 4.0);
+                int script_command_port = 50004, float servoj_time = 0.008, float servoj_lookahead_time = 0.1,
+                int servoj_gain = 300, float stopj_acc = 8.0);
 
     /**
      * @brief Destroy the Elite Driver object

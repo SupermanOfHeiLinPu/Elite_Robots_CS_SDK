@@ -37,9 +37,9 @@ EliteDriver::EliteDriver(
     int trajectory_port = 50003, 
     int script_command_port = 50004, 
     float servoj_time = 0.008,
-    float servoj_lookhead_time = 0.08, 
+    float servoj_lookhead_time = 0.1, 
     int servoj_gain = 300, 
-    float stopj_acc = 4.0);
+    float stopj_acc = 8.0);
 ```
 - ***Function***
 Creates an EliteDriver object and initializes the necessary connections for communication with the robot.
