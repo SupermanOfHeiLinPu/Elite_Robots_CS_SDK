@@ -53,6 +53,18 @@ bool RtsiIOInterface::connect(const std::string& ip) {
     is_recv_thread_alive_ = true;
     std::promise<bool> thread_prom;
     recv_thread_.reset(new std::thread([&]() {
+        // To avoid the situation where retrieving recipe data immediately after connecting returns null values, a data packet is
+        // received first.
+        try {
+            if (!receiveData(output_recipe_, false)) {
+                thread_prom.set_value(false);
+                return;
+            }
+        } catch (const std::exception& e) {
+            thread_prom.set_value(false);
+            return;
+        }
+
         thread_prom.set_value(true);
         recvLoop();
     }));

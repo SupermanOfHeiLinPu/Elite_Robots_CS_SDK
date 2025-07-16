@@ -30,6 +30,9 @@ static const std::string TRAJECTORY_DATA_SIZE_REPLACE = "{{TRAJECTORY_DATA_SIZE_
 static const std::string SCRIPT_COMMAND_DATA_SIZE_REPLACE = "{{SCRIPT_COMMAND_DATA_SIZE_REPLACE}}";
 static const std::string STOP_J_REPLACE = "{{STOP_J_REPLACE}}";
 static const std::string SERVOJ_TIME_REPLACE = "{{SERVOJ_TIME_REPLACE}}";
+static const std::string SERVOJ_QUEUE_PRE_RECV_SIZE_REPLACE = "{{SERVOJ_QUEUE_PRE_RECV_SIZE_REPLACE}}";
+static const std::string SERVOJ_QUEUE_PRE_RECV_TIMEOUT_REPLACE = "{{SERVOJ_QUEUE_PRE_RECV_TIMEOUT_REPLACE}}";
+
 
 class EliteDriver::Impl {
    public:
@@ -38,8 +41,7 @@ class EliteDriver::Impl {
     ~Impl() { TcpServer::stop(); }
 
     std::string readScriptFile(const std::string& file);
-    void scriptParamWrite(std::string& file_string, int reverse_port, int trajectory_port, int script_command_port,
-                          float servoj_time, float servoj_lookahead_time, int servoj_gain, float stopj_acc);
+    void scriptParamWrite(std::string& file_string, const EliteDriverConfig& config);
     std::string robot_script_;
     std::string robot_ip_;
     std::string local_ip_;
@@ -65,34 +67,33 @@ std::string EliteDriver::Impl::readScriptFile(const std::string& filepath) {
     return content;
 }
 
-void EliteDriver::Impl::scriptParamWrite(std::string& file_string, int reverse_port, int trajectory_port, int script_command_port,
-                                         float servoj_time, float servoj_lookahead_time, int servoj_gain, float stopj_acc) {
+void EliteDriver::Impl::scriptParamWrite(std::string& file_string, const EliteDriverConfig& config) {
     while (file_string.find(SERVER_IP_REPLACE) != std::string::npos) {
         file_string.replace(file_string.find(SERVER_IP_REPLACE), SERVER_IP_REPLACE.length(), local_ip_);
     }
 
     while (file_string.find(TRAJECTORY_SERVER_PORT_REPLACE) != std::string::npos) {
         file_string.replace(file_string.find(TRAJECTORY_SERVER_PORT_REPLACE), TRAJECTORY_SERVER_PORT_REPLACE.length(),
-                            std::to_string(trajectory_port));
+                            std::to_string(config.trajectory_port));
     }
 
     while (file_string.find(REVERSE_PORT_REPLACE) != std::string::npos) {
-        file_string.replace(file_string.find(REVERSE_PORT_REPLACE), REVERSE_PORT_REPLACE.length(), std::to_string(reverse_port));
+        file_string.replace(file_string.find(REVERSE_PORT_REPLACE), REVERSE_PORT_REPLACE.length(), std::to_string(config.reverse_port));
     }
 
     while (file_string.find(SCRIPT_COMMAND_PORT_REPLACE) != std::string::npos) {
         file_string.replace(file_string.find(SCRIPT_COMMAND_PORT_REPLACE), SCRIPT_COMMAND_PORT_REPLACE.length(),
-                            std::to_string(script_command_port));
+                            std::to_string(config.script_command_port));
     }
 
     std::ostringstream servoj_replace_str;
-    servoj_replace_str << "lookahead_time = " << servoj_lookahead_time << ", gain=" << servoj_gain;
+    servoj_replace_str << "lookahead_time = " << config.servoj_lookahead_time << ", gain=" << config.servoj_gain;
     while (file_string.find(SERVO_J_REPLACE) != std::string::npos) {
         file_string.replace(file_string.find(SERVO_J_REPLACE), SERVO_J_REPLACE.length(), servoj_replace_str.str());
     }
 
     while (file_string.find(SERVOJ_TIME_REPLACE) != std::string::npos) {
-        file_string.replace(file_string.find(SERVOJ_TIME_REPLACE), SERVOJ_TIME_REPLACE.length(), std::to_string(servoj_time));
+        file_string.replace(file_string.find(SERVOJ_TIME_REPLACE), SERVOJ_TIME_REPLACE.length(), std::to_string(config.servoj_time));
     }
 
     while (file_string.find(POS_ZOOM_RATIO_REPLACE) != std::string::npos) {
@@ -126,8 +127,23 @@ void EliteDriver::Impl::scriptParamWrite(std::string& file_string, int reverse_p
     }
 
     while (file_string.find(STOP_J_REPLACE) != std::string::npos) {
-        file_string.replace(file_string.find(STOP_J_REPLACE), STOP_J_REPLACE.length(), std::to_string(stopj_acc));
+        file_string.replace(file_string.find(STOP_J_REPLACE), STOP_J_REPLACE.length(), std::to_string(config.stopj_acc));
     }
+
+    while (file_string.find(SERVOJ_QUEUE_PRE_RECV_SIZE_REPLACE) != std::string::npos) {
+        file_string.replace(file_string.find(SERVOJ_QUEUE_PRE_RECV_SIZE_REPLACE), SERVOJ_QUEUE_PRE_RECV_SIZE_REPLACE.length(), std::to_string(config.servoj_queue_pre_recv_size));
+    }
+
+    float servoj_queue_pre_recv_timeout = 0;
+    if (config.servoj_queue_pre_recv_timeout <= 0) {
+       servoj_queue_pre_recv_timeout = config.servoj_queue_pre_recv_size * config.servoj_time;
+    } else {
+        servoj_queue_pre_recv_timeout = config.servoj_queue_pre_recv_timeout;
+    }
+    while (file_string.find(SERVOJ_QUEUE_PRE_RECV_TIMEOUT_REPLACE) != std::string::npos) {
+        file_string.replace(file_string.find(SERVOJ_QUEUE_PRE_RECV_TIMEOUT_REPLACE), SERVOJ_QUEUE_PRE_RECV_TIMEOUT_REPLACE.length(), std::to_string(servoj_queue_pre_recv_timeout));
+    }
+    
 }
 
 void EliteDriver::init(const EliteDriverConfig& config) {
@@ -149,8 +165,7 @@ void EliteDriver::init(const EliteDriverConfig& config) {
 
     // Generate external control script.
     std::string control_script = impl_->readScriptFile(config.script_file_path);
-    impl_->scriptParamWrite(control_script, config.reverse_port, config.trajectory_port, config.script_command_port,
-                            config.servoj_time, config.servoj_lookahead_time, config.servoj_gain, config.stopj_acc);
+    impl_->scriptParamWrite(control_script, config);
 
     impl_->reverse_server_ = std::make_unique<ReverseInterface>(config.reverse_port);
     ELITE_LOG_DEBUG("Created reverse interface");
@@ -205,6 +220,18 @@ EliteDriver::~EliteDriver() { impl_.reset(); }
 
 bool EliteDriver::writeServoj(const vector6d_t& pos, int timeout_ms) {
     return impl_->reverse_server_->writeJointCommand(pos, ControlMode::MODE_SERVOJ, timeout_ms);
+}
+
+bool EliteDriver::writePose(const vector6d_t& pose, int timeout_ms) {
+    return impl_->reverse_server_->writeJointCommand(pose, ControlMode::MODE_POSE, timeout_ms);
+}
+
+bool EliteDriver::writePoseQueue(const vector6d_t& pose, int timeout_ms) {
+    return impl_->reverse_server_->writeJointCommand(pose, ControlMode::MODE_POSE_QUEUE, timeout_ms);
+}
+
+bool EliteDriver::writeServojQueue(const vector6d_t& pos, int timeout_ms) {
+    return impl_->reverse_server_->writeJointCommand(pos, ControlMode::MODE_SERVOJ_QUEUE, timeout_ms);
 }
 
 bool EliteDriver::writeSpeedl(const vector6d_t& vel, int timeout_ms) {

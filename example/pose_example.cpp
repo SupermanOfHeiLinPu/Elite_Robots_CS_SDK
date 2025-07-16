@@ -1,9 +1,9 @@
-﻿#include <Elite/DashboardClient.hpp>
+#include <Elite/DashboardClient.hpp>
 #include <Elite/DataType.hpp>
 #include <Elite/EliteDriver.hpp>
 #include <Elite/Log.hpp>
-#include <Elite/RtsiIOInterface.hpp>
 #include <Elite/RtUtils.hpp>
+#include <Elite/RtsiIOInterface.hpp>
 
 #include <boost/program_options.hpp>
 #include <chrono>
@@ -37,16 +37,13 @@ int main(int argc, char** argv) {
     // Parser param
     po::options_description desc(
         "Usage:\n"
-        "\t./servo_example <--robot-ip=ip> [--local-ip=\"\"] [--use-headless-mode=true]\n"
+        "\t./pose_example <--robot-ip=ip> [--local-ip=\"\"] [--use-headless-mode=true]\n"
         "Parameters:");
-    desc.add_options()
-        ("help,h", "Print help message")
-        ("robot-ip", po::value<std::string>(&config.robot_ip)->required(),
-            "\tRequired. IP address of the robot.")
-        ("use-headless-mode", po::value<bool>(&config.headless_mode)->required()->implicit_value(true),
-            "\tRequired. Use headless mode.")
-        ("local-ip", po::value<std::string>(&config.local_ip)->default_value(""),
-            "\tOptional. IP address of the local network interface.");
+    desc.add_options()("help,h", "Print help message")("robot-ip", po::value<std::string>(&config.robot_ip)->required(),
+                                                       "\tRequired. IP address of the robot.")(
+        "use-headless-mode", po::value<bool>(&config.headless_mode)->required()->implicit_value(true),
+        "\tRequired. Use headless mode.")("local-ip", po::value<std::string>(&config.local_ip)->default_value(""),
+                                          "\tOptional. IP address of the local network interface.");
 
     po::variables_map vm;
     try {
@@ -127,37 +124,36 @@ int main(int argc, char** argv) {
     }
     ELITE_LOG_INFO("External control script is running");
 
-    bool positive_rotation = false;
-    bool negative_rotation = false;
-    vector6d_t acutal_joint;
-    vector6d_t target_joint;
+    bool up_move = false;
+    bool down_move = false;
+    vector6d_t start_pose = s_rtsi_client->getAcutalTCPPose();
+    vector6d_t acutal_pose = start_pose;
+    vector6d_t target_pose = acutal_pose;
     double increment = 0;
     bool first_point = true;
     auto next = steady_clock::now();
-    while (!(positive_rotation && negative_rotation)) {
-        acutal_joint = s_rtsi_client->getActualJointPositions();
-        // If first point init target_joint
-        if (first_point) {
-            target_joint = acutal_joint;
-            first_point = false;
-        }
 
-        // Set the increment of positive rotation and negative rotation
-        if (positive_rotation == false) {
-            increment = 0.0005;
-            if (acutal_joint[5] >= 3) {
-                positive_rotation = true;
+    ELITE_LOG_INFO("Start pose:[%lf, %lf, %lf, %lf, %lf, %lf]", start_pose[0], start_pose[1], start_pose[2], start_pose[3],
+                   start_pose[4], start_pose[5]);
+
+    while (!(up_move && down_move)) {
+        acutal_pose = s_rtsi_client->getAcutalTCPPose();
+        // Set the increment of
+        if (down_move == false) {
+            increment = -0.00004;
+            if ((acutal_pose[2] - start_pose[2]) <= -0.1) {
+                down_move = true;
             }
-        } else if (negative_rotation == false) {
-            increment = -0.0005;
-            if (acutal_joint[5] <= -3) {
-                negative_rotation = true;
+        } else if (up_move == false) {
+            increment = 0.00004;
+            if ((acutal_pose[2] - start_pose[2]) >= -0.01) {
+                up_move = true;
             }
         }
-        target_joint[5] += increment;
+        target_pose[2] += increment;
 
-        // Can also use the `writeServojQueue()` interface.
-        if (!s_driver->writeServoj(target_joint, 100)) {
+        // Can also use the `writePoseQueue()` interface.
+        if (!s_driver->writePose(target_pose, 100)) {
             ELITE_LOG_FATAL("Send servoj command to robot fail");
             return 1;
         }
