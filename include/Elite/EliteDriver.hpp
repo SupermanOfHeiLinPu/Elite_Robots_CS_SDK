@@ -131,8 +131,8 @@ class EliteDriver {
      *
      * @param pos points
      * @param timeout_ms The read timeout configuration for the reverse socket running in the external control script on the robot.
-     * @return true
-     * @return false
+     * @return true Joint angles sent successfully.
+     * @return false Fail to send joint angles.
      */
     ELITE_EXPORT bool writeServoj(const vector6d_t& pos, int timeout_ms);
 
@@ -142,18 +142,28 @@ class EliteDriver {
      * 
      * @param pos points
      * @param timeout_ms The read timeout configuration for the reverse socket running in the external control script on the robot.
-     * @return true
-     * @return false
+     * @return true Joint angles sent successfully.
+     * @return false Fail to send joint angles.
      */
     ELITE_EXPORT bool writeServojQueue(const vector6d_t& pos, int timeout_ms);
+
+    /**
+     * @brief Cartesian pose control. 
+     * 
+     * @param pose  Cartesian pose ([x, y, z, rx, ry, rz])
+     * @param timeout_ms The read timeout configuration for the reverse socket running in the external control script on the robot.
+     * @return true Coordinates sent successfully.
+     * @return false Failed to send coordinates.
+     */
+    ELITE_EXPORT bool writeServoPose(const vector6d_t& pose, int timeout_ms);
 
     /**
      * @brief Write speedl() velocity to robot
      *
      * @param vel line velocity ([x, y, z, rx, ry, rz])
      * @param timeout_ms The read timeout configuration for the reverse socket running in the external control script on the robot.
-     * @return true
-     * @return false
+     * @return true Linear velocity sent successfully.
+     * @return false Fail to send linear velocity.
      */
     ELITE_EXPORT bool writeSpeedl(const vector6d_t& vel, int timeout_ms);
 
@@ -162,8 +172,8 @@ class EliteDriver {
      *
      * @param vel joint velocity
      * @param timeout_ms The read timeout configuration for the reverse socket running in the external control script on the robot.
-     * @return true
-     * @return false
+     * @return true Joint velocity sent successfully.
+     * @return false Fail to send joint velocity.
      */
     ELITE_EXPORT bool writeSpeedj(const vector6d_t& vel, int timeout_ms);
 
@@ -184,8 +194,8 @@ class EliteDriver {
      * @param time Time for the robot to reach this point
      * @param blend_radius The radius to be used for blending between control points
      * @param cartesian True, if the point sent is cartesian, false if joint-based
-     * @return true
-     * @return false
+     * @return true Trajectory point sent successfully.
+     * @return false Fail to send trajectory point.
      */
     ELITE_EXPORT bool writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_radius, bool cartesian);
 
@@ -195,8 +205,8 @@ class EliteDriver {
      * @param action The action to be taken, such as starting a new trajectory
      * @param point_number The number of points of a new trajectory to be sent
      * @param timeout_ms The read timeout configuration for the reverse socket running in the external control script on the robot.
-     * @return true
-     * @return false
+     * @return true Trajectory action sent successfully.
+     * @return false Fail to send trajectory action.
      */
     ELITE_EXPORT bool writeTrajectoryControlAction(TrajectoryControlAction action, const int point_number, int timeout_ms);
 
@@ -206,8 +216,8 @@ class EliteDriver {
      *  When robot recv idle signal, robot will stop motion.
      *
      * @param timeout_ms The read timeout configuration for the reverse socket running in the external control script on the robot.
-     * @return true
-     * @return false
+     * @return true Idle signal sent successfully.
+     * @return false Fail to send idle signal.
      */
     ELITE_EXPORT bool writeIdle(int timeout_ms);
 
@@ -216,8 +226,8 @@ class EliteDriver {
      *
      * @param action Freedrive mode action assigned to this command, such as starting or stopping freedrive.
      * @param timeout_ms The read timeout configuration for the reverse socket running in the external control script on the robot.
-     * @return true success
-     * @return false fail
+     * @return true Freedriver action sent successfully.
+     * @return false Fail to send freedriver action.
      */
     ELITE_EXPORT bool writeFreedrive(FreedriveAction action, int timeout_ms);
 

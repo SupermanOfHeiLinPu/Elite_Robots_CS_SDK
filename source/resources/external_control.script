@@ -214,10 +214,10 @@ def getServoPoints():
             extrapolate_count = 0
             return None
 
-def servoThread():
+def servoThread(run_mode):
     global control_mode
     textmsg("ExternalControl: Starting servo thread")
-    while control_mode == MODE_SERVOJ:
+    while control_mode == run_mode:
         joints = getServoPoints()
         if joints is None:
             sync()
@@ -371,17 +371,25 @@ while control_mode > MODE_STOPPED:
                 move_thread_handle = start_thread(speedjThread, ())
             elif control_mode == MODE_SERVOJ:
                 cmd_servo_joints = get_actual_joint_positions()
-                move_thread_handle = start_thread(servoThread, ())
+                move_thread_handle = start_thread(servoThread, (MODE_SERVOJ,))
             elif control_mode == MODE_SERVOJ_QUEUE:
                 cmd_servo_joints_queue = Queue()
                 cmd_servo_joints_queue.put(get_actual_joint_positions())
                 move_thread_handle = start_thread(servoQueueThread, ())
+            elif control_mode == MODE_POSE:
+                cmd_servo_joints = get_actual_joint_positions()
+                move_thread_handle = start_thread(servoThread, (MODE_POSE,))
             
         # Update the motion commands with new parameters
         if control_mode == MODE_SERVOJ:
             joints = [params_mult[2]/ POS_ZOOM_RATIO, params_mult[3]/ POS_ZOOM_RATIO, params_mult[4]/ POS_ZOOM_RATIO, params_mult[5]/ POS_ZOOM_RATIO, params_mult[6]/ POS_ZOOM_RATIO, params_mult[7]/ POS_ZOOM_RATIO]
             with SERVO_MUTEX:
                 setServoSetpoint(joints)
+        elif control_mode == MODE_POSE:
+            pose = [params_mult[2]/ POS_ZOOM_RATIO, params_mult[3]/ POS_ZOOM_RATIO, params_mult[4]/ POS_ZOOM_RATIO, params_mult[5]/ POS_ZOOM_RATIO, params_mult[6]/ POS_ZOOM_RATIO, params_mult[7]/ POS_ZOOM_RATIO]
+            with SERVO_MUTEX:
+                textmsg(pose)
+                setServoSetpoint(get_inverse_kin(pose, cmd_servo_joints))
         elif control_mode == MODE_SPEEDL:
             setSpeedl([params_mult[2] / POS_ZOOM_RATIO, params_mult[3] / POS_ZOOM_RATIO, params_mult[4] / POS_ZOOM_RATIO, params_mult[5] / POS_ZOOM_RATIO, params_mult[6] / POS_ZOOM_RATIO, params_mult[7] / POS_ZOOM_RATIO])
         elif control_mode == MODE_SPEEDJ:
