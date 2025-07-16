@@ -156,6 +156,7 @@ int main(int argc, char** argv) {
         }
         target_joint[5] += increment;
 
+        // Can also use the `writeServojQueue()` interface.
         if (!s_driver->writeServoj(target_joint, 100)) {
             ELITE_LOG_FATAL("Send servoj command to robot fail");
             return 1;

@@ -19,6 +19,12 @@ class Queue(queue.Queue):
         with self.mutex:
             self.size_condition.notify_all()
             return item
+    
+    def peekTail(self):
+        with self.mutex:
+            if self._qsize() == 0:
+                return None
+            return self.queue[-1]
 
     def waitUntilSize(self, target_size, timeout = None):
         start_time = time.time()
@@ -61,6 +67,7 @@ MODE_POSE = 5
 MODE_FREEDRIVE = 6
 MODE_TOOL_IN_CONTACT = 7
 MODE_SERVOJ_QUEUE = 8
+MODE_POSE_QUEUE = 9
 
 STOPJ_ACCELERATION = {{STOP_J_REPLACE}}
 
@@ -232,14 +239,14 @@ def setServoQueuePoint(joints):
     global cmd_servo_joints_queue
     cmd_servo_joints_queue.put(joints)
 
-def servoQueueThread():
+def servoQueueThread(run_mode):
     global control_mode
     global cmd_servo_joints_queue
     textmsg("ExternalControl: Starting servo queue thread")
     # Wait for the queue to have enough storage before starting the movement
     # Since the current position will be added to the queue as the first point before the thread starts, we need to add 1 here.
     cmd_servo_joints_queue.waitUntilSize(SERVOJ_QUEUE_PRE_RECV_SIZE + 1, SERVOJ_QUEUE_PRE_RECV_TIMEOUT + SERVOJ_TIME)
-    while control_mode == MODE_SERVOJ_QUEUE:
+    while control_mode == run_mode:
         joints = cmd_servo_joints_queue.get()
         servoj(joints, t = SERVOJ_TIME, {{SERVO_J_REPLACE}})
     textmsg("ExternalControl: servo thread queue ended")
@@ -375,10 +382,14 @@ while control_mode > MODE_STOPPED:
             elif control_mode == MODE_SERVOJ_QUEUE:
                 cmd_servo_joints_queue = Queue()
                 cmd_servo_joints_queue.put(get_actual_joint_positions())
-                move_thread_handle = start_thread(servoQueueThread, ())
+                move_thread_handle = start_thread(servoQueueThread, (MODE_SERVOJ_QUEUE,))
             elif control_mode == MODE_POSE:
                 cmd_servo_joints = get_actual_joint_positions()
                 move_thread_handle = start_thread(servoThread, (MODE_POSE,))
+            elif control_mode == MODE_POSE_QUEUE:
+                cmd_servo_joints_queue = Queue()
+                cmd_servo_joints_queue.put(get_actual_joint_positions())
+                move_thread_handle = start_thread(servoQueueThread, (MODE_POSE_QUEUE,))
             
         # Update the motion commands with new parameters
         if control_mode == MODE_SERVOJ:
@@ -420,6 +431,13 @@ while control_mode > MODE_STOPPED:
         elif control_mode == MODE_SERVOJ_QUEUE:
             joints = [params_mult[2]/ POS_ZOOM_RATIO, params_mult[3]/ POS_ZOOM_RATIO, params_mult[4]/ POS_ZOOM_RATIO, params_mult[5]/ POS_ZOOM_RATIO, params_mult[6]/ POS_ZOOM_RATIO, params_mult[7]/ POS_ZOOM_RATIO]
             setServoQueuePoint(joints)
+        elif control_mode == MODE_POSE_QUEUE:
+            pose = [params_mult[2]/ POS_ZOOM_RATIO, params_mult[3]/ POS_ZOOM_RATIO, params_mult[4]/ POS_ZOOM_RATIO, params_mult[5]/ POS_ZOOM_RATIO, params_mult[6]/ POS_ZOOM_RATIO, params_mult[7]/ POS_ZOOM_RATIO]
+            tail_joint = cmd_servo_joints_queue.peekTail()
+            if tail_joint is None:
+                tail_joint = get_actual_joint_positions()
+            setServoQueuePoint(get_inverse_kin(pose, tail_joint))
+
     else:
         textmsg("Socket timed out waiting for command on reverse_socket. The script will exit now.")
         control_mode = MODE_STOPPED

@@ -152,7 +152,8 @@ int main(int argc, char** argv) {
         }
         target_pose[2] += increment;
 
-        if (!s_driver->writeServoPose(target_pose, 100)) {
+        // Can also use the `writePoseQueue()` interface.
+        if (!s_driver->writePose(target_pose, 100)) {
             ELITE_LOG_FATAL("Send servoj command to robot fail");
             return 1;
         }

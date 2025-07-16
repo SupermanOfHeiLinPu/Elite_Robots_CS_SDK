@@ -60,11 +60,11 @@ class EliteDriverConfig {
     // Acceleration [rad/s^2]. The acceleration of stopj motion.
     float stopj_acc = 8;
 
-    // When using the `writeServojQueue()` and `writeServojPoseQueue` interfaces, the number of points pre-saved in the queue before
+    // When using the `writeServojQueue()` and `writePoseQueue()` interfaces, the number of points pre-saved in the queue before
     // starting the movement.
     int servoj_queue_pre_recv_size = 10;
 
-    // When using the `writeServojQueue()` and `writeServojPoseQueue` interfaces, the timeout duration for the queue waiting for
+    // When using the `writeServojQueue()` and `writePoseQueue()` interfaces, the timeout duration for the queue waiting for
     // pre-stored points. If the value is less than or equal to 0, the timeout duration will be calculated based on
     // `servoj_queue_pre_recv_size * servoj_time`.
     float servoj_queue_pre_recv_timeout = -1;
@@ -155,7 +155,18 @@ class EliteDriver {
      * @return true Coordinates sent successfully.
      * @return false Failed to send coordinates.
      */
-    ELITE_EXPORT bool writeServoPose(const vector6d_t& pose, int timeout_ms);
+    ELITE_EXPORT bool writePose(const vector6d_t& pose, int timeout_ms);
+
+    /**
+     * @brief Cartesian pose control. 
+     *       When calling this interface, a specified number of points will first be saved in a queue before the movement starts.
+     * 
+     * @param pose points
+     * @param timeout_ms The read timeout configuration for the reverse socket running in the external control script on the robot.
+     * @return true Coordinates sent successfully.
+     * @return false Failed to send coordinates.
+     */
+    ELITE_EXPORT bool writePoseQueue(const vector6d_t& pose, int timeout_ms);
 
     /**
      * @brief Write speedl() velocity to robot
