@@ -89,6 +89,22 @@ bool writeServoj(const vector6d_t& pos, int timeout_ms)
 
 ---
 
+### ***控制位姿***
+```cpp
+bool writePose(const vector6d_t& pose, int timeout_ms)
+```
+- ***功能***
+    向机器人发送笛卡尔空间坐标。
+
+- ***参数***
+    - pose：目标点位
+
+    - timeout_ms：设置机器人读取下一条指令的超时时间，小于等于0时会无限等待。
+
+- ***返回值***：指令发送成功返回 true，失败返回 false。
+
+---
+
 ### ***控制末端速度***
 ```cpp
 bool writeSpeedl(const vector6d_t& vel, int timeout_ms)
@@ -133,6 +149,40 @@ bool writeFreedrive(FreedriveAction action, int timeout_ms)
     - timeout_ms：设置机器人读取下一条指令的超时时间，小于等于0时会无限等待。
 
 - ***注意***：写入`START`动作之后，需要在超时时间内写入下一条指令，可以写入`NOOP`。
+
+---
+
+### ***控制关节位置-队列版本***
+```cpp
+bool writeServojQueue(const vector6d_t& pos, int timeout_ms)
+```
+- ***功能***
+    向机器人发送伺服运动的指令。
+    在开始运动前，机器人会先把接收到的点位添加到队列中，在接收够指定的点位数量后，会逐个从队列中取出点位并使用。 
+
+- ***参数***
+    - pos：目标点位
+
+    - timeout_ms：设置机器人读取下一条指令的超时时间，小于等于0时会无限等待。
+
+- ***返回值***：指令发送成功返回 true，失败返回 false。
+
+---
+
+### ***控制位姿-队列版本***
+```cpp
+bool writePoseQueue(const vector6d_t& pose, int timeout_ms)
+```
+- ***功能***
+    向机器人发送笛卡尔空间坐标。
+    在开始运动前，机器人会先把接收到的点位添加到队列中，在接收够指定的点位数量后，会逐个从队列中取出点位并使用。 
+
+- ***参数***
+    - pose：目标点位
+
+    - timeout_ms：设置机器人读取下一条指令的超时时间，小于等于0时会无限等待。
+
+- ***返回值***：指令发送成功返回 true，失败返回 false。
 
 ---
 
