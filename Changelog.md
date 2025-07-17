@@ -9,8 +9,10 @@
   - `writeFreedrive()`: New interface for Freedrive control.
   - `registerRobotExceptionCallback()`: New interface for registering robot exception callbacks.
   - `EliteDriver()`: Constructor updated with new `stopj_acc` parameter (acceleration for stopping motion).
+  - `writeServoj()`: Added `cartesian` and `queue_mode` parameters.
 - `EliteDriverConfig`: New configuration class for more flexible initialization.
   - Local IP is no longer required when constructing via `EliteDriver(const EliteDriverConfig& config)`.
+  - Added `servoj_queue_pre_recv_size` and `servoj_queue_pre_recv_timeout` parameters.
 - `PrimaryPortInterface`:
   - `getLocalIP()`: New interface for retrieving the local IP address.
   - `registerRobotExceptionCallback()`: New interface for registering robot exception callbacks.

@@ -9,8 +9,10 @@
   - `writeFreedrive()`：新增 Freedrive 控制接口。
   - `registerRobotExceptionCallback()`： 新增机器人异常回调注册接口
   - `EliteDriver()`: 构造函数新增`stopj_acc`参数（停止运动的加速度）。
+  - `writeServoj()`: 新增`cartesian`和`queue_mode`参数。
 - `EliteDriverConfig`：新增构造配置类，支持更灵活的初始化。
   - 通过 `EliteDriver(const EliteDriverConfig& config)` 构造时，不再强制要求本地 IP。
+  - 新增`servoj_queue_pre_recv_size`与`servoj_queue_pre_recv_timeout`参数。
 - `PrimaryPortInterface`：
   - `getLocalIP()`：新增获取本地 IP 的接口。
   - `registerRobotExceptionCallback()`： 新增机器人异常回调注册接口
