@@ -218,20 +218,21 @@ EliteDriver::EliteDriver(const std::string& robot_ip, const std::string& local_i
 
 EliteDriver::~EliteDriver() { impl_.reset(); }
 
-bool EliteDriver::writeServoj(const vector6d_t& pos, int timeout_ms) {
-    return impl_->reverse_server_->writeJointCommand(pos, ControlMode::MODE_SERVOJ, timeout_ms);
-}
-
-bool EliteDriver::writePose(const vector6d_t& pose, int timeout_ms) {
-    return impl_->reverse_server_->writeJointCommand(pose, ControlMode::MODE_POSE, timeout_ms);
-}
-
-bool EliteDriver::writePoseQueue(const vector6d_t& pose, int timeout_ms) {
-    return impl_->reverse_server_->writeJointCommand(pose, ControlMode::MODE_POSE_QUEUE, timeout_ms);
-}
-
-bool EliteDriver::writeServojQueue(const vector6d_t& pos, int timeout_ms) {
-    return impl_->reverse_server_->writeJointCommand(pos, ControlMode::MODE_SERVOJ_QUEUE, timeout_ms);
+bool EliteDriver::writeServoj(const vector6d_t& pos, int timeout_ms, bool cartesian, bool queue_mode) {
+    if (cartesian) {
+        if (queue_mode) {
+            return impl_->reverse_server_->writeJointCommand(pos, ControlMode::MODE_POSE_QUEUE, timeout_ms);
+        } else {
+            return impl_->reverse_server_->writeJointCommand(pos, ControlMode::MODE_POSE, timeout_ms);
+        }
+    } else {
+        if (queue_mode) {
+            return impl_->reverse_server_->writeJointCommand(pos, ControlMode::MODE_SERVOJ_QUEUE, timeout_ms);
+        } else {
+            return impl_->reverse_server_->writeJointCommand(pos, ControlMode::MODE_SERVOJ, timeout_ms);
+        }
+    }
+     
 }
 
 bool EliteDriver::writeSpeedl(const vector6d_t& vel, int timeout_ms) {

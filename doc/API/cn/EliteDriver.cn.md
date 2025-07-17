@@ -75,7 +75,7 @@ EliteDriver::EliteDriver(
 
 ### ***控制关节位置***
 ```cpp
-bool writeServoj(const vector6d_t& pos, int timeout_ms)
+bool writeServoj(const vector6d_t& pos, int timeout_ms, bool cartesian = false, bool queue_mode = false)
 ```
 - ***功能***
     向机器人发送伺服运动的指令。
@@ -85,21 +85,10 @@ bool writeServoj(const vector6d_t& pos, int timeout_ms)
 
     - timeout_ms：设置机器人读取下一条指令的超时时间，小于等于0时会无限等待。
 
-- ***返回值***：指令发送成功返回 true，失败返回 false。
+    - cartesian：如果发送的点是笛卡尔的，则为true，如果是基于关节的，则为false。
 
----
-
-### ***控制位姿***
-```cpp
-bool writePose(const vector6d_t& pose, int timeout_ms)
-```
-- ***功能***
-    向机器人发送笛卡尔空间坐标。
-
-- ***参数***
-    - pose：目标点位
-
-    - timeout_ms：设置机器人读取下一条指令的超时时间，小于等于0时会无限等待。
+    - queue_mode：如果使用队列模式，为true，否则为false。
+        > 队列模式：此模式下，会把控制指令放到一个队列中然后依次执行，并且在开始运动前会预存指定数量的指令。注意，此行为会造成一定的延迟。
 
 - ***返回值***：指令发送成功返回 true，失败返回 false。
 
@@ -152,40 +141,6 @@ bool writeFreedrive(FreedriveAction action, int timeout_ms)
 
 ---
 
-### ***控制关节位置-队列版本***
-```cpp
-bool writeServojQueue(const vector6d_t& pos, int timeout_ms)
-```
-- ***功能***
-    向机器人发送伺服运动的指令。
-    在开始运动前，机器人会先把接收到的点位添加到队列中，在接收够指定的点位数量后，会逐个从队列中取出点位并使用。 
-
-- ***参数***
-    - pos：目标点位
-
-    - timeout_ms：设置机器人读取下一条指令的超时时间，小于等于0时会无限等待。
-
-- ***返回值***：指令发送成功返回 true，失败返回 false。
-
----
-
-### ***控制位姿-队列版本***
-```cpp
-bool writePoseQueue(const vector6d_t& pose, int timeout_ms)
-```
-- ***功能***
-    向机器人发送笛卡尔空间坐标。
-    在开始运动前，机器人会先把接收到的点位添加到队列中，在接收够指定的点位数量后，会逐个从队列中取出点位并使用。 
-
-- ***参数***
-    - pose：目标点位
-
-    - timeout_ms：设置机器人读取下一条指令的超时时间，小于等于0时会无限等待。
-
-- ***返回值***：指令发送成功返回 true，失败返回 false。
-
----
-
 ## 轨迹运动
 
 ### ***设置轨迹运动结果回调***
@@ -217,7 +172,7 @@ bool writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_r
     
     - blend_radius：两个路点的转接半径
 
-    - cartesian：如果发送的点是笛卡尔的，则为True，如果是基于关节的，则为false
+    - cartesian：如果发送的点是笛卡尔的，则为true，如果是基于关节的，则为false
 
 - ***返回值***：指令发送成功返回 true，失败返回 false。
 

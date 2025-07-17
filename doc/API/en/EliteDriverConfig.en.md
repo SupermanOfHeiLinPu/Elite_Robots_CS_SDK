@@ -113,8 +113,8 @@ This class serves as the configuration input when constructing the `EliteDriver`
 
 - servoj_queue_pre_recv_size
     - Type: `int`
-    - Description: When using the `writeServojQueue()` and `writeServojPoseQueue` interfaces, the number of points pre-saved in the queue before starting the movement.
+    - Description: When using the `writeServoj()` interface with the `queue_mode` parameter set to `true`, this refers to the number of points pre-stored in the queue before motion starts. (For queue mode details, refer to the description of `queue_mode` in the [writeServoj()](./EliteDriver.en.md#control-joint-position) interface.)
 
 - servoj_queue_pre_recv_timeout
     - Type: `float`
-    - Description: When using the `writeServojQueue()` and `writeServojPoseQueue` interfaces, the timeout duration for the queue waiting for pre-stored points. If the value is less than or equal to 0, the timeout duration will be calculated based on `servoj_queue_pre_recv_size * servoj_time`.
+    - Description:When using the `writeServoj()` interface with the `queue_mode` parameter set to `true`, the timeout duration for the queue waiting for pre-stored points. If the value is less than or equal to 0, the timeout duration will be calculated based on `servoj_queue_pre_recv_size * servoj_time`.(For queue mode details, refer to the description of `queue_mode` in the [writeServoj()](./EliteDriver.en.md#control-joint-position) interface.)

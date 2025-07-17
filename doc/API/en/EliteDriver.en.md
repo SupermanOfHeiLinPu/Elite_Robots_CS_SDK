@@ -72,28 +72,19 @@ Releases resources, and the socket will be closed during destruction.
 
 ### ***Control Joint Position***
 ```cpp
-bool writeServoj(const vector6d_t& pos, int timeout_ms)
+bool writeServoj(const vector6d_t& pos, int timeout_ms, bool cartesian = false, bool queue_mode = false)
 ```
 - ***Function***
 Sends a servo motion instruction to the robot.
 - ***Parameters***
     - pos: The target position.
+
     - timeout_ms: Sets the timeout for the robot to read the next instruction. If it is less than or equal to 0, it will wait indefinitely.
-- ***Return Value***: Returns true if the instruction is sent successfully, and false if it fails.
 
----
-
-### ***Control Pose***
-```cpp
-bool writePose(const vector6d_t& pose, int timeout_ms)
-```
-- ***Function***
-    Sends Cartesian coordinates to the robot.
-
-- ***Parameters***
-    - `pose`: Target position
-    - `timeout_ms`: Timeout (ms) for the robot to read the next command. If ≤ 0, it will wait indefinitely.
-
+    - `cartesian`: Set to `true` if sending Cartesian coordinates, `false` for joint-based positions.  
+    
+    - `queue_mode`: Set to `true` to enable queue mode, `false` otherwise.  
+        > **Queue Mode**: In this mode, control commands are queued and executed sequentially. A specified number of commands are pre-stored before motion starts. Note that this introduces additional latency.
 - ***Return Value***: Returns true if the instruction is sent successfully, and false if it fails.
 
 ---
@@ -136,38 +127,6 @@ Send commands for Freedrive mode, such as enabling and stopping Freedrive.
     - timeout_ms: Set the timeout for the robot to read the next instruction. If it is less than or equal to 0, it will wait indefinitely.
 
 - *** Note***: After writing the 'START' action, the next instruction needs to be written within the timeout period, which can be written as' NOOP '.
-
----
-
-### ***Control Joint Position - Queue Version***
-```cpp
-bool writeServojQueue(const vector6d_t& pos, int timeout_ms)
-```
-- ***Function***
-    Sends servo motion commands to the robot.
-    Before starting the movement, the robot will first add the received positions to a queue. After receiving the specified number of positions, it will execute them sequentially from the queue.
-
-- ***Parameters***
-    - `pos`: Target joint positions
-    - `timeout_ms`: Timeout (ms) for the robot to read the next command. If ≤ 0, it will wait indefinitely.
-
-- ***Return Value***: Returns `true` if the command is sent successfully, `false` otherwise.
-
----
-
-### ***Control Pose - Queue Version***
-```cpp
-bool writePoseQueue(const vector6d_t& pose, int timeout_ms)
-```
-- ***Function***
-    Sends Cartesian coordinates to the robot.
-    Before starting the movement, the robot will first add the received poses to a queue. After receiving the specified number of poses, it will execute them sequentially from the queue.
-
-- ***Parameters***
-    - `pose`: Target Cartesian pose
-    - `timeout_ms`: Timeout (ms) for the robot to read the next command. If ≤ 0, it will wait indefinitely.
-
-- ***Return Value***: Returns `true` if the command is sent successfully, `false` otherwise.
 
 ---
 

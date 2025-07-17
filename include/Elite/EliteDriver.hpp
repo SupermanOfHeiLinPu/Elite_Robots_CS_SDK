@@ -60,13 +60,14 @@ class EliteDriverConfig {
     // Acceleration [rad/s^2]. The acceleration of stopj motion.
     float stopj_acc = 8;
 
-    // When using the `writeServojQueue()` and `writePoseQueue()` interfaces, the number of points pre-saved in the queue before
-    // starting the movement.
+    // When using the `writeServoj()` and the `queue_mode` parameter is true, the timeout duration for the queue waiting for. (For
+    // detailed descriptions of the queue mode, please refer to the description of this interface in the API documentation.)
     int servoj_queue_pre_recv_size = 10;
 
-    // When using the `writeServojQueue()` and `writePoseQueue()` interfaces, the timeout duration for the queue waiting for
+    // When using the `writeServoj()` and the `queue_mode` parameter is true, the timeout duration for the queue waiting for
     // pre-stored points. If the value is less than or equal to 0, the timeout duration will be calculated based on
-    // `servoj_queue_pre_recv_size * servoj_time`.
+    // `servoj_queue_pre_recv_size * servoj_time`.(For detailed descriptions of the queue mode, please refer to the description of
+    // this interface in the API documentation.)
     float servoj_queue_pre_recv_timeout = -1;
 
     EliteDriverConfig() = default;
@@ -131,42 +132,13 @@ class EliteDriver {
      *
      * @param pos points
      * @param timeout_ms The read timeout configuration for the reverse socket running in the external control script on the robot.
+     * @param cartesian True if the point sent is cartesian, false if joint-based
+     * @param queue_mode True if use queue mode, false if normal mode. (For detailed descriptions of the queue mode, please refer to
+     * the description of this interface in the API documentation.)
      * @return true Joint angles sent successfully.
      * @return false Fail to send joint angles.
      */
-    ELITE_EXPORT bool writeServoj(const vector6d_t& pos, int timeout_ms);
-
-    /**
-     * @brief Write servoj() points to robot. 
-     *      When calling this interface, a specified number of points will first be saved in a queue before the movement starts.
-     * 
-     * @param pos points
-     * @param timeout_ms The read timeout configuration for the reverse socket running in the external control script on the robot.
-     * @return true Joint angles sent successfully.
-     * @return false Fail to send joint angles.
-     */
-    ELITE_EXPORT bool writeServojQueue(const vector6d_t& pos, int timeout_ms);
-
-    /**
-     * @brief Cartesian pose control. 
-     * 
-     * @param pose  Cartesian pose ([x, y, z, rx, ry, rz])
-     * @param timeout_ms The read timeout configuration for the reverse socket running in the external control script on the robot.
-     * @return true Coordinates sent successfully.
-     * @return false Failed to send coordinates.
-     */
-    ELITE_EXPORT bool writePose(const vector6d_t& pose, int timeout_ms);
-
-    /**
-     * @brief Cartesian pose control. 
-     *       When calling this interface, a specified number of points will first be saved in a queue before the movement starts.
-     * 
-     * @param pose points
-     * @param timeout_ms The read timeout configuration for the reverse socket running in the external control script on the robot.
-     * @return true Coordinates sent successfully.
-     * @return false Failed to send coordinates.
-     */
-    ELITE_EXPORT bool writePoseQueue(const vector6d_t& pose, int timeout_ms);
+    ELITE_EXPORT bool writeServoj(const vector6d_t& pos, int timeout_ms, bool cartesian = false, bool queue_mode = false);
 
     /**
      * @brief Write speedl() velocity to robot
