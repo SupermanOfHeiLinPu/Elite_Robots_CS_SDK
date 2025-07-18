@@ -36,6 +36,7 @@
   - 减少 `RtsiClientInterface` 的 Socket 数据拷贝次数。
   - 简化 `RtsiIOInterface.hpp` 的后台线程循环逻辑。
   - `RtsiIOInterface::getRecipeValue()` 与 `RtsiIOInterface::setInputRecipeValue()`接口从private变为public，并且添加了常用的显式实例化声明。
+  - `RtsiIOInterface`改为保护继承。
 - 调整了项目Readme的结构。
 - 增强`external_control.script`的线程安全性
 - 使用`boost::program_options`来解析示例程序的输入参数。

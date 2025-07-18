@@ -20,6 +20,7 @@
   - `RobotException`: Base class.
   - `RobotError`: Robot errors.
   - `RobotRuntimeException`: Runtime errors in robot scripts.
+  - Changed `RtsiIOInterface` to protected inheritance.
 - Complete API documentation (Markdown) added.
 - Compilation guide documentation added.
 
