@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     // Parser param
     po::options_description desc(
         "Usage:\n"
-        "\t./pose_example <--robot-ip=ip> [--local-ip=\"\"] [--use-headless-mode=true]\n"
+        "\t./servoj_cartesian_example <--robot-ip=ip> [--local-ip=\"\"] [--use-headless-mode=true]\n"
         "Parameters:");
     desc.add_options()("help,h", "Print help message")("robot-ip", po::value<std::string>(&config.robot_ip)->required(),
                                                        "\tRequired. IP address of the robot.")(

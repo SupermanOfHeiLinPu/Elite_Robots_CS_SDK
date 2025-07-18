@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     // Parser param
     po::options_description desc(
         "Usage:\n"
-        "\t./servo_example <--robot-ip=ip> [--local-ip=\"\"] [--use-headless-mode=true]\n"
+        "\t./servoj_example <--robot-ip=ip> [--local-ip=\"\"] [--use-headless-mode=true]\n"
         "Parameters:");
     desc.add_options()
         ("help,h", "Print help message")
