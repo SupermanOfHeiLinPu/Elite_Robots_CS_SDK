@@ -5,7 +5,10 @@
 
 
 ## Requirements
- * **CS Controller* (机器人的控制软件) version >=**2.13.4**(for CS-Series). 如果机器人的控制软件版本低于此，建议升级之。  
+ * ***CS Controller*** (robot control software)  
+    - For version **2.13.x**, require **≥ 2.13.4** (CS-Series).  
+    - For version **2.14.x**, require **≥ 2.14.2**.  
+    - If your robot's control software version is lower than these, an upgrade is recommended.
 
 ## Build & Install
 如果你的操作系统是 Ubuntu20.04、Ubuntu22.04、Ubuntu24.04，那么可以用下面的指令直接安装elite-cs-series-sdk:
