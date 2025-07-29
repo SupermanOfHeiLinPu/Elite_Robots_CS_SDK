@@ -16,7 +16,7 @@ sudo apt update
 
 sudo apt install libboost-all-dev
 
-sudo apt install libssh-dev # 可选，建议安装
+sudo apt install libssh-dev # 可选，建议安装，建议版本为0.9.6
 
 # sudo apt install sshpass #如果没安装 libssh-dev 则需要安装此指令
 ```

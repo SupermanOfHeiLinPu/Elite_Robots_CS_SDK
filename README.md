@@ -10,7 +10,6 @@ This SDK is a C++ library for Elibot Robots' CS series robotic arms. With this l
     - If your robot's control software version is lower than these, an upgrade is recommended.
 - boost version >= (recommend)1.74
 - cmake version >= 3.22.1
-- libssh (It is not mandatory, but it is recommended.)
 
 ## Build & Install
 If your system is Ubuntu20.04, Ubuntu22.04 or Ubuntu24.04, you can run the following command to install elite-cs-series-sdk:

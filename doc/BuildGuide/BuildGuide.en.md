@@ -16,7 +16,7 @@ sudo apt update
 
 sudo apt install libboost-all-dev
 
-sudo apt install libssh-dev # Optional, recommended installation
+sudo apt install libssh-dev # Optional, recommended installation, recommended version is 0.9.6
 
 # sudo apt install sshpass # Install this command if libssh-dev is not installed
 ```

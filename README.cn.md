@@ -8,7 +8,6 @@
 - ***CS Controller*** (机器人的控制软件) 如果使用 2.13.x 则需要 >= **2.13.4**(for CS-Series)，如果使用2.14.x 则需要 >= **2.14.2**。 如果机器人的控制软件版本低于此，建议升级。
 - boost >= (建议)1.74
 - cmake >= 3.22.1
-- libssh
 
 ## Build & Install
 如果你的操作系统是 Ubuntu20.04、Ubuntu22.04、Ubuntu24.04，那么可以用下面的指令直接安装elite-cs-series-sdk:
