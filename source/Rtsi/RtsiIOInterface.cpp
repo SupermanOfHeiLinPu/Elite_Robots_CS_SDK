@@ -41,7 +41,7 @@ bool RtsiIOInterface::connect(const std::string& ip) {
         }
     } catch (const EliteException& e) {
         if (e == EliteException::Code::RTSI_UNKNOW_VARIABLE_TYPE) {
-            ELITE_LOG_FATAL("RTSI setup recipe fail. Check recipe files.");
+            ELITE_LOG_FATAL("RTSI setup recipe fail: %s. Check recipe files.", e.what());
             disconnect();
             return false;
         } else {
