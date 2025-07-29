@@ -309,6 +309,8 @@ bool DashboardClient::pauseProgram() {
 bool DashboardClient::setSpeedScaling(int scaling) {
     std::string send_command = "speed -v " + std::to_string(scaling) + "\n";
     sendAndRequest(send_command);
+    // Give some time for the command to take effect
+    std::this_thread::sleep_for(200ms);
     return (speedScaling() == scaling);
 }
 
