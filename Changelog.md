@@ -21,6 +21,8 @@
   - `RobotError`: Robot errors.
   - `RobotRuntimeException`: Runtime errors in robot scripts.
   - Changed `RtsiIOInterface` to protected inheritance.
+- `DashboardClient`
+  - Add `sendAndReceive()` interface.
 - Complete API documentation (Markdown) added.
 - Compilation guide documentation added.
 
@@ -43,6 +45,7 @@
 
 ### Fixed
 - Fixed crash issue caused by dangling pointers during `EliteDriver` destruction
+- Fixed the issue where the `DashboardClient::setSpeedScaling()` interface returns failure when setting a new value.
 
 ### Deprecated
 - Legacy `EliteDriver` constructor is now deprecated and will be removed in future versions - migrate to `EliteDriverConfig`

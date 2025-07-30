@@ -20,6 +20,8 @@
   - `RobotException`：基类。
   - `RobotError`：机器人错误。
   - `RobotRuntimeException`：机器人脚本运行时错误。
+- `DashboardClient`
+  - 新增`sendAndReceive()`接口。
 - 新增完整的 API 文档（Markdown）。
 - 新增编译向导文档。
 
@@ -44,6 +46,7 @@
 
 ### Fixed
 - 修复 `EliteDriver` 析构时可能因悬垂指针导致的崩溃问题。
+- 修复 `DashboardClient::setSpeedScaling()` 接口设置新值返回失败的问题。
 
 ### Deprecated
 - `EliteDriver` 的旧构造函数已废弃，未来版本将移除，请改用 `EliteDriverConfig`。
