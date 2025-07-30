@@ -1,28 +1,51 @@
-#include "Elite/RtsiIOInterface.hpp"
-#include <memory>
+#include <Elite/Log.hpp>
+#include <Elite/RtsiIOInterface.hpp>
+
+#include <boost/program_options.hpp>
 #include <iostream>
+#include <memory>
 
 using namespace ELITE;
-
-// In a real-world example it would be better to get those values from command line parameters / a
-// better configuration system such as Boost.Program_options
-const std::string DEFAULT_ROBOT_IP = "192.168.51.244";
+namespace po = boost::program_options;
 
 int main(int argc, char* argv[]) {
     // Parse the ip arguments if given
-    std::string robot_ip = DEFAULT_ROBOT_IP;
-    if (argc > 1) {
-        robot_ip = std::string(argv[1]);
+    std::string robot_ip;
+
+    // Parser param
+    po::options_description desc(
+        "Usage:\n"
+        "\t./rtsi_example <--robot-ip=ip>\n"
+        "Parameters:");
+    desc.add_options()
+        ("help,h", "Print help message")
+        ("robot-ip", po::value<std::string>(&robot_ip)->required(),
+            "\tRequired. IP address of the robot.");
+
+    po::variables_map vm;
+    try {
+        po::store(po::parse_command_line(argc, argv, desc), vm);
+
+        if (vm.count("help")) {
+            std::cout << desc << std::endl;
+            return 0;
+        }
+        po::notify(vm);
+    } catch (const po::error& e) {
+        std::cerr << "Argument error: " << e.what() << "\n\n";
+        std::cerr << desc << "\n";
+        return 1;
     }
 
     std::unique_ptr<RtsiIOInterface> io_interface = std::make_unique<RtsiIOInterface>("output_recipe.txt", "input_recipe.txt", 250);
 
-    if(!io_interface->connect(robot_ip)) {
-        std::cout << "Couldn't connect RTSI server" << std::endl;
+    if (!io_interface->connect(robot_ip)) {
+        ELITE_LOG_FATAL("Couldn't connect RTSI server");
         return 1;
     }
 
-    std::cout << "Controller is: " << io_interface->getControllerVersion().toString() << std::endl;
+    VersionInfo version = io_interface->getControllerVersion();
+    ELITE_LOG_INFO("Controller is: %s", version.toString().c_str());
 
     if ((io_interface->getDigitalOutputBits() & 0x00000001)) {
         auto start_set_false = std::chrono::high_resolution_clock::now();
@@ -32,7 +55,7 @@ int main(int argc, char* argv[]) {
         }
         auto finish_set_false = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed_set_false = finish_set_false - start_set_false;
-        std::cout << "Setting low level cost time: " << elapsed_set_false.count() << std::endl;
+        ELITE_LOG_INFO("Setting low level cost time: %d", elapsed_set_false.count());
     }
 
     auto start_set_true = std::chrono::high_resolution_clock::now();
@@ -44,8 +67,8 @@ int main(int argc, char* argv[]) {
     auto finish_set_true = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double> elapsed_set_true = finish_set_true - start_set_true;
-    std::cout << "Setting high level cost time: " << elapsed_set_true.count() << std::endl;
-    
+    ELITE_LOG_INFO("Setting high level cost time: %d", elapsed_set_true.count());
+
     io_interface->disconnect();
 
     return 0;

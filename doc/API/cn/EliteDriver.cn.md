@@ -13,6 +13,20 @@ EliteDriver 是用于与机器人进行数据交互的主要类。它负责建�
 
 ### ***构造函数***
 ```cpp
+EliteDriver(const EliteDriverConfig& config)
+```
+- ***功能***
+
+    创建 EliteDriver 对象，并初始化与机器人通信的必要连接。  
+    以下情况此函数会抛出异常：  
+    1. TCP server 创建失败，通常是因为端口被占用导致的。
+    2. 连接机器人的primary port失败。
+
+- ***参数***
+    - config：配置，参考[配置](./EliteDriverConfig.cn.md)
+
+### ***构造函数***(此函数已废弃)
+```cpp
 EliteDriver::EliteDriver(
     const std::string& robot_ip, 
     const std::string& local_ip, 
@@ -23,9 +37,9 @@ EliteDriver::EliteDriver(
     int trajectory_port = 50003, 
     int script_command_port = 50004, 
     float servoj_time = 0.008,
-    float servoj_lookhead_time = 0.08, 
+    float servoj_lookhead_time = 0.1, 
     int servoj_gain = 300, 
-    float stopj_acc = 4.0);
+    float stopj_acc = 8.0);
 ```
 - ***功能***
 
@@ -35,8 +49,8 @@ EliteDriver::EliteDriver(
     - robot_ip：机器人 IP 地址。
     - local_ip：本机 IP 地址。
     - script_file：控制脚本模板文件。
-    - headless_mode：是否以无界面模式运行。如果此参数为true，那么在构造函数中，将会向机器人的 primary 端口发送一次控制脚本。
-    - script_sender_port：发送脚本的端口。
+    - headless_mode：是否以无界面模式运行，使用此模式后，无需使用`External Control`插件。如果此参数为true，那么在构造函数中，将会向机器人的 primary 端口发送一次控制脚本。
+    - script_sender_port：用于发送控制脚本的端口。如果无法连接此端口，`External Control`插件将会停止运行。
     - reverse_port：反向通信端口。
     - trajectory_port：发送轨迹点的端口。
     - script_command_port：发送脚本命令的端口。
@@ -61,7 +75,7 @@ EliteDriver::EliteDriver(
 
 ### ***控制关节位置***
 ```cpp
-bool writeServoj(const vector6d_t& pos, int timeout_ms)
+bool writeServoj(const vector6d_t& pos, int timeout_ms, bool cartesian = false, bool queue_mode = false)
 ```
 - ***功能***
     向机器人发送伺服运动的指令。
@@ -70,6 +84,11 @@ bool writeServoj(const vector6d_t& pos, int timeout_ms)
     - pos：目标点位
 
     - timeout_ms：设置机器人读取下一条指令的超时时间，小于等于0时会无限等待。
+
+    - cartesian：如果发送的点是笛卡尔的，则为true，如果是基于关节的，则为false。
+
+    - queue_mode：如果使用队列模式，为true，否则为false。
+        > 队列模式：此模式下，会把控制指令放到一个队列中然后依次执行，并且在开始运动前会预存指定数量的指令。注意，此行为会造成一定的延迟。
 
 - ***返回值***：指令发送成功返回 true，失败返回 false。
 
@@ -106,6 +125,22 @@ bool writeIdle(int timeout_ms)
 
 ---
 
+### ***Freedrive***
+```cpp
+bool writeFreedrive(FreedriveAction action, int timeout_ms)
+```
+- ***功能***
+
+    发送Freedrive模式的指令，如：开启Freedrive，停止Freedrive。
+
+- ***参数***
+    - action：Freedrive动作，有：开启（START）、停止(END)、空操作(NOOP)
+    - timeout_ms：设置机器人读取下一条指令的超时时间，小于等于0时会无限等待。
+
+- ***注意***：写入`START`动作之后，需要在超时时间内写入下一条指令，可以写入`NOOP`。
+
+---
+
 ## 轨迹运动
 
 ### ***设置轨迹运动结果回调***
@@ -137,7 +172,7 @@ bool writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_r
     
     - blend_radius：两个路点的转接半径
 
-    - cartesian：如果发送的点是笛卡尔的，则为True，如果是基于关节的，则为false
+    - cartesian：如果发送的点是笛卡尔的，则为true，如果是基于关节的，则为false
 
 - ***返回值***：指令发送成功返回 true，失败返回 false。
 
@@ -249,17 +284,24 @@ bool endForceMode()
 
 ### ***停止外部控制***
 ```cpp
-bool stopControl()
+bool stopControl(int wait_ms = 500)
 ```
 - ***功能***
 
     发送停止指令到机器人，机器人将退出控制脚本，并且将停止接收来自PC的指令。
 
-- ***返回值***：指令发送成功返回 true，失败返回 false。
+- ***参数***
+    - wait_ms: 阻塞等待机器人断开连接的时间（毫秒）。范围：> 5ms。
+
+- ***返回值***
+
+    指令发送成功返回 true，失败返回 false。以下情况会返回false：
+    - 已经与机器人断开连接。
+    - 等待时间内未与机器人断开连接。
 
 ---
 
-### isRobotConnected
+### ***是否与机器人连接***
 ```cpp
 bool isRobotConnected()
 ```
@@ -322,3 +364,18 @@ bool primaryReconnect()
     重新建立连接到机器人的30001端口。
 
 - ***返回值***：成功返回 true，失败返回 false。
+
+---
+
+### ***注册机器人异常回调***
+```cpp
+void registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)> cb)
+```
+
+- ***功能***
+    注册机器人异常回调函数。当从机器人的 primary 端口接收到异常报文时，将调用该回调函数。回调函数接收一个 RobotExceptionSharedPtr 类型的参数，表示发生的异常信息。
+
+- ***参数***
+    - registerRobotExceptionCallback: 回调函数，用于处理接收到的机器人异常。参数为机器人异常的共享指针(参考：[RobotException](./RobotException.cn.md))。
+    
+

@@ -19,3 +19,5 @@
 - [远程升级](./RemoteUpgrade.cn.md)
 
 - [控制器日志](./ControllerLog.cn.md)
+
+- [实时工具](./RTUtils.cn.md)

@@ -68,7 +68,7 @@ Sends an executable script to the robot.
 
 ---
 
-### Get Data Packet
+### ***Get Data Packet***
 ```cpp
 bool getPackage(std::shared_ptr<PrimaryPackage> pkg, int timeout_ms)
 ```
@@ -80,6 +80,29 @@ Retrieves and parses the robot's data packet.
 - ***Return Value***: Returns true if the retrieval is successful, and false if failed.
 
 ---
+
+### ***Get local IP***
+```cpp
+std::string getLocalIP()
+```
+- ***Function***
+
+    Get local IP address
+
+- ***Return Value***：Local IP address. If empty, connection had some errors.
+
+---
+
+### ***Register Robot Exception Callback***
+```cpp
+void registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)> cb)
+```
+
+- ***Functionality***
+    Registers a callback function for robot exceptions. This callback will be invoked when an exception message is received from the robot's primary port. The callback function takes a parameter of type `RobotExceptionSharedPtr`, representing the exception information.
+
+- ***Parameters***
+    - `cb`: The callback function to handle received robot exceptions. The parameter is a shared pointer to a robot exception (see: [RobotException](./RobotException.en.md)).
 
 # PrimaryPackage Class
 

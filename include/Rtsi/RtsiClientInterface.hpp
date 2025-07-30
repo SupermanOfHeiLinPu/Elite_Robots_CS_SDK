@@ -3,32 +3,31 @@
  * @author yanxiaojia
  * @brief The RTSI client interface
  * @date 2024-08-21
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  */
 #ifndef __RTSI_CLIENT_INTERFACE_HPP__
 #define __RTSI_CLIENT_INTERFACE_HPP__
 
+#include <Elite/EliteOptions.hpp>
 #include <Elite/RtsiRecipe.hpp>
 #include <Elite/VersionInfo.hpp>
-#include <Elite/EliteOptions.hpp>
 
 #include <memory>
-
 
 namespace ELITE {
 
 /**
  * @brief The RTSI client raw interface.
- * 
+ *
  */
-class RtsiClientInterface
-{
-private:
+class RtsiClientInterface {
+   private:
     class Impl;
     std::unique_ptr<Impl> impl_;
-public:
+
+   public:
     static constexpr uint16_t DEFAULT_PROTOCOL_VERSION = 1;
 
     ELITE_EXPORT RtsiClientInterface();
@@ -36,7 +35,7 @@ public:
 
     /**
      * @brief Connect to robot RTSI server
-     * 
+     *
      * @param ip The robot IP
      * @param port RTSI port
      */
@@ -44,13 +43,13 @@ public:
 
     /**
      * @brief Disconnect
-     * 
+     *
      */
     ELITE_EXPORT virtual void disconnect();
 
     /**
      * @brief Verify the protocol version.
-     * 
+     *
      * @param version The version of RTSI
      * @return bool true if successful
      */
@@ -58,15 +57,15 @@ public:
 
     /**
      * @brief Get the Controller Version object
-     * 
-     * @return std::tuple<uint32_t, uint32_t, uint32_t, uint32_t> 
-     * A tuple type where the data is, in order, major version, minor version, bugfix, and build. 
+     *
+     * @return std::tuple<uint32_t, uint32_t, uint32_t, uint32_t>
+     * A tuple type where the data is, in order, major version, minor version, bugfix, and build.
      */
     ELITE_EXPORT virtual VersionInfo getControllerVersion();
 
     /**
      * @brief Subscribe to output variables.
-     * 
+     *
      * @param recipe_list The list of recipe. The variable names are explained in the document.
      * @param frequency Setup output frenqucy
      * @return RtsiRecipeSharedPtr The data recipe
@@ -75,7 +74,7 @@ public:
 
     /**
      * @brief Subscribe to input variables.
-     * 
+     *
      * @param recipe The list of recipe. The variable names are explained in the document.
      * @return RtsiRecipeSharedPtr The data recipe
      */
@@ -83,7 +82,7 @@ public:
 
     /**
      * @brief Send start signal to server
-     * 
+     *
      * @return true Start successfully
      * @return false Start fail
      */
@@ -91,7 +90,7 @@ public:
 
     /**
      * @brief Send pause signal to server
-     * 
+     *
      * @return true Pause successfully
      * @return false Pause fail
      */
@@ -99,14 +98,14 @@ public:
 
     /**
      * @brief Send an recipe to controller
-     * 
+     *
      * @param recipe  The recipe sent to the controller.
      */
     ELITE_EXPORT void send(RtsiRecipeSharedPtr& recipe);
 
     /**
      * @brief Receive RTSI output recipes data
-     * 
+     *
      * @param recipes The recipe you want to receive. Note that only one recipe will be received.
      * @param read_newest If want to parser the newest message
      * @return int The ID of recipe which is received. If -1, not match recipe
@@ -115,7 +114,7 @@ public:
 
     /**
      * @brief Receive RTSI output recipe data
-     * 
+     *
      * @param recipe The recipe you want to receive.
      * @param read_newest If want to parser the newest message
      * @return true success
@@ -125,7 +124,7 @@ public:
 
     /**
      * @brief Get connection state
-     * 
+     *
      * @return true connected
      * @return false disconnect
      */
@@ -133,7 +132,7 @@ public:
 
     /**
      * @brief Is start to sync robot data
-     * 
+     *
      * @return true started
      * @return false not started
      */
@@ -141,17 +140,13 @@ public:
 
     /**
      * @brief This function is used to determine have bytes that may be read without blocking.
-     * 
+     *
      * @return true has bytes
      * @return false don't has
      */
     ELITE_EXPORT bool isReadAvailable();
-
 };
 
-}
-
-
-
+}  // namespace ELITE
 
 #endif

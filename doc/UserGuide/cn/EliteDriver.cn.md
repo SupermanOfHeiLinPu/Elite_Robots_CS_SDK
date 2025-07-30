@@ -19,14 +19,14 @@ touch elite_driver_example.cpp
 
 复制下面代码，使用你习惯的文本编辑器，粘贴到`elite_driver_example.cpp`中：
 ```cpp
+#include <Elite/DashboardClient.hpp>
+#include <Elite/DataType.hpp>
 #include <Elite/EliteDriver.hpp>
 #include <Elite/RtsiIOInterface.hpp>
-#include <Elite/DataType.hpp>
-#include <Elite/DashboardClient.hpp>
 
+#include <iostream>
 #include <memory>
 #include <thread>
-#include <iostream>
 
 using namespace ELITE;
 
@@ -35,14 +35,25 @@ static std::unique_ptr<RtsiIOInterface> s_rtsi_client;
 static std::unique_ptr<DashboardClient> s_dashboard;
 
 int main(int argc, const char** argv) {
-    if (argc < 3) {
-        std::cout << "Must provide robot ip or local ip. Command like: ./trajectory_example 192.168.1.250 192.168.1.251" << std::endl;
+    if (argc < 2) {
+        std::cout << "Must provide robot ip or local ip. Command like: \"./trajectory_example robot_ip\" or \"./trajectory_example "
+                     "robot_ip local_ip\""
+                  << std::endl;
         return 1;
     }
-    s_driver = std::make_unique<EliteDriver>(argv[1], argv[2], "/usr/local/share/Elite/external_control.script");
+    std::string robot_ip = argv[1];
+    std::string local_ip = "";
+    if (argc >= 3) {
+        local_ip = argv[2];
+    }
+    EliteDriverConfig config;
+    config.robot_ip = robot_ip;
+    config.script_file_path = "/usr/local/share/Elite/external_control.script";
+    config.local_ip = local_ip;
+    s_driver = std::make_unique<EliteDriver>(config);
     s_rtsi_client = std::make_unique<RtsiIOInterface>("output_recipe.txt", "input_recipe.txt", 250);
     s_dashboard = std::make_unique<DashboardClient>();
-    
+
     if (!s_dashboard->connect(argv[1])) {
         return 1;
     }
@@ -52,13 +63,13 @@ int main(int argc, const char** argv) {
     std::cout << "RTSI connected" << std::endl;
 
     bool is_move_finish = false;
-    s_driver->setTrajectoryResultCallback([&](TrajectoryMotionResult result){
+    s_driver->setTrajectoryResultCallback([&](TrajectoryMotionResult result) {
         if (result == TrajectoryMotionResult::SUCCESS) {
             is_move_finish = true;
         }
     });
 
-    if(!s_dashboard->powerOn()) {
+    if (!s_dashboard->powerOn()) {
         return 1;
     }
     std::cout << "Robot power on" << std::endl;
@@ -72,11 +83,11 @@ int main(int argc, const char** argv) {
         return 1;
     }
     std::cout << "Program run" << std::endl;
-    
+
     while (!s_driver->isRobotConnected()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
-    
+
     vector6d_t actual_joints = s_rtsi_client->getActualJointPositions();
 
     s_driver->writeTrajectoryControlAction(ELITE::TrajectoryControlAction::START, 1, 200);
@@ -95,7 +106,7 @@ int main(int argc, const char** argv) {
     is_move_finish = false;
 
     s_driver->writeTrajectoryControlAction(ELITE::TrajectoryControlAction::START, 3, 200);
-    
+
     actual_pose[2] -= 0.2;
     s_driver->writeTrajectoryPoint(actual_pose, 3, 0.05, true);
 
@@ -154,19 +165,30 @@ static std::unique_ptr<DashboardClient> s_dashboard;
 ```
 
 
-main函数是程序开始的地方，main函数中最开始的部分的功能是：如果运行`elite_driver_example`时，后面没有跟机器人IP和本机IP，则打印提示信息，并异常退出程序。
+main函数是程序开始的地方，main函数中最开始的部分的功能是：如果运行`elite_driver_example`时，后面没有跟机器人IP，则打印提示信息，并异常退出程序。如果没有输入本机IP，本机IP则为默认值：空字符串（EliteDriver内部会尝试自动取获取本机IP）。
 
 ```cpp
 int main(int argc, const char** argv) {
-    if (argc < 3) {
-        std::cout << "Must provide robot ip or local ip. Command like: ./trajectory_example 192.168.1.250 192.168.1.251" << std::endl;
+    if (argc < 2) {
+        std::cout << "Must provide robot ip or local ip. Command like: \"./trajectory_example robot_ip\" or \"./trajectory_example "
+                     "robot_ip local_ip\""
+                  << std::endl;
         return 1;
+    }
+    std::string robot_ip = argv[1];
+    std::string local_ip = "";
+    if (argc >= 3) {
+        local_ip = argv[2];
     }
 ```
 
-创建`EliteDriver`、`RtsiIOInterface`、`DashboardClient`这三个类的实例，并给指针赋值。`EliteDriver`的构造函数有三个参数需要提供，分别是机器人IP、本机IP、控制脚本（控制脚本在安装的时候会安装到`/usr/local/share/Elite/`目录下）。
+创建`EliteDriver`、`RtsiIOInterface`、`DashboardClient`这三个类的实例，并给指针赋值。`EliteDriver`的构造函数配置主要有三个部分，分别是机器人IP、本机IP、控制脚本（控制脚本在安装的时候会安装到`/usr/local/share/Elite/`目录下）。
 ```cpp
-    s_driver = std::make_unique<EliteDriver>(argv[1], argv[2], "/usr/local/share/Elite/external_control.script");
+    EliteDriverConfig config;
+    config.robot_ip = robot_ip;
+    config.script_file_path = "/usr/local/share/Elite/external_control.script";
+    config.local_ip = local_ip;
+    s_driver = std::make_unique<EliteDriver>(config);
     s_rtsi_client = std::make_unique<RtsiIOInterface>("output_recipe.txt", "input_recipe.txt", 250);
     s_dashboard = std::make_unique<DashboardClient>();
 ```

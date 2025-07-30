@@ -19,3 +19,5 @@ Applicable SDK version: ***v1.2.0***
 - [Remote upgrade](./RemoteUpgrade.en.md)
 
 - [Controller log](./ControllerLog.en.md)
+
+- [Real time utils](./RTUtils.en.md)

@@ -42,6 +42,7 @@ set(
     source/Common/TcpServer.cpp
     source/Common/EliteException.cpp
     source/Common/SshUtils.cpp
+    source/Common/RtUtils.cpp
     source/Primary/PrimaryPort.cpp
     source/Primary/PrimaryPortInterface.cpp
     source/Primary/RobotConfPackage.cpp
@@ -92,6 +93,8 @@ set(
     Elite/Log.hpp
     Elite/RemoteUpgrade.hpp
     Elite/ControllerLog.hpp
+    Elite/RobotException.hpp
+    Common/RtUtils.hpp
 )
 
 # Set output library default name

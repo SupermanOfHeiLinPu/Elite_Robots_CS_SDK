@@ -1,21 +1,44 @@
-#include "Elite/DashboardClient.hpp"
-#include "Elite/DataType.hpp"
+#include <Elite/DashboardClient.hpp>
+#include <Elite/DataType.hpp>
+#include <Elite/Log.hpp>
 
-#include <thread>
-#include <regex>
+#include <boost/program_options.hpp>
 #include <iostream>
+#include <regex>
+#include <thread>
 
 using namespace ELITE;
-
-// In a real-world example it would be better to get those values from command line parameters / a
-// better configuration system such as Boost.Program_options
-const std::string DEFAULT_ROBOT_IP = "192.168.51.244";
+namespace po = boost::program_options;
 
 int main(int argc, char* argv[]) {
     // Parse the ip arguments if given
-    std::string robot_ip = DEFAULT_ROBOT_IP;
-    if (argc > 1) {
-        robot_ip = std::string(argv[1]);
+    std::string robot_ip;
+
+    // Parser param
+    po::options_description desc(
+        "Usage:\n"
+        "\t./dashboard_example <--robot-ip=ip>\n"
+        "Note:A task named \"test\" must be saved in the robot before running.\n"
+        "Parameters:");
+    desc.add_options()
+        ("help,h", "Print help message")
+        ("robot-ip", po::value<std::string>(&robot_ip)->required(),
+            "\tRequired. IP address of the robot.");
+
+    po::variables_map vm;
+    try {
+        po::store(po::parse_command_line(argc, argv, desc), vm);
+
+        if (vm.count("help")) {
+            std::cout << desc << std::endl;
+            return 0;
+        }
+
+        po::notify(vm);
+    } catch (const po::error& e) {
+        std::cerr << "Argument error: " << e.what() << "\n\n";
+        std::cerr << desc << "\n";
+        return 1;
     }
 
     // Making the robot ready for the program by:
@@ -23,116 +46,114 @@ int main(int argc, char* argv[]) {
     std::unique_ptr<DashboardClient> my_dashboard;
     my_dashboard.reset(new DashboardClient());
     if (!my_dashboard->connect(robot_ip)) {
-        std::cout << "Could not connect to robot" << std::endl;
+        ELITE_LOG_FATAL("Could not connect to robot");
         return 1;
     } else {
-        std::cout << "Connect to robot" << std::endl;
+        ELITE_LOG_INFO("Connect to robot");
     }
 
     if (!my_dashboard->echo()) {
-        std::cout << "Echo not right response" << std::endl;
+        ELITE_LOG_FATAL("Echo not right response");
         return 1;
     } else {
-        std::cout << "Echo right response" << std::endl;
+        ELITE_LOG_INFO("Echo right response");
     }
-    
 
-    if (!my_dashboard->powerOff())    {
-        std::cout << "Could not send power off" << std::endl;
+    if (!my_dashboard->powerOff()) {
+        ELITE_LOG_FATAL("Could not send power off");
         return 1;
     } else {
-        std::cout << "Power off" << std::endl;
+        ELITE_LOG_INFO("Power off");
     }
 
     my_dashboard->closeSafetyDialog();
 
     // Power it on
     if (!my_dashboard->powerOn()) {
-        std::cout << "Could not send Power on command" << std::endl;
+        ELITE_LOG_FATAL("Could not send Power on command");
         return 1;
     } else {
-        std::cout << "Power on" << std::endl;
+        ELITE_LOG_INFO("Power on");
     }
 
     // Release the brakes
     if (!my_dashboard->brakeRelease()) {
-        std::cout << "Could not send BrakeRelease command" << std::endl;
+        ELITE_LOG_FATAL("Could not send BrakeRelease command");
         return 1;
     } else {
-        std::cout << "Brake release" << std::endl;
+        ELITE_LOG_INFO("Brake release");
     }
 
     // Load existing task
     const std::string task_file_name_to_be_loaded("test.task");
     if (!my_dashboard->loadTask(task_file_name_to_be_loaded)) {
-        std::cout << "Could not load  " << task_file_name_to_be_loaded.c_str() << std::endl;
+        ELITE_LOG_FATAL("Could not load  %s", task_file_name_to_be_loaded.c_str());
         return 1;
     }
     std::string task = my_dashboard->getTaskPath();
     if (task != task_file_name_to_be_loaded) {
-        std::cout << "Not load right task" << std::endl;
+        ELITE_LOG_FATAL("Not load right task");
         return 1;
     } else {
-        std::cout << "Load task" << std::endl;
+        ELITE_LOG_INFO("Load task");
     }
 
     if (my_dashboard->getTaskStatus() != TaskStatus::STOPPED) {
-        std::cout << "Task not stopped" << std::endl;
+        ELITE_LOG_FATAL("Task not stopped");
         return 1;
     } else {
-        std::cout << "Task stopped" << std::endl;
+        ELITE_LOG_INFO("Task stopped");
     }
 
     if (!my_dashboard->playProgram()) {
-        std::cout << "Could not play task" << std::endl;
+        ELITE_LOG_FATAL("Could not play task");
         return 1;
     } else {
-        std::cout << "Play task" << std::endl;
+        ELITE_LOG_INFO("Play task");
     }
 
     if (my_dashboard->getTaskStatus() != TaskStatus::PLAYING) {
-        std::cout << "Task not running" << std::endl;
+        ELITE_LOG_FATAL("Task not running");
         return 1;
     } else {
-        std::cout << "Task running" << std::endl;
+        ELITE_LOG_INFO("Task running");
     }
 
     if (!my_dashboard->pauseProgram()) {
-        std::cout << "Could not pause task" << std::endl;
+        ELITE_LOG_FATAL("Could not pause task");
         return 1;
     } else {
-        std::cout << "Pause task" << std::endl;
+        ELITE_LOG_INFO("Pause task");
     }
 
     if (my_dashboard->getTaskStatus() != TaskStatus::PAUSED) {
-        std::cout << "Task not pause" << std::endl;
+        ELITE_LOG_FATAL("Task not pause");
         return 1;
     } else {
-        std::cout << "Task pause" << std::endl;
+        ELITE_LOG_INFO("Task pause");
     }
 
     if (!my_dashboard->stopProgram()) {
-        std::cout << "Could not stop task" << std::endl;
+        ELITE_LOG_FATAL("Could not stop task");
         return 1;
     } else {
-        std::cout << "Stop task" << std::endl;
+        ELITE_LOG_INFO("Stop task");
     }
 
     if (my_dashboard->getTaskStatus() != TaskStatus::STOPPED) {
-        std::cout << "Task not stop" << std::endl;
+        ELITE_LOG_FATAL("Task not stop");
         return 1;
     } else {
-        std::cout << "Task stopped" << std::endl;
+        ELITE_LOG_INFO("Task stopped");
     }
-    
-    
+
     if (!my_dashboard->isTaskSaved()) {
-        std::cout << "Task save status not right" << std::endl;
+        ELITE_LOG_FATAL("Task save status not right");
         return 1;
     } else {
-        std::cout << "Task saved" << std::endl;
+        ELITE_LOG_INFO("Task saved");
     }
-    
+
     my_dashboard->disconnect();
 
     return 0;

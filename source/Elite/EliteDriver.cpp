@@ -1,17 +1,19 @@
 #include "EliteDriver.hpp"
-#include "EliteException.hpp"
-#include "ReverseInterface.hpp"
-#include "TrajectoryInterface.hpp"
-#include "ScriptSender.hpp"
-#include "ScriptCommandInterface.hpp"
-#include "ControlCommon.hpp"
-#include "ControlMode.hpp"
-#include "PrimaryPortInterface.hpp"
-#include "Log.hpp"
 #include <boost/asio.hpp>
 #include <fstream>
-#include <sstream>
 #include <iostream>
+#include <sstream>
+#include <string>
+#include "ControlCommon.hpp"
+#include "ControlMode.hpp"
+#include "EliteException.hpp"
+#include "Log.hpp"
+#include "PrimaryPortInterface.hpp"
+#include "ReverseInterface.hpp"
+#include "ScriptCommandInterface.hpp"
+#include "ScriptSender.hpp"
+#include "TcpServer.hpp"
+#include "TrajectoryInterface.hpp"
 
 using namespace ELITE;
 
@@ -27,18 +29,19 @@ static const std::string REVERSE_DATA_SIZE_REPLACE = "{{REVERSE_DATA_SIZE_REPLAC
 static const std::string TRAJECTORY_DATA_SIZE_REPLACE = "{{TRAJECTORY_DATA_SIZE_REPLACE}}";
 static const std::string SCRIPT_COMMAND_DATA_SIZE_REPLACE = "{{SCRIPT_COMMAND_DATA_SIZE_REPLACE}}";
 static const std::string STOP_J_REPLACE = "{{STOP_J_REPLACE}}";
+static const std::string SERVOJ_TIME_REPLACE = "{{SERVOJ_TIME_REPLACE}}";
+static const std::string SERVOJ_QUEUE_PRE_RECV_SIZE_REPLACE = "{{SERVOJ_QUEUE_PRE_RECV_SIZE_REPLACE}}";
+static const std::string SERVOJ_QUEUE_PRE_RECV_TIMEOUT_REPLACE = "{{SERVOJ_QUEUE_PRE_RECV_TIMEOUT_REPLACE}}";
+
 
 class EliteDriver::Impl {
-public:
+   public:
     Impl() = delete;
-    explicit Impl(const std::string& robot_ip, const std::string& local_ip) 
-        : robot_ip_(robot_ip), local_ip_(local_ip) {
-    }
+    explicit Impl(const std::string& robot_ip) : robot_ip_(robot_ip) { TcpServer::start(); }
+    ~Impl() { TcpServer::stop(); }
 
     std::string readScriptFile(const std::string& file);
-    void scriptParamWrite(std::string& file_string, int reverse_port, int trajectory_port, \
-                          int script_command_port, float servoj_time, float servoj_lookhead_time, 
-                          int servoj_gain, float stopj_acc);
+    void scriptParamWrite(std::string& file_string, const EliteDriverConfig& config);
     std::string robot_script_;
     std::string robot_ip_;
     std::string local_ip_;
@@ -49,7 +52,6 @@ public:
     std::unique_ptr<PrimaryPortInterface> primary_port_;
     bool headless_mode_;
 };
-
 
 std::string EliteDriver::Impl::readScriptFile(const std::string& filepath) {
     std::ifstream ifs;
@@ -65,116 +67,116 @@ std::string EliteDriver::Impl::readScriptFile(const std::string& filepath) {
     return content;
 }
 
-void EliteDriver::Impl::scriptParamWrite(std::string& file_string, int reverse_port, int trajectory_port, 
-                                         int script_command_port, float servoj_time, float servoj_lookhead_time, 
-                                         int servoj_gain, float stopj_acc) {
-
+void EliteDriver::Impl::scriptParamWrite(std::string& file_string, const EliteDriverConfig& config) {
     while (file_string.find(SERVER_IP_REPLACE) != std::string::npos) {
-        file_string.replace(file_string.find(SERVER_IP_REPLACE), 
-                            SERVER_IP_REPLACE.length(), 
-                            local_ip_);
+        file_string.replace(file_string.find(SERVER_IP_REPLACE), SERVER_IP_REPLACE.length(), local_ip_);
     }
-    
+
     while (file_string.find(TRAJECTORY_SERVER_PORT_REPLACE) != std::string::npos) {
-        file_string.replace(file_string.find(TRAJECTORY_SERVER_PORT_REPLACE), 
-                            TRAJECTORY_SERVER_PORT_REPLACE.length(), 
-                            std::to_string(trajectory_port));
+        file_string.replace(file_string.find(TRAJECTORY_SERVER_PORT_REPLACE), TRAJECTORY_SERVER_PORT_REPLACE.length(),
+                            std::to_string(config.trajectory_port));
     }
-    
+
     while (file_string.find(REVERSE_PORT_REPLACE) != std::string::npos) {
-        file_string.replace(file_string.find(REVERSE_PORT_REPLACE), 
-                            REVERSE_PORT_REPLACE.length(), 
-                            std::to_string(reverse_port));
+        file_string.replace(file_string.find(REVERSE_PORT_REPLACE), REVERSE_PORT_REPLACE.length(), std::to_string(config.reverse_port));
     }
 
     while (file_string.find(SCRIPT_COMMAND_PORT_REPLACE) != std::string::npos) {
-        file_string.replace(file_string.find(SCRIPT_COMMAND_PORT_REPLACE), 
-                            SCRIPT_COMMAND_PORT_REPLACE.length(), 
-                            std::to_string(script_command_port));
+        file_string.replace(file_string.find(SCRIPT_COMMAND_PORT_REPLACE), SCRIPT_COMMAND_PORT_REPLACE.length(),
+                            std::to_string(config.script_command_port));
     }
-    
+
     std::ostringstream servoj_replace_str;
-    servoj_replace_str<< "t = " << servoj_time << ", lookahead_time = " << servoj_lookhead_time << ", gain=" << servoj_gain;
+    servoj_replace_str << "lookahead_time = " << config.servoj_lookahead_time << ", gain=" << config.servoj_gain;
     while (file_string.find(SERVO_J_REPLACE) != std::string::npos) {
-        file_string.replace(file_string.find(SERVO_J_REPLACE), 
-                            SERVO_J_REPLACE.length(), 
-                            servoj_replace_str.str());
+        file_string.replace(file_string.find(SERVO_J_REPLACE), SERVO_J_REPLACE.length(), servoj_replace_str.str());
     }
-    
+
+    while (file_string.find(SERVOJ_TIME_REPLACE) != std::string::npos) {
+        file_string.replace(file_string.find(SERVOJ_TIME_REPLACE), SERVOJ_TIME_REPLACE.length(), std::to_string(config.servoj_time));
+    }
+
     while (file_string.find(POS_ZOOM_RATIO_REPLACE) != std::string::npos) {
-        file_string.replace(file_string.find(POS_ZOOM_RATIO_REPLACE), 
-                            POS_ZOOM_RATIO_REPLACE.length(), 
+        file_string.replace(file_string.find(POS_ZOOM_RATIO_REPLACE), POS_ZOOM_RATIO_REPLACE.length(),
                             std::to_string(CONTROL::POS_ZOOM_RATIO));
     }
-    
 
     while (file_string.find(TIME_ZOOM_RATIO_REPLACE) != std::string::npos) {
-        file_string.replace(file_string.find(TIME_ZOOM_RATIO_REPLACE), 
-                            TIME_ZOOM_RATIO_REPLACE.length(), 
+        file_string.replace(file_string.find(TIME_ZOOM_RATIO_REPLACE), TIME_ZOOM_RATIO_REPLACE.length(),
                             std::to_string(CONTROL::TIME_ZOOM_RATIO));
     }
 
     while (file_string.find(COMMON_ZOOM_RATIO_REPLACE) != std::string::npos) {
-        file_string.replace(file_string.find(COMMON_ZOOM_RATIO_REPLACE), 
-                            COMMON_ZOOM_RATIO_REPLACE.length(), 
+        file_string.replace(file_string.find(COMMON_ZOOM_RATIO_REPLACE), COMMON_ZOOM_RATIO_REPLACE.length(),
                             std::to_string(CONTROL::COMMON_ZOOM_RATIO));
     }
 
     while (file_string.find(REVERSE_DATA_SIZE_REPLACE) != std::string::npos) {
-        
-        file_string.replace(file_string.find(REVERSE_DATA_SIZE_REPLACE), \
-                            REVERSE_DATA_SIZE_REPLACE.length(), \
+        file_string.replace(file_string.find(REVERSE_DATA_SIZE_REPLACE), REVERSE_DATA_SIZE_REPLACE.length(),
                             std::to_string(ReverseInterface::REVERSE_DATA_SIZE));
     }
 
     while (file_string.find(TRAJECTORY_DATA_SIZE_REPLACE) != std::string::npos) {
-        file_string.replace(file_string.find(TRAJECTORY_DATA_SIZE_REPLACE), \
-                            TRAJECTORY_DATA_SIZE_REPLACE.length(), \
+        file_string.replace(file_string.find(TRAJECTORY_DATA_SIZE_REPLACE), TRAJECTORY_DATA_SIZE_REPLACE.length(),
                             std::to_string(TrajectoryInterface::TRAJECTORY_MESSAGE_LEN));
     }
 
     while (file_string.find(SCRIPT_COMMAND_DATA_SIZE_REPLACE) != std::string::npos) {
-        file_string.replace(file_string.find(SCRIPT_COMMAND_DATA_SIZE_REPLACE), \
-                            SCRIPT_COMMAND_DATA_SIZE_REPLACE.length(), \
+        file_string.replace(file_string.find(SCRIPT_COMMAND_DATA_SIZE_REPLACE), SCRIPT_COMMAND_DATA_SIZE_REPLACE.length(),
                             std::to_string(ScriptCommandInterface::SCRIPT_COMMAND_DATA_SIZE));
     }
 
     while (file_string.find(STOP_J_REPLACE) != std::string::npos) {
-        file_string.replace(file_string.find(STOP_J_REPLACE), \
-                            STOP_J_REPLACE.length(), \
-                            std::to_string(stopj_acc));
+        file_string.replace(file_string.find(STOP_J_REPLACE), STOP_J_REPLACE.length(), std::to_string(config.stopj_acc));
     }
 
+    while (file_string.find(SERVOJ_QUEUE_PRE_RECV_SIZE_REPLACE) != std::string::npos) {
+        file_string.replace(file_string.find(SERVOJ_QUEUE_PRE_RECV_SIZE_REPLACE), SERVOJ_QUEUE_PRE_RECV_SIZE_REPLACE.length(), std::to_string(config.servoj_queue_pre_recv_size));
+    }
+
+    float servoj_queue_pre_recv_timeout = 0;
+    if (config.servoj_queue_pre_recv_timeout <= 0) {
+       servoj_queue_pre_recv_timeout = config.servoj_queue_pre_recv_size * config.servoj_time;
+    } else {
+        servoj_queue_pre_recv_timeout = config.servoj_queue_pre_recv_timeout;
+    }
+    while (file_string.find(SERVOJ_QUEUE_PRE_RECV_TIMEOUT_REPLACE) != std::string::npos) {
+        file_string.replace(file_string.find(SERVOJ_QUEUE_PRE_RECV_TIMEOUT_REPLACE), SERVOJ_QUEUE_PRE_RECV_TIMEOUT_REPLACE.length(), std::to_string(servoj_queue_pre_recv_timeout));
+    }
+    
 }
 
-EliteDriver::EliteDriver(const std::string& robot_ip, const std::string& local_ip, const std::string& script_file,
-                bool headless_mode, int script_sender_port, int reverse_port,
-                int trajectory_port, int script_command_port, float servoj_time,
-                float servoj_lookhead_time, int servoj_gain, float stopj_acc) {
+void EliteDriver::init(const EliteDriverConfig& config) {
     ELITE_LOG_DEBUG("Initialization Elite Driver");
-    
-    impl_ = new EliteDriver::Impl(robot_ip, local_ip);
-    
-    // Generate external control script.
-    std::string control_script = impl_->readScriptFile(script_file);
-    impl_->scriptParamWrite(control_script, reverse_port, trajectory_port, script_command_port, servoj_time, servoj_lookhead_time, servoj_gain, stopj_acc);
 
-    impl_->reverse_server_ = std::make_unique<ReverseInterface>(reverse_port);
-    ELITE_LOG_DEBUG("Created reverse interface");
-    impl_->trajectory_server_ = std::make_unique<TrajectoryInterface>(trajectory_port);
-    ELITE_LOG_DEBUG("Created trajectory interface");
-    impl_->script_command_server_ = std::make_unique<ScriptCommandInterface>(script_command_port);
-    ELITE_LOG_DEBUG("Created script command interface");
-    // Connect to robot primary port
+    impl_ = std::make_unique<EliteDriver::Impl>(config.robot_ip);
+
+    // First, need to connect to the robot primary port before attempting to obtain the local IP address
     impl_->primary_port_ = std::make_unique<PrimaryPortInterface>();
-    if (!impl_->primary_port_->connect(robot_ip, PrimaryPortInterface::PRIMARY_PORT)) {
-        ELITE_LOG_ERROR("Connect robot primary port fail");
-        impl_->primary_port_.reset();
+    if (!impl_->primary_port_->connect(impl_->robot_ip_, PrimaryPortInterface::PRIMARY_PORT)) {
+        ELITE_LOG_FATAL("Connect robot primary port fail.");
+        throw EliteException(EliteException::Code::SOCKET_CONNECT_FAIL, "Connect robot primary port fail.");
     }
-    
-    impl_->headless_mode_ = headless_mode;
+    if (config.local_ip.length() <= 0) {
+        impl_->local_ip_ = impl_->primary_port_->getLocalIP();
+    } else {
+        impl_->local_ip_ = config.local_ip;
+    }
 
-    if (headless_mode) {
+    // Generate external control script.
+    std::string control_script = impl_->readScriptFile(config.script_file_path);
+    impl_->scriptParamWrite(control_script, config);
+
+    impl_->reverse_server_ = std::make_unique<ReverseInterface>(config.reverse_port);
+    ELITE_LOG_DEBUG("Created reverse interface");
+    impl_->trajectory_server_ = std::make_unique<TrajectoryInterface>(config.trajectory_port);
+    ELITE_LOG_DEBUG("Created trajectory interface");
+    impl_->script_command_server_ = std::make_unique<ScriptCommandInterface>(config.script_command_port);
+    ELITE_LOG_DEBUG("Created script command interface");
+
+    impl_->headless_mode_ = config.headless_mode;
+
+    if (impl_->headless_mode_) {
         impl_->robot_script_ += "def externalControl():\n";
         std::istringstream control_script_stream(control_script);
         std::string line;
@@ -186,21 +188,51 @@ EliteDriver::EliteDriver(const std::string& robot_ip, const std::string& local_i
         sendExternalControlScript();
     } else {
         impl_->robot_script_ = control_script;
-        impl_->script_sender_ = std::make_unique<ScriptSender>(script_sender_port, impl_->robot_script_);
+        impl_->script_sender_ = std::make_unique<ScriptSender>(config.script_sender_port, impl_->robot_script_);
         ELITE_LOG_DEBUG("Created script sender");
     }
 
     ELITE_LOG_DEBUG("Initialization done");
 }
 
+EliteDriver::EliteDriver(const EliteDriverConfig& config) { init(config); }
 
-EliteDriver::~EliteDriver() {
-    delete impl_;
+EliteDriver::EliteDriver(const std::string& robot_ip, const std::string& local_ip, const std::string& script_file,
+                         bool headless_mode, int script_sender_port, int reverse_port, int trajectory_port, int script_command_port,
+                         float servoj_time, float servoj_lookahead_time, int servoj_gain, float stopj_acc) {
+    EliteDriverConfig config;
+    config.robot_ip = robot_ip;
+    config.local_ip = local_ip;
+    config.script_file_path = script_file;
+    config.headless_mode = headless_mode;
+    config.script_sender_port = script_sender_port;
+    config.reverse_port = reverse_port;
+    config.trajectory_port = trajectory_port;
+    config.script_command_port = script_command_port;
+    config.servoj_time = servoj_time;
+    config.servoj_lookahead_time = servoj_lookahead_time;
+    config.servoj_gain = servoj_gain;
+    config.stopj_acc = stopj_acc;
+    init(config);
 }
 
+EliteDriver::~EliteDriver() { impl_.reset(); }
 
-bool EliteDriver::writeServoj(const vector6d_t& pos, int timeout_ms) {
-    return impl_->reverse_server_->writeJointCommand(pos, ControlMode::MODE_SERVOJ, timeout_ms);
+bool EliteDriver::writeServoj(const vector6d_t& pos, int timeout_ms, bool cartesian, bool queue_mode) {
+    if (cartesian) {
+        if (queue_mode) {
+            return impl_->reverse_server_->writeJointCommand(pos, ControlMode::MODE_POSE_QUEUE, timeout_ms);
+        } else {
+            return impl_->reverse_server_->writeJointCommand(pos, ControlMode::MODE_POSE, timeout_ms);
+        }
+    } else {
+        if (queue_mode) {
+            return impl_->reverse_server_->writeJointCommand(pos, ControlMode::MODE_SERVOJ_QUEUE, timeout_ms);
+        } else {
+            return impl_->reverse_server_->writeJointCommand(pos, ControlMode::MODE_SERVOJ, timeout_ms);
+        }
+    }
+     
 }
 
 bool EliteDriver::writeSpeedl(const vector6d_t& vel, int timeout_ms) {
@@ -223,43 +255,54 @@ bool EliteDriver::writeTrajectoryControlAction(TrajectoryControlAction action, c
     return impl_->reverse_server_->writeTrajectoryControlAction(action, point_number, robot_receive_timeout);
 }
 
+bool EliteDriver::writeFreedrive(FreedriveAction action, int timeout_ms) {
+    return impl_->reverse_server_->writeFreedrive(action, timeout_ms);
+}
 
-bool EliteDriver::stopControl() {
-    return impl_->reverse_server_->stopControl();
+bool EliteDriver::stopControl(int wait_ms) {
+    if (wait_ms < 5) {
+        wait_ms = 5;
+    }
+    if (!impl_->reverse_server_->stopControl()) {
+        return false;
+    }
+
+    auto start_time = std::chrono::steady_clock::now();
+    auto timeout = std::chrono::milliseconds(wait_ms);
+    while (impl_->script_command_server_->isRobotConnect() || impl_->reverse_server_->isRobotConnect()) {
+        auto elapsed = std::chrono::steady_clock::now() - start_time;
+        if (elapsed >= timeout) {
+            return false;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    }
+
+    return !isRobotConnected();
 }
 
 bool EliteDriver::writeIdle(int timeout_ms) {
     return impl_->reverse_server_->writeJointCommand(nullptr, ControlMode::MODE_IDLE, timeout_ms);
 }
 
-void EliteDriver::printRobotScript() {
-    std::cout << impl_->robot_script_ << std::endl;
-}
+void EliteDriver::printRobotScript() { std::cout << impl_->robot_script_ << std::endl; }
 
 bool EliteDriver::isRobotConnected() {
-    return impl_->reverse_server_->isRobotConnect() && impl_->trajectory_server_->isRobotConnect();
+    return impl_->reverse_server_->isRobotConnect() && impl_->trajectory_server_->isRobotConnect() &&
+           impl_->script_command_server_->isRobotConnect();
 }
 
-bool EliteDriver::zeroFTSensor() {
-    return impl_->script_command_server_->zeroFTSensor();
-}
+bool EliteDriver::zeroFTSensor() { return impl_->script_command_server_->zeroFTSensor(); }
 
-bool EliteDriver::setPayload(double mass, const vector3d_t& cog) {
-    return impl_->script_command_server_->setPayload(mass, cog);
-}
+bool EliteDriver::setPayload(double mass, const vector3d_t& cog) { return impl_->script_command_server_->setPayload(mass, cog); }
 
-bool EliteDriver::setToolVoltage(const ToolVoltage& vol) {
-    return impl_->script_command_server_->setToolVoltage(vol);
-}
+bool EliteDriver::setToolVoltage(const ToolVoltage& vol) { return impl_->script_command_server_->setToolVoltage(vol); }
 
 bool EliteDriver::startForceMode(const vector6d_t& reference_frame, const vector6int32_t& selection_vector,
                                  const vector6d_t& wrench, const ForceMode& mode, const vector6d_t& limits) {
     return impl_->script_command_server_->startForceMode(reference_frame, selection_vector, wrench, mode, limits);
 }
 
-bool EliteDriver::endForceMode() {
-    return impl_->script_command_server_->endForceMode();
-}
+bool EliteDriver::endForceMode() { return impl_->script_command_server_->endForceMode(); }
 
 bool EliteDriver::sendScript(const std::string& script) {
     if (!impl_->primary_port_) {

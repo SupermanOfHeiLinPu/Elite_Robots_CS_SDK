@@ -1,20 +1,18 @@
 #include "RtsiRecipeInternal.hpp"
-#include "Utils.hpp"
 #include "EliteException.hpp"
+#include "Utils.hpp"
 
 #include <iterator>
 
 using namespace ELITE;
 
-RtsiRecipeInternal::RtsiRecipeInternal(const std::vector<std::string>& list) : RtsiRecipe() {
-    recipe_list_ = list;
-}
+RtsiRecipeInternal::RtsiRecipeInternal(const std::vector<std::string>& list) : RtsiRecipe() { recipe_list_ = list; }
 
 void RtsiRecipeInternal::parserTypePackage(int package_len, const std::vector<std::uint8_t>& package) {
     std::lock_guard<std::mutex> lock(update_mutex_);
     // Referring to the RTSI document, the fourth byte of the message is the recipe ID.
     recipe_id_ = package[3];
-    
+
     std::string types_string;
     std::copy(package.begin() + 4, package.begin() + package_len, std::back_inserter(types_string));
     std::vector<std::string> types_list = UTILS::StringUtils::splitString(types_string, ",");
@@ -27,9 +25,9 @@ void RtsiRecipeInternal::parserTypePackage(int package_len, const std::vector<st
         if (types_list[i] == "VECTOR6D") {
             init_value = vector6d_t();
         } else if (types_list[i] == "VECTOR3D") {
-           init_value = vector3d_t();
+            init_value = vector3d_t();
         } else if (types_list[i] == "DOUBLE") {
-           init_value = double();
+            init_value = double();
         } else if (types_list[i] == "UINT32") {
             init_value = uint32_t();
         } else if (types_list[i] == "UINT64") {
@@ -44,10 +42,11 @@ void RtsiRecipeInternal::parserTypePackage(int package_len, const std::vector<st
             init_value = uint16_t();
         } else if (types_list[i] == "VECTOR6INT32") {
             init_value = vector6int32_t();
-        } else if(types_list[i] == "VECTOR6UINT32") {
+        } else if (types_list[i] == "VECTOR6UINT32") {
             init_value = vector6uint32_t();
         } else {
-            throw EliteException(EliteException::Code::RTSI_UNKNOW_VARIABLE_TYPE, "variable \"" + recipe_list_[i] + "\" error type: " + types_list[i]);
+            throw EliteException(EliteException::Code::RTSI_UNKNOW_VARIABLE_TYPE,
+                                 "variable \"" + recipe_list_[i] + "\" error type: " + types_list[i]);
         }
         value_table_.insert({recipe_list_[i], init_value});
     }
@@ -68,25 +67,25 @@ bool RtsiRecipeInternal::parserDataPackage(int package_len, const std::vector<st
         // bool, uint8_t, uint16_t, uint32_t, uint64_t, int32_t, double, vector3d_t, vector6d_t, vector6int32_t, vector6uint32_t
         if (std::holds_alternative<bool>(value)) {
             value = (bool)package[offset];
-            offset ++;
+            offset++;
 
-        } else if(std::holds_alternative<uint8_t>(value)) {
+        } else if (std::holds_alternative<uint8_t>(value)) {
             value = (uint8_t)package[offset];
-            offset ++;
+            offset++;
 
-        } else if(std::holds_alternative<uint16_t>(value)) {
+        } else if (std::holds_alternative<uint16_t>(value)) {
             UTILS::EndianUtils::unpack(package, offset, std::get<uint16_t>(value));
 
-        } else if(std::holds_alternative<uint32_t>(value)) {
+        } else if (std::holds_alternative<uint32_t>(value)) {
             UTILS::EndianUtils::unpack(package, offset, std::get<uint32_t>(value));
 
-        } else if( std::holds_alternative<uint64_t>(value)) {
+        } else if (std::holds_alternative<uint64_t>(value)) {
             UTILS::EndianUtils::unpack(package, offset, std::get<uint64_t>(value));
 
-        } else if(std::holds_alternative<int32_t>(value)) {
+        } else if (std::holds_alternative<int32_t>(value)) {
             UTILS::EndianUtils::unpack(package, offset, std::get<int32_t>(value));
 
-        } else if(std::holds_alternative<double>(value)) {
+        } else if (std::holds_alternative<double>(value)) {
             UTILS::EndianUtils::unpack(package, offset, std::get<double>(value));
 
         } else if (std::holds_alternative<vector3d_t>(value)) {
@@ -111,25 +110,25 @@ bool RtsiRecipeInternal::parserDataPackage(int package_len, const std::vector<st
         // bool, uint8_t, uint16_t, uint32_t, uint64_t, int32_t, double, vector3d_t, vector6d_t, vector6int32_t, vector6uint32_t
         if (boost::get<bool>(&value)) {
             value = (bool)package[offset];
-            offset ++;
+            offset++;
 
-        } else if(boost::get<uint8_t>(&value)) {
+        } else if (boost::get<uint8_t>(&value)) {
             value = (uint8_t)package[offset];
-            offset ++;
+            offset++;
 
-        } else if(boost::get<uint16_t>(&value)) {
+        } else if (boost::get<uint16_t>(&value)) {
             UTILS::EndianUtils::unpack(package, offset, boost::get<uint16_t>(value));
 
-        } else if(boost::get<uint32_t>(&value)) {
+        } else if (boost::get<uint32_t>(&value)) {
             UTILS::EndianUtils::unpack(package, offset, boost::get<uint32_t>(value));
 
-        } else if(boost::get<uint64_t>(&value)) {
+        } else if (boost::get<uint64_t>(&value)) {
             UTILS::EndianUtils::unpack(package, offset, boost::get<uint64_t>(value));
 
-        } else if(boost::get<int32_t>(&value)) {
+        } else if (boost::get<int32_t>(&value)) {
             UTILS::EndianUtils::unpack(package, offset, boost::get<int32_t>(value));
 
-        } else if(boost::get<double>(&value)) {
+        } else if (boost::get<double>(&value)) {
             UTILS::EndianUtils::unpack(package, offset, boost::get<double>(value));
 
         } else if (boost::get<vector3d_t>(&value)) {
@@ -152,7 +151,6 @@ bool RtsiRecipeInternal::parserDataPackage(int package_len, const std::vector<st
     return true;
 }
 
-
 std::vector<uint8_t> RtsiRecipeInternal::packToBytes() {
     std::lock_guard<std::mutex> lock(update_mutex_);
     std::unordered_map<std::string, ELITE::RtsiTypeVariant>::const_iterator iter;
@@ -168,28 +166,28 @@ std::vector<uint8_t> RtsiRecipeInternal::packToBytes() {
         }
         // bool, uint8_t, uint16_t, uint32_t, uint64_t, int32_t, double, vector3d_t, vector6d_t, vector6int32_t, vector6uint32_t
         if (auto va = std::get_if<bool>(&iter->second)) {
-           result.push_back(*va);
-
-        } else if(auto va = std::get_if<uint8_t>(&iter->second)) {
             result.push_back(*va);
 
-        } else if(auto va = std::get_if<uint16_t>(&iter->second)) {
+        } else if (auto va = std::get_if<uint8_t>(&iter->second)) {
+            result.push_back(*va);
+
+        } else if (auto va = std::get_if<uint16_t>(&iter->second)) {
             bytes = UTILS::EndianUtils::pack(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
-        } else if(auto va = std::get_if<uint32_t>(&iter->second)) {
+        } else if (auto va = std::get_if<uint32_t>(&iter->second)) {
             bytes = UTILS::EndianUtils::pack(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
-        } else if(auto va = std::get_if<uint64_t>(&iter->second)) {
+        } else if (auto va = std::get_if<uint64_t>(&iter->second)) {
             bytes = UTILS::EndianUtils::pack(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
-        } else if(auto va = std::get_if<int32_t>(&iter->second)) {
+        } else if (auto va = std::get_if<int32_t>(&iter->second)) {
             bytes = UTILS::EndianUtils::pack(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
-        } else if(auto va = std::get_if<double>(&iter->second)) {
+        } else if (auto va = std::get_if<double>(&iter->second)) {
             bytes = UTILS::EndianUtils::pack(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
@@ -208,7 +206,6 @@ std::vector<uint8_t> RtsiRecipeInternal::packToBytes() {
         } else if (auto va = std::get_if<vector6uint32_t>(&iter->second)) {
             bytes = UTILS::EndianUtils::pack<uint32_t, 6>(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
-
         }
     }
 #elif (ELITE_SDK_COMPILE_STANDARD == 14)
@@ -219,28 +216,28 @@ std::vector<uint8_t> RtsiRecipeInternal::packToBytes() {
         }
         // bool, uint8_t, uint16_t, uint32_t, uint64_t, int32_t, double, vector3d_t, vector6d_t, vector6int32_t, vector6uint32_t
         if (auto va = boost::get<bool>(&iter->second)) {
-           result.push_back(*va);
-
-        } else if(auto va = boost::get<uint8_t>(&iter->second)) {
             result.push_back(*va);
 
-        } else if(auto va = boost::get<uint16_t>(&iter->second)) {
+        } else if (auto va = boost::get<uint8_t>(&iter->second)) {
+            result.push_back(*va);
+
+        } else if (auto va = boost::get<uint16_t>(&iter->second)) {
             bytes = UTILS::EndianUtils::pack(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
-        } else if(auto va = boost::get<uint32_t>(&iter->second)) {
+        } else if (auto va = boost::get<uint32_t>(&iter->second)) {
             bytes = UTILS::EndianUtils::pack(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
-        } else if(auto va = boost::get<uint64_t>(&iter->second)) {
+        } else if (auto va = boost::get<uint64_t>(&iter->second)) {
             bytes = UTILS::EndianUtils::pack(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
-        } else if(auto va = boost::get<int32_t>(&iter->second)) {
+        } else if (auto va = boost::get<int32_t>(&iter->second)) {
             bytes = UTILS::EndianUtils::pack(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
-        } else if(auto va = boost::get<double>(&iter->second)) {
+        } else if (auto va = boost::get<double>(&iter->second)) {
             bytes = UTILS::EndianUtils::pack(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
@@ -259,7 +256,6 @@ std::vector<uint8_t> RtsiRecipeInternal::packToBytes() {
         } else if (auto va = boost::get<vector6uint32_t>(&iter->second)) {
             bytes = UTILS::EndianUtils::pack<uint32_t, 6>(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
-
         }
     }
 

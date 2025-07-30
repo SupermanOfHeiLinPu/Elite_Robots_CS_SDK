@@ -12,7 +12,7 @@
 #if defined(__linux) || defined(linux) || defined(__linux__)
 #include <sys/wait.h>
 #include <unistd.h>
-#elif _WIN32
+#elif defined(_WIN32) || defined(_WIN64)
 #define NOMINMAX
 #include <io.h>
 #define stat _stat64
@@ -327,7 +327,7 @@ bool uploadFile(const std::string& server, const std::string& user, const std::s
         return false;
     }
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_WIN64)
 #define FILE_PERMISSIONS (S_IREAD | S_IWRITE)
 #elif defined(__linux) || defined(linux) || defined(__linux__)
 #define FILE_PERMISSIONS (S_IRUSR | S_IWUSR)

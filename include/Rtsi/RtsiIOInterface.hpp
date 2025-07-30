@@ -28,7 +28,7 @@ namespace ELITE {
  * @brief The RTSI interface has been functionally encapsulated.
  *
  */
-class RtsiIOInterface : public RtsiClientInterface {
+class RtsiIOInterface : protected RtsiClientInterface {
    public:
     RtsiIOInterface() = delete;
 
@@ -497,6 +497,34 @@ class RtsiIOInterface : public RtsiClientInterface {
      */
     std::vector<std::string> readRecipe(const std::string& file);
 };
+
+// getRecipeValue() interface instantiate
+template bool RtsiIOInterface::getRecipeValue<double>(const std::string& name, double& out_value);
+template bool RtsiIOInterface::getRecipeValue<bool>(const std::string& name, bool& out_value);
+template bool RtsiIOInterface::getRecipeValue<int8_t>(const std::string& name, int8_t& out_value);
+template bool RtsiIOInterface::getRecipeValue<uint8_t>(const std::string& name, uint8_t& out_value);
+template bool RtsiIOInterface::getRecipeValue<int16_t>(const std::string& name, int16_t& out_value);
+template bool RtsiIOInterface::getRecipeValue<uint16_t>(const std::string& name, uint16_t& out_value);
+template bool RtsiIOInterface::getRecipeValue<int32_t>(const std::string& name, int32_t& out_value);
+template bool RtsiIOInterface::getRecipeValue<uint32_t>(const std::string& name, uint32_t& out_value);
+template bool RtsiIOInterface::getRecipeValue<int64_t>(const std::string& name, int64_t& out_value);
+template bool RtsiIOInterface::getRecipeValue<uint64_t>(const std::string& name, uint64_t& out_value);
+template bool RtsiIOInterface::getRecipeValue<vector3d_t>(const std::string& name, vector3d_t& out_value);
+template bool RtsiIOInterface::getRecipeValue<vector6d_t>(const std::string& name, vector6d_t& out_value);
+template bool RtsiIOInterface::getRecipeValue<vector6int32_t>(const std::string& name, vector6int32_t& out_value);
+template bool RtsiIOInterface::getRecipeValue<vector6uint32_t>(const std::string& name, vector6uint32_t& out_value);
+
+// setInputRecipeValue() interface instantiate
+template bool RtsiIOInterface::setInputRecipeValue<double>(const std::string& name, const double& value);
+template bool RtsiIOInterface::setInputRecipeValue<bool>(const std::string& name, const bool& value);
+template bool RtsiIOInterface::setInputRecipeValue<int8_t>(const std::string& name, const int8_t& value);
+template bool RtsiIOInterface::setInputRecipeValue<uint8_t>(const std::string& name, const uint8_t& value);
+template bool RtsiIOInterface::setInputRecipeValue<int16_t>(const std::string& name, const int16_t& value);
+template bool RtsiIOInterface::setInputRecipeValue<uint16_t>(const std::string& name, const uint16_t& value);
+template bool RtsiIOInterface::setInputRecipeValue<int32_t>(const std::string& name, const int32_t& value);
+template bool RtsiIOInterface::setInputRecipeValue<uint32_t>(const std::string& name, const uint32_t& value);
+template bool RtsiIOInterface::setInputRecipeValue<vector6d_t>(const std::string& name, const vector6d_t& value);
+template bool RtsiIOInterface::setInputRecipeValue<vector6int32_t>(const std::string& name, const vector6int32_t& value);
 
 }  // namespace ELITE
 
