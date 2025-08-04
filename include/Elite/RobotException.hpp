@@ -22,8 +22,8 @@ class RobotException {
    public:
     // Exception Type
     enum class Type : int8_t {
-        ERROR = 6,    // Represents a robot operation error.
-        RUNTIME = 10  // Represents a runtime error, such as script execution or syntax issues.
+        ROBOT_ERROR = 6,    // Represents a robot operation error.
+        SCRIPT_RUNTIME = 10  // Represents a runtime error, such as script execution or syntax issues.
     };
 
     /**
@@ -43,7 +43,7 @@ class RobotException {
     /**
      * @brief Construct a new Robot Exception object
      *
-     * @param type The type of exception (ERROR or RUNTIME).
+     * @param type The type of exception (ROBOT_ERROR or SCRIPT_RUNTIME).
      * @param ts Timestamp in milliseconds.
      */
     RobotException(Type type, uint64_t ts) : type_(type), timestamp_(ts) {}
@@ -150,7 +150,7 @@ class RobotError : public RobotException {
      * @param data Additional data (e.g., string, integer, float).
      */
     RobotError(uint64_t ts, int code, int sc, Source es, Level el, DataType et, Data data)
-        : RobotException(RobotException::Type::ERROR, ts),
+        : RobotException(RobotException::Type::ROBOT_ERROR, ts),
           code_(code),
           sub_code_(sc),
           error_source_(es),
@@ -217,7 +217,7 @@ class RobotRuntimeException : public RobotException {
      * @param msg Script exception message
      */
     RobotRuntimeException(uint64_t ts, int line, int column, std::string&& msg)
-        : RobotException(RobotException::Type::RUNTIME, ts), line_(line), column_(column), message_(std::move(msg)) {}
+        : RobotException(RobotException::Type::SCRIPT_RUNTIME, ts), line_(line), column_(column), message_(std::move(msg)) {}
 
     RobotRuntimeException() = delete;
     ~RobotRuntimeException() = default;

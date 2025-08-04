@@ -22,13 +22,13 @@ The base class for robot exceptions, representing common exception properties su
 
 ```cpp
 enum class Type : int8_t {
-    ERROR = 6,
-    RUNTIME = 10
+    ROBOT_ERROR = 6,
+    SCRIPT_RUNTIME = 10
 };
 ```
 
-* `ERROR`: Represents a robot operation error.
-* `RUNTIME`: Represents a runtime error, such as script execution or syntax issues.
+* `ROBOT_ERROR`: Represents a robot operation error.
+* `SCRIPT_RUNTIME`: Represents a runtime error, such as script execution or syntax issues.
 
 ## Constructor
 
@@ -41,7 +41,7 @@ RobotException::RobotException(Type type, uint64_t ts)
 * **Description**: Constructs an exception object with a specific type and timestamp.
 * **Parameters**:
 
-  * `type`: The type of exception (ERROR or RUNTIME).
+  * `type`: The type of exception (ROBOT_ERROR or SCRIPT_RUNTIME).
   * `ts`: Timestamp in microseconds.
 
 ## Interface Methods

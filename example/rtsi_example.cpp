@@ -4,6 +4,7 @@
 #include <boost/program_options.hpp>
 #include <iostream>
 #include <memory>
+#include <chrono>
 
 using namespace ELITE;
 namespace po = boost::program_options;
