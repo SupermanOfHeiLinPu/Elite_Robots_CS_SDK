@@ -22,13 +22,13 @@
 
 ```cpp
 enum class Type : int8_t {
-    ERROR = 6,
-    RUNTIME = 10
+    ROBOT_ERROR = 6,
+    SCRIPT_RUNTIME = 10
 };
 ```
 
-* `ERROR`：表示机器人运行错误。
-* `RUNTIME`：表示运行时异常，如语法错误、脚本执行错误等。
+* `ROBOT_ERROR`：表示机器人运行错误。
+* `SCRIPT_RUNTIME`：表示运行时异常，如语法错误、脚本执行错误等。
 
 ## 构造函数
 
@@ -41,7 +41,7 @@ RobotException::RobotException(Type type, uint64_t ts)
 * **功能**：构造异常对象，指定类型与发生时间。
 * **参数**
 
-  * `type`：异常类型（ERROR 或 RUNTIME）。
+  * `type`：异常类型（ROBOT_ERROR 或 SCRIPT_RUNTIME）。
   * `ts`：时间戳（单位为微秒）。
 
 ## 接口函数

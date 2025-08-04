@@ -15,7 +15,7 @@ namespace po = boost::program_options;
 
 // When the robot encounters an exception, this callback will be called
 void robotExceptionCb(ELITE::RobotExceptionSharedPtr ex) {
-    if (ex->getType() == ELITE::RobotException::Type::RUNTIME) {
+    if (ex->getType() == ELITE::RobotException::Type::SCRIPT_RUNTIME) {
         auto r_ex = std::static_pointer_cast<ELITE::RobotRuntimeException>(ex);
         ELITE_LOG_INFO("Robot throw exception: %s", r_ex->getMessage().c_str());
     }

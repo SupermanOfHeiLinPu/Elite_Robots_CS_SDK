@@ -49,14 +49,14 @@ git clone https://github.com/microsoft/vcpkg.git
 
 .\vcpkg install libssh
 
-vcpkg integrate install
+.\vcpkg integrate install
 ```
 
 - 测例依赖
 ```bash
-vcpkg install gtest
+.\vcpkg install gtest
 
-vcpkg integrate install
+.\vcpkg integrate install
 ```
 
 ## 编译

@@ -172,9 +172,9 @@ RobotExceptionSharedPtr PrimaryPort::parserException(const std::vector<uint8_t>&
     RobotException::Type type = static_cast<RobotException::Type>(msg_body[offset]);
     offset++;
 
-    if (type == RobotException::Type::ERROR) {
+    if (type == RobotException::Type::ROBOT_ERROR) {
         return parserRobotError(timestamp, source, msg_body, offset);
-    } else if (type == RobotException::Type::RUNTIME) {
+    } else if (type == RobotException::Type::SCRIPT_RUNTIME) {
         return paraserRuntimeException(timestamp, msg_body, offset);
     } else {
         return nullptr;
