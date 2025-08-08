@@ -1,9 +1,23 @@
-# Elite Robots CS SDK user guide
+# Elite Robots CS SDK 使用指南
 
-本使用向导旨在说明SDK中各个功能的使用，可以按需点击下面的章节进行查看。此向导的演示主要是在Ubuntu22.04上。
+在阅读本使用指南前，请先按照[编译安装指南](../../BuildGuide/BuildGuide.cn.md)成功编译与安装此SDK（如果已使用apt安装可忽略）。
 
-- [Dashboard](./Dashboard.cn.md)
-- [RTSI](./RTSI.cn.md)
-- [PrimaryPort](./PrimaryPort.cn.md)
-- [EliteDriver](./EliteDriver.cn.md)
-- [Log](./Log.cn.md)
+这是一个循序渐进的SDK使用指南，旨在说明如何使用此SDK。
+
+建议按顺序阅读此指南，如果有需要，也可以直接跳转到下面的章节中：
+
+1. [Power on](./Power-on-Robot.cn.md)
+
+2. [获取机器人状态](./Get-Robot-State.cn.md)
+
+3. [与机器人的主端口通讯](./Primary-Port-Message.cn.md)
+
+4. [如何解析主端口报文](./How-to-Parser-30001.cn.md)
+
+5. [让机器人动起来](./Let-Robot-Move.cn.md)
+
+
+
+
+2. [获取机器人状态](./Get-Robot-State.cn.md)
+2. [获取机器人状态](./Get-Robot-State.cn.md)
