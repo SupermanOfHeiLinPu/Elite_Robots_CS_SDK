@@ -1,13 +1,11 @@
+[Home](./UserGuide.en.md)
 # Log
 
 ## Background
 
 The SDK has a logging function and supports users to customize the logging method and level.
 
-## Prerequisites
-- Ensure that the SDK is installed correctly.
-
-## Usage
+## Tasks
 
 ### Change logging level
 

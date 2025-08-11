@@ -1,4 +1,4 @@
-# 编译向导
+# 编译安装指南
 
 ## Requirements
 * SDK中的socket使用了 **boost::asio**。 因此需要安装 **boost** 库。
