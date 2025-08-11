@@ -1,3 +1,5 @@
+[Home](./UserGuide.cn.md)
+
 # 自定义日志
 
 ## 目标
