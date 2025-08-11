@@ -49,14 +49,14 @@ git clone https://github.com/microsoft/vcpkg.git
 
 .\vcpkg install libssh
 
-vcpkg integrate install
+.\vcpkg integrate install
 ```
 
 - Test Case Dependencies (Optional)
 ```bash
-vcpkg install gtest
+.\vcpkg install gtest
 
-vcpkg integrate install
+.\vcpkg integrate install
 ```
 
 ## Compilation

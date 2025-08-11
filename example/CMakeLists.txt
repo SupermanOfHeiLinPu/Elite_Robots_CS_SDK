@@ -4,6 +4,8 @@ configure_file(resource/output_recipe.txt ${PROJECT_BINARY_DIR}/example/ COPYONL
 
 file(GLOB SOURCES *.cpp)
 
+find_package(Boost REQUIRED COMPONENTS program_options)
+
 # On Windows systems, when using CMake in the main directory, 
 # the ELITE_EXPORT_LIBRARY macro definition must be removed to avoid compilation errors.
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -19,12 +21,13 @@ foreach(SOURCE ${SOURCES})
         ${ELITE_SDK_EXAMPLE_NAME} 
         elite-cs-series-sdk::shared
         ${SYSTEM_LIB}
-        boost_program_options
+        Boost::program_options
     )
     target_link_directories(
         ${ELITE_SDK_EXAMPLE_NAME} 
         PRIVATE 
         ${CMAKE_BINARY_DIR}
+        ${Boost_LIBRARY_DIRS}
     )
     target_include_directories(
         ${ELITE_SDK_EXAMPLE_NAME}

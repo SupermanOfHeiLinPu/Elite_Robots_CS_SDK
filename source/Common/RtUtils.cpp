@@ -75,15 +75,14 @@ int getThreadFiFoMaxPriority() {
 }
 
 bool bindThreadToCpus(std::thread::native_handle_type& thread, const int cpu) {
-#if defined(__linux__)
     const int ncpu = static_cast<int>(std::thread::hardware_concurrency());
-    cpu_set_t mask;
-    CPU_ZERO(&mask);
-
     if (cpu < 0 || cpu >= ncpu) {
-        ELITE_LOG_ERROR(("CPU index " + std::to_string(cpu) + " out of range 0 - " + std::to_string(ncpu - 1)).c_str());
+        ELITE_LOG_ERROR("CPU index %d out of range 0 - %d", cpu, ncpu - 1);
         return false;
     }
+#if defined(__linux__)
+    cpu_set_t mask;
+    CPU_ZERO(&mask);
     CPU_SET(cpu, &mask);
 
     int ret = pthread_setaffinity_np(thread, sizeof(mask), &mask);
@@ -94,21 +93,15 @@ bool bindThreadToCpus(std::thread::native_handle_type& thread, const int cpu) {
 
     return true;
 #elif defined(_WIN32) || defined(_WIN64)
-
     DWORD_PTR mask = 0;
-    for (int c : cpus) {
-        if (c < 0 || c >= 64) {
-            throw std::invalid_argument("CPU index must be 0 - 63 on this sample WinAPI path");
-        }
-        mask |= (1ULL << c);
-    }
+    mask |= (1ULL << cpu);
 
-    HANDLE hThread = static_cast<HANDLE>(thr.native_handle());
+    HANDLE hThread = static_cast<HANDLE>(thread);
     DWORD_PTR prev = SetThreadAffinityMask(hThread, mask);
     if (!prev) {
         throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "SetThreadAffinityMask failed");
     }
-
+    return true;
 #else
     throw std::runtime_error("CPU affinity not supported on this platform");
 #endif
