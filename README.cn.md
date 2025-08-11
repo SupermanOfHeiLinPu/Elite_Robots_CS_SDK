@@ -17,16 +17,16 @@ sudo apt update
 sudo apt install elite-cs-series-sdk
 ```
 
-如果需要编译安装，参考[编译向导](./doc/BuildGuide/BuildGuide.cn.md)
+如果需要编译安装，参考[编译安装指南](./doc/BuildGuide/BuildGuide.cn.md)
 
-## User guide
-[中文向导](./doc/UserGuide/cn/UserGuide.cn.md)  
-
-## Architecture
-[代码架构](./doc/Architecture/Arch.cn.md)
+## 使用指南
+[使用指南](./doc/UserGuide/cn/UserGuide.cn.md)  
 
 ## API 说明
 [API](./doc/API/cn/API.cn.md)
+
+## Architecture
+[代码架构](./doc/Architecture/Arch.cn.md)
 
 ## Compatible Operating Systems
 在以下系统平台上测试过：
