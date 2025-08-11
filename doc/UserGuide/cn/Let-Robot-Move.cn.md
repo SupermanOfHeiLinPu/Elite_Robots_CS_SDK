@@ -162,6 +162,9 @@ class TrajectoryControl {
 
 `EliteDriver`这个类主要负责与控制脚本通讯，并且集成了一些常用接口进去。
 
+本章节主要用到`EliteDriver`中 `setTrajectoryResultCallback()`、`writeTrajectoryPoint()`、`writeTrajectoryControlAction()`三个接口来让机器人执行“movej”和“movel”运动，调用流程如下：
+- 调用`setTrajectoryResultCallback()`注册运动结果的回调函数，在机器人结束了这段轨迹的运动后，会调用
+
 ---
 
 #### 2.1 成员变量 & 构造 / 析构
@@ -642,5 +645,5 @@ g++ trajectory_example.cpp -o trajectory_example -lelite-cs-series-sdk
 
 ---
 
-[>>>下一章：高频控制:servoj](./Servoj-Move.cn.md)
+[>>>下一章：透传:servoj](./Servoj-Move.cn.md)
 
