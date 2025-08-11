@@ -16,8 +16,6 @@
 
 5. [让机器人动起来](./Let-Robot-Move.cn.md)
 
+6. [透传:servoj](./Servoj-Move.cn.md)
 
-
-
-2. [获取机器人状态](./Get-Robot-State.cn.md)
-2. [获取机器人状态](./Get-Robot-State.cn.md)
+7. [自定义日志](./Log.cn.md)

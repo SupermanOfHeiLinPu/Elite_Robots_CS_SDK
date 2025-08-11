@@ -163,7 +163,11 @@ class TrajectoryControl {
 `EliteDriver`这个类主要负责与控制脚本通讯，并且集成了一些常用接口进去。
 
 本章节主要用到`EliteDriver`中 `setTrajectoryResultCallback()`、`writeTrajectoryPoint()`、`writeTrajectoryControlAction()`三个接口来让机器人执行“movej”和“movel”运动，调用流程如下：
-- 调用`setTrajectoryResultCallback()`注册运动结果的回调函数，在机器人结束了这段轨迹的运动后，会调用
+- 调用`setTrajectoryResultCallback()`注册运动结果的回调函数，在机器人结束了这段轨迹的运动后，会调用这个回调，并告知运动结果。
+- 调用`writeTrajectoryControlAction()`写入start命令
+- 调用`writeTrajectoryPoint()`将点位与参数发送过去，与此同时调用`writeTrajectoryControlAction()`发送noop指令来防止超时。
+- 持续调用`writeTrajectoryControlAction()`发送noop指令并等待运动结果。
+- 期间如果想要取消运动，可以调用`writeTrajectoryControlAction()`发送cancel指令
 
 ---
 
@@ -590,9 +594,17 @@ cp /your/path/external_control.script ./
         std::cout << "Must provide robot IP. Example: ./trajectory_example aaa.bbb.ccc.ddd <eee.fff.ggg.hhh>" << std::endl;
         return 1;
     }
+    config.headless_mode = true;
+    config.script_file_path = "external_control.script";
     ```
 
 如前文中[“背景说明”](#背景说明)所述，控制脚本会与SDK建立TCP连接，因此本质上SDK是需要本机IP地址的（用于替换控制脚本中`socket_open()`的IP地址），然而 `EliteDriver` 在构造时会尝试获取本机IP，所以不需要手动去设置`config`的`local_ip`。但是，某些情况下可能需要单独设置本机IP，例如，你使用了NAT配置的虚拟机，并且配置好了虚拟机与宿主机50001~50004的端口转发（SDK与控制脚本通讯的默认端口），那么此时就需要特别指定`local_ip`为你的宿主机IP。
+
+`config.headless_mode = true;`设置启用了无界面模式，此模式下会发送控制脚本给机器人的主端口（30001），机器人便会运行这个脚本。
+> note：在`EliteDriver`的构造函数中会自动发送一次，如果此时机器人还未释放抱闸，则需要在释放抱闸后，调用`sendExternalControlScript()`方法再次发送控制脚本。
+
+`config.script_file_path`指定了外部控制脚本的路径。
+
 
 2. 获取当前关节角度，并让第四关节旋转90度。
     ```cpp
