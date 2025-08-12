@@ -39,9 +39,6 @@ void RtsiClient::connect(const std::string& ip, int port) {
 }
 
 void RtsiClient::disconnect() {
-    if (connection_state == STARTED) {
-        pause();
-    }
     socketDisconnect();
 }
 
