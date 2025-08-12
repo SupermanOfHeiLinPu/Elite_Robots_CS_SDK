@@ -69,7 +69,6 @@ bool PrimaryPort::getPackage(std::shared_ptr<PrimaryPackage> pkg, int timeout_ms
 bool PrimaryPort::parserMessage() {
     std::lock_guard<std::mutex> lock(socket_mutex_);
     if (!socket_ptr_ || !socket_ptr_->is_open()) {
-        ELITE_LOG_WARN("Don't connect to robot primary port");
         return false;
     }
     // Receive package head and parser it
