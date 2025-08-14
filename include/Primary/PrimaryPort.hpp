@@ -69,10 +69,11 @@ private:
      * 
      * @param ip The robot ip
      * @param port The port(30001 or 30002)
+     * @param is_last_connect_success Indicate whether the last connection was successful.
      * @return true 
      * @return false 
      */
-    bool socketConnect(const std::string& ip, int port);
+    bool socketConnect(const std::string& ip, int port, bool is_last_connect_success = false);
 
     /**
      * @brief Close connection socket

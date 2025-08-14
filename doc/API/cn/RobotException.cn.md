@@ -22,11 +22,13 @@
 
 ```cpp
 enum class Type : int8_t {
+    ROBOT_TCP_DISCONNECTED = -1
     ROBOT_ERROR = 6,
     SCRIPT_RUNTIME = 10
 };
 ```
 
+* `ROBOT_TCP_DISCONNECTED` : 表示与机器人断开了连接
 * `ROBOT_ERROR`：表示机器人运行错误。
 * `SCRIPT_RUNTIME`：表示运行时异常，如语法错误、脚本执行错误等。
 

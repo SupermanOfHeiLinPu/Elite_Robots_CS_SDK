@@ -3,7 +3,6 @@
 #include "Log.hpp"
 #include "Utils.hpp"
 
-
 using namespace std::chrono;
 
 namespace ELITE {
@@ -93,7 +92,8 @@ bool PrimaryPort::parserMessage() {
     return parserMessageBody(message_head_[4], package_len);
 }
 
-RobotErrorSharedPtr PrimaryPort::parserRobotError(uint64_t timestamp, RobotError::Source source, const std::vector<uint8_t>& msg_body, int offset) {
+RobotErrorSharedPtr PrimaryPort::parserRobotError(uint64_t timestamp, RobotError::Source source,
+                                                  const std::vector<uint8_t>& msg_body, int offset) {
     int32_t code = 0;
     UTILS::EndianUtils::unpack(msg_body.begin() + offset, code);
     offset += sizeof(int32_t);
@@ -117,7 +117,8 @@ RobotErrorSharedPtr PrimaryPort::parserRobotError(uint64_t timestamp, RobotError
             uint32_t data;
             UTILS::EndianUtils::unpack(msg_body.begin() + offset, data);
             return std::make_shared<RobotError>(timestamp, code, sub_code, static_cast<RobotError::Source>(source),
-                              static_cast<RobotError::Level>(level), static_cast<RobotError::DataType>(data_type), data);
+                                                static_cast<RobotError::Level>(level), static_cast<RobotError::DataType>(data_type),
+                                                data);
 
         } break;
         case RobotError::DataType::SIGNED:
@@ -125,7 +126,8 @@ RobotErrorSharedPtr PrimaryPort::parserRobotError(uint64_t timestamp, RobotError
             int32_t data;
             UTILS::EndianUtils::unpack(msg_body.begin() + offset, data);
             return std::make_shared<RobotError>(timestamp, code, sub_code, static_cast<RobotError::Source>(source),
-                              static_cast<RobotError::Level>(level), static_cast<RobotError::DataType>(data_type), data);
+                                                static_cast<RobotError::Level>(level), static_cast<RobotError::DataType>(data_type),
+                                                data);
         } break;
         case RobotError::DataType::STRING: {
             std::string data;
@@ -134,14 +136,15 @@ RobotErrorSharedPtr PrimaryPort::parserRobotError(uint64_t timestamp, RobotError
             }
 
             return std::make_shared<RobotError>(timestamp, code, sub_code, static_cast<RobotError::Source>(source),
-                              static_cast<RobotError::Level>(level), static_cast<RobotError::DataType>(data_type), data);
+                                                static_cast<RobotError::Level>(level), static_cast<RobotError::DataType>(data_type),
+                                                data);
         } break;
     }
     return nullptr;
 }
 
-
-RobotRuntimeExceptionSharedPtr PrimaryPort::paraserRuntimeException(uint64_t timestamp, const std::vector<uint8_t>& msg_body, int offset) {
+RobotRuntimeExceptionSharedPtr PrimaryPort::paraserRuntimeException(uint64_t timestamp, const std::vector<uint8_t>& msg_body,
+                                                                    int offset) {
     int32_t line;
     UTILS::EndianUtils::unpack(msg_body.begin() + offset, line);
     offset += sizeof(int32_t);
@@ -240,10 +243,18 @@ bool PrimaryPort::parserMessageBody(int type, int package_len) {
 }
 
 void PrimaryPort::socketAsyncLoop(const std::string& ip, int port) {
+    bool is_last_connect_success = true;
     while (socket_async_thread_alive_) {
         try {
             if (!parserMessage()) {
-                socketConnect(ip, port);
+                auto now = std::chrono::system_clock::now();
+                auto duration = now.time_since_epoch();
+                auto timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+                auto ex = std::make_shared<RobotException>(RobotException::Type::ROBOT_DISCONNECTED, timestamp);
+                if (robot_exception_cb_ && is_last_connect_success) {
+                    robot_exception_cb_(ex);
+                }
+                is_last_connect_success = socketConnect(ip, port, is_last_connect_success);
             }
             std::this_thread::sleep_for(10ms);
         } catch (const std::exception& e) {
@@ -252,7 +263,7 @@ void PrimaryPort::socketAsyncLoop(const std::string& ip, int port) {
     }
 }
 
-bool PrimaryPort::socketConnect(const std::string& ip, int port) {
+bool PrimaryPort::socketConnect(const std::string& ip, int port, bool is_last_connect_success) {
     try {
         std::lock_guard<std::mutex> lock(socket_mutex_);
         socket_ptr_.reset(new boost::asio::ip::tcp::socket(io_context_));
@@ -273,14 +284,18 @@ bool PrimaryPort::socketConnect(const std::string& ip, int port) {
         io_context_.run_for(std::chrono::steady_clock::duration(500ms));
         if (connect_ec) {
             socket_ptr_.reset();
-            ELITE_LOG_ERROR("Connect to robot primary port fail: %s", boost::system::system_error(connect_ec).what());
+            if (is_last_connect_success) {
+                ELITE_LOG_ERROR("Connect to robot primary port fail: %s", boost::system::system_error(connect_ec).what());
+            }
             return false;
         }
         // If the asynchronous operation completed successfully then the io_context
         // would have been stopped due to running out of work. If it was not
         // stopped, then the io_context::run_for call must have timed out.
         if (!io_context_.stopped()) {
-            ELITE_LOG_ERROR("Connect to robot primary port fail: timeout");
+            if (is_last_connect_success) {
+                ELITE_LOG_ERROR("Connect to robot primary port fail: timeout");
+            }
             socketDisconnect();
             socket_ptr_.reset();
             io_context_.stop();

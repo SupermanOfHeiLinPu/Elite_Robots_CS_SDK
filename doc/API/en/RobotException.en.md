@@ -22,11 +22,13 @@ The base class for robot exceptions, representing common exception properties su
 
 ```cpp
 enum class Type : int8_t {
+    ROBOT_TCP_DISCONNECTED = -1
     ROBOT_ERROR = 6,
     SCRIPT_RUNTIME = 10
 };
 ```
 
+* `ROBOT_TCP_DISCONNECTED` : Represents a disconnection from the robot.
 * `ROBOT_ERROR`: Represents a robot operation error.
 * `SCRIPT_RUNTIME`: Represents a runtime error, such as script execution or syntax issues.
 
