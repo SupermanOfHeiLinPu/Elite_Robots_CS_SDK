@@ -22,8 +22,9 @@ class RobotException {
    public:
     // Exception Type
     enum class Type : int8_t {
-        ROBOT_ERROR = 6,    // Represents a robot operation error.
-        SCRIPT_RUNTIME = 10  // Represents a runtime error, such as script execution or syntax issues.
+        ROBOT_DISCONNECTED = -1,  // Represents a disconnection from the robot.
+        ROBOT_ERROR = 6,          // Represents a robot operation error.
+        SCRIPT_RUNTIME = 10       // Represents a runtime error, such as script execution or syntax issues.
     };
 
     /**
