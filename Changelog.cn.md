@@ -1,6 +1,6 @@
 # Changelog for Elite Robots CS SDK
 
-## [Unreleased]
+## [v1.2.0] - 2025-08-14
 
 ### Added
 - `ControllerLog::downloadSystemLog()`：下载机器人系统日志的接口。

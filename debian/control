@@ -13,7 +13,7 @@ Vcs-Git: https://github.com/Elite-Robots/Elite_Robots_CS_SDK.git
 Rules-Requires-Root: no
 
 Package: elite-cs-series-sdk
-Architecture: amd64
+Architecture: amd64 arm64
 Depends: 
   ${shlibs:Depends},
   ${misc:Depends}
