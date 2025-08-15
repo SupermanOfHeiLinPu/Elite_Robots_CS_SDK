@@ -284,7 +284,7 @@ bool endForceMode()
 
 ### ***停止外部控制***
 ```cpp
-bool stopControl(int wait_ms = 500)
+bool stopControl(int wait_ms = 10000)
 ```
 - ***功能***
 

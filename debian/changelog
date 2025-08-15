@@ -1,3 +1,24 @@
+elite-cs-series-sdk (1.2.0-focal-multiarch-1) focal; urgency=medium
+
+  * Focal upload
+  * Same as 1.2.0-focal-multiarch, but add libssh-dev dependency.
+
+ -- Elite Robots <elite@elibot.cn>  Thu, 14 Aug 2025 15:03:25 +0800
+
+elite-cs-series-sdk (1.2.0-noble-multiarch-1) noble; urgency=medium
+
+  * Noble upload
+  * Same as 1.2.0-noble-multiarch, but add libssh-dev dependency.
+
+ -- Elite Robots <elite@elibot.cn>  Thu, 14 Aug 2025 15:03:25 +0800
+
+elite-cs-series-sdk (1.2.0-jammy-multiarch-1) jammy; urgency=medium
+
+  * Jammy upload
+  * Same as 1.2.0-jammy-multiarch, but add libssh-dev dependency.
+
+ -- Elite Robots <elite@elibot.cn>  Thu, 14 Aug 2025 15:03:25 +0800
+
 elite-cs-series-sdk (1.2.0-focal-multiarch) focal; urgency=medium
 
   * focal upload
