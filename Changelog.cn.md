@@ -1,5 +1,14 @@
 # Changelog for Elite Robots CS SDK
 
+## [Unrelease]
+
+### Added
+- 新增一个带速度规划的“servoj”示例。
+
+### Fixed
+- 修复 `external_control.script` 中 `extrapolate()`函数计算的步长为固定的steptime的问题。
+
+
 ## [v1.2.0] - 2025-08-14
 
 ### Added

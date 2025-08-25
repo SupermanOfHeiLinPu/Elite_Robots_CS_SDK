@@ -191,7 +191,7 @@ def extrapolate():
     global cmd_servo_joints
     joint_speed = get_target_joint_speeds()
     for i in range(len(joint_speed)):
-        cmd_servo_joints[i] = cmd_servo_joints[i] + (joint_speed[i] * steptime)
+        cmd_servo_joints[i] = cmd_servo_joints[i] + (joint_speed[i] * SERVOJ_TIME)
     return cmd_servo_joints
 
 def getServoPoints():

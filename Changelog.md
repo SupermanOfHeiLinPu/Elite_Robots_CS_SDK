@@ -1,5 +1,13 @@
 # Changelog for Elite Robots CS SDK
 
+## [Unrelease]
+
+### Added
+- Add a "servoj" example with speed planning.
+
+### Fixed
+- Fix the issue where the step size calculated by the `extrapolate()` function in `external_control.script` is a fixed steptime.
+
 ## [v1.2.0] - 2025-08-14
 
 ### Added
