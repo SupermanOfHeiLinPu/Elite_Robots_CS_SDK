@@ -5,6 +5,9 @@
 ### Added
 - Add a "servoj" example with speed planning.
 
+### Changed
+- Adjust the "timeout" value of "trajectory_socket" in `external_control.script`.
+
 ### Fixed
 - Fix the issue where the step size calculated by the `extrapolate()` function in `external_control.script` is a fixed steptime.
 

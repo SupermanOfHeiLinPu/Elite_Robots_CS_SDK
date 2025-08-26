@@ -5,6 +5,9 @@
 ### Added
 - 新增一个带速度规划的“servoj”示例。
 
+### Changed
+- 调整 `external_control.script` 中 “trajectory_socket” 的“timeout”值。
+
 ### Fixed
 - 修复 `external_control.script` 中 `extrapolate()`函数计算的步长为固定的steptime的问题。
 
