@@ -36,11 +36,21 @@ class RtsiIOInterface : protected RtsiClientInterface {
      * @brief Construct a new Rtsi I O Interface object
      *
      * @param output_recipe_file Output recipe configuration file
-     * @param input_recipe_file Input recipe configuration file
+     * @param input_recipe_file Input recipe configuration file. If empty
      * @param frequency Output frequency
      */
     ELITE_EXPORT explicit RtsiIOInterface(const std::string& output_recipe_file, const std::string& input_recipe_file,
                                           double frequency);
+
+    /**
+     * @brief Construct a new Rtsi I O Interface object
+     *
+     * @param output_recipe_file Output recipe configuration
+     * @param input_recipe_file Input recipe configuration
+     * @param frequency Output frequency
+     */
+    ELITE_EXPORT explicit RtsiIOInterface(const std::vector<std::string>& output_recipe,
+                                          const std::vector<std::string>& input_recipe, double frequency);
 
     ELITE_EXPORT virtual ~RtsiIOInterface();
 

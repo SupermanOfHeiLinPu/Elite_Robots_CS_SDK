@@ -234,9 +234,25 @@ RtsiIOInterface::RtsiIOInterface(const std::string& output_recipe_file, const st
     ```
 
 - ***参数***
-    - output_recipe_file：输出配方文件路径。
+    - output_recipe_file：输出配方文件路径。如果为空，则不订阅。
 
-    - input_recipe_file：输入配方文件路径。
+    - input_recipe_file：输入配方文件路径。如果为空，则不订阅。
+
+    - frequency：数据同步频率。
+
+---
+
+```cpp
+RtsiIOInterface(const std::vector<std::string>& output_recipe, const std::vector<std::string>& input_recipe, double frequency)
+```
+- ***功能***
+
+    初始化数据
+
+- ***参数***
+    - output_recipe：输入配方字符串。如果为空，则不订阅。
+
+    - input_recipe：输出配方字符串。如果为空，则不订阅。
 
     - frequency：数据同步频率。
 

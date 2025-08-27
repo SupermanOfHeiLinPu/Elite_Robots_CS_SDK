@@ -4,9 +4,11 @@
 
 ### Added
 - Add a "servoj" example with speed planning.
+- The `RtsiIOInterface` adds a string list constructor.
 
 ### Changed
 - Adjust the "timeout" value of "trajectory_socket" in `external_control.script`.
+- The `RtsiIOInterface` allows input of empty paths and empty lists.
 
 ### Fixed
 - Fix the issue where the step size calculated by the `extrapolate()` function in `external_control.script` is a fixed steptime.

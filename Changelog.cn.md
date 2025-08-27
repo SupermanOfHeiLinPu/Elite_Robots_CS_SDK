@@ -4,9 +4,11 @@
 
 ### Added
 - 新增一个带速度规划的“servoj”示例。
+- `RtsiIOInterface` 新增字符串列表构造函数。
 
 ### Changed
 - 调整 `external_control.script` 中 “trajectory_socket” 的“timeout”值。
+- `RtsiIOInterface` 允许输入空路径以及空列表。
 
 ### Fixed
 - 修复 `external_control.script` 中 `extrapolate()`函数计算的步长为固定的steptime的问题。
