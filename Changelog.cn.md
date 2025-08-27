@@ -10,7 +10,7 @@
 
 ### Fixed
 - 修复 `external_control.script` 中 `extrapolate()`函数计算的步长为固定的steptime的问题。
-
+- 修复解析30001机器人错误异常报文时，遗漏了“float”类型的错误。
 
 ## [v1.2.0] - 2025-08-14
 

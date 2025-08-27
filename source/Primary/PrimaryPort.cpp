@@ -139,6 +139,13 @@ RobotErrorSharedPtr PrimaryPort::parserRobotError(uint64_t timestamp, RobotError
                                                 static_cast<RobotError::Level>(level), static_cast<RobotError::DataType>(data_type),
                                                 data);
         } break;
+        case RobotError::DataType::FLOAT: {
+            float data;
+            UTILS::EndianUtils::unpack(msg_body.begin() + offset, data);
+            return std::make_shared<RobotError>(timestamp, code, sub_code, static_cast<RobotError::Source>(source),
+                                                static_cast<RobotError::Level>(level), static_cast<RobotError::DataType>(data_type),
+                                                data);
+        } break;
     }
     return nullptr;
 }
