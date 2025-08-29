@@ -52,7 +52,7 @@ class TrajectoryControl {
         ELITE_LOG_INFO("Start releasing brake...");
         if (!dashboard_->brakeRelease()) {
             ELITE_LOG_FATAL("Brake release failed");
-            return 1;
+            return false;
         }
         ELITE_LOG_INFO("Brake released");
 
