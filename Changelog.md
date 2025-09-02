@@ -4,7 +4,10 @@
 
 ### Added
 - Add a "servoj" example with speed planning.
-- The `RtsiIOInterface` adds a string list constructor.
+- The `RtsiIOInterface`:
+  - Adds a string list constructor.
+  - Add an interface to determine if connected: `isConnected()`.
+  - Add an interface to determine if data synchronization has started: `isStarted()`.
 
 ### Changed
 - Adjust the "timeout" value of "trajectory_socket" in `external_control.script`.

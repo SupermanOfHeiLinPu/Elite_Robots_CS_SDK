@@ -91,6 +91,16 @@ void RtsiIOInterface::disconnect() {
     RtsiClientInterface::disconnect();
 }
 
+
+bool RtsiIOInterface::isConnected() {
+    return is_recv_thread_alive_ && RtsiClientInterface::isConnected();
+}
+
+
+bool RtsiIOInterface::isStarted() {
+    return is_recv_thread_alive_ && RtsiClientInterface::isStarted();
+}
+
 VersionInfo RtsiIOInterface::getControllerVersion() { return controller_version_; }
 
 bool RtsiIOInterface::setSpeedScaling(double slider) {
@@ -628,5 +638,6 @@ void RtsiIOInterface::recvLoop() {
             is_recv_thread_alive_ = false;
         }
     }
+    is_recv_thread_alive_ = false;
     ELITE_LOG_INFO("RTSI IO interface sync thread dropped");
 }

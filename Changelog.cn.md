@@ -4,7 +4,10 @@
 
 ### Added
 - 新增一个带速度规划的“servoj”示例。
-- `RtsiIOInterface` 新增字符串列表构造函数。
+- `RtsiIOInterface` 
+  - 新增字符串列表构造函数。
+  - 新增判断是否连接的接口:`isConnected()`。
+  - 新增判断是否开始数据同步的接口`isStarted()`。
 
 ### Changed
 - 调整 `external_control.script` 中 “trajectory_socket” 的“timeout”值。

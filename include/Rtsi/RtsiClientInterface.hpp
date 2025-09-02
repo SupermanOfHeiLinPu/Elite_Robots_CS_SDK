@@ -128,7 +128,7 @@ class RtsiClientInterface {
      * @return true connected
      * @return false disconnect
      */
-    ELITE_EXPORT bool isConnected();
+    ELITE_EXPORT virtual bool isConnected();
 
     /**
      * @brief Is start to sync robot data
@@ -136,7 +136,7 @@ class RtsiClientInterface {
      * @return true started
      * @return false not started
      */
-    ELITE_EXPORT bool isStarted();
+    ELITE_EXPORT virtual bool isStarted();
 
     /**
      * @brief This function is used to determine have bytes that may be read without blocking.

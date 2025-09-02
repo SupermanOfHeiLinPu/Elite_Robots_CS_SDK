@@ -71,6 +71,22 @@ class RtsiIOInterface : protected RtsiClientInterface {
     ELITE_EXPORT virtual void disconnect();
 
     /**
+     * @brief Get connection state
+     *
+     * @return true connected
+     * @return false disconnect
+     */
+    ELITE_EXPORT virtual bool isConnected();
+
+    /**
+     * @brief Is start to sync robot data
+     *
+     * @return true started
+     * @return false not started
+     */
+    ELITE_EXPORT virtual bool isStarted();
+
+    /**
      * @brief Get the Controller Version
      *
      * @return std::tuple<uint32_t, uint32_t, uint32_t, uint32_t>
