@@ -103,7 +103,7 @@ RobotErrorSharedPtr PrimaryPort::parserRobotError(uint64_t timestamp, RobotError
     offset += sizeof(int32_t);
 
     int32_t level = 0;
-    UTILS::EndianUtils::unpack(msg_body.begin() + offset, sub_code);
+    UTILS::EndianUtils::unpack(msg_body.begin() + offset, level);
     offset += sizeof(int32_t);
 
     uint32_t data_type;
