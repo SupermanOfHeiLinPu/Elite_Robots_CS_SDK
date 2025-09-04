@@ -38,7 +38,13 @@ class EliteDriver::Impl {
    public:
     Impl() = delete;
     explicit Impl(const std::string& robot_ip) : robot_ip_(robot_ip) { TcpServer::start(); }
-    ~Impl() { TcpServer::stop(); }
+    ~Impl() { 
+        reverse_server_.reset();
+        trajectory_server_.reset();
+        script_command_server_.reset();
+        script_sender_.reset();
+        TcpServer::stop(); 
+    }
 
     std::string readScriptFile(const std::string& file);
     void scriptParamWrite(std::string& file_string, const EliteDriverConfig& config);
