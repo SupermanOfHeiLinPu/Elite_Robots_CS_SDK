@@ -135,7 +135,8 @@ def targetWithinLimits(step_start, step_end, time):
             if violation_popup_counter == 0:
                 # We want a popup when an invalid commant is sent. As long as we keep sending invalid
                 # commands, we do not want to repeat the popup.
-                popup(str_msg, title="External Control speed limit", blocking=False, warning=True)
+                textmsg(str_msg)
+                # popup(str_msg, title="External Control speed limit", blocking=False, warning=True)
             if violation_popup_counter * get_steptime() % 5.0 == 0:
                 # We want to have a log printed regularly. We are receiving motion commands that are not
                 # feasible. The user should have a chance to know about this.
@@ -339,6 +340,7 @@ extrapolate_max_count = 0
 cmd_servo_joints_queue = Queue()
 cmd_servo_joints_queue.put(get_actual_joint_positions())
 
+pin_thread(cpu=1, prio=80, lockmem=1)
 while control_mode > MODE_STOPPED:
     params_mult = socket_read_binary_integer(REVERSE_DATA_SIZE, "reverse_socket", read_timeout)
     if params_mult[0] > 0:
