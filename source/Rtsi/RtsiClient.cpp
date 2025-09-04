@@ -224,7 +224,7 @@ int RtsiClient::receiveSocket(std::vector<uint8_t>& buff, int size, int offset, 
     // the pending asynchronous operation is a composed operation, the deadline
     // applies to the entire operation, rather than individual operations on
     // the socket.
-    io_context_.run_for(std::chrono::steady_clock::duration(std::chrono::milliseconds(timeout_ms)));
+    io_context_.run_for(std::chrono::milliseconds(timeout_ms));
 
     // If the asynchronous operation completed successfully then the io_context
     // would have been stopped due to running out of work. If it was not
