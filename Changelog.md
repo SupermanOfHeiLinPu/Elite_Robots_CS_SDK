@@ -17,6 +17,8 @@
 - Fix the issue where the step size calculated by the `extrapolate()` function in `external_control.script` is a fixed steptime.
 - Fix the error of missing the "float" type when parsing the 30001 robot error exception message.
 - Fix the issue where the error level was incorrect when parsing the 30001 robot error exception message.
+- Fix the memory issue that occurs after receiving incomplete messages from 30001.
+- Fix the issue where static resources in `TcpServer` are destructed prematurely.
 
 ## [v1.2.0] - 2025-08-14
 
