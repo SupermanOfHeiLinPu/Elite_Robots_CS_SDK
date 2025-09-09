@@ -4,6 +4,7 @@
 
 #include "Common/SshUtils.hpp"
 #include "Elite/Logger.hpp"
+#include "RemoteUpgrade.hpp"
 
 using namespace ELITE::SSH_UTILS;
 
