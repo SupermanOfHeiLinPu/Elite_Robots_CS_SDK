@@ -158,6 +158,7 @@ void EliteDriver::init(const EliteDriverConfig& config) {
     impl_ = std::make_unique<EliteDriver::Impl>(config.robot_ip);
 
     // First, need to connect to the robot primary port before attempting to obtain the local IP address
+    ELITE_LOG_DEBUG("Connecting to robot primary port %s ...", config.robot_ip.c_str());
     impl_->primary_port_ = std::make_unique<PrimaryPortInterface>();
     if (!impl_->primary_port_->connect(impl_->robot_ip_, PrimaryPortInterface::PRIMARY_PORT)) {
         ELITE_LOG_FATAL("Connect robot primary port fail.");
@@ -168,9 +169,11 @@ void EliteDriver::init(const EliteDriverConfig& config) {
     } else {
         impl_->local_ip_ = config.local_ip;
     }
+    ELITE_LOG_DEBUG("Connected to robot primary port.");
 
     // Generate external control script.
     std::string control_script = impl_->readScriptFile(config.script_file_path);
+    ELITE_LOG_DEBUG("Read script file '%s' success.", config.script_file_path.c_str());
     impl_->scriptParamWrite(control_script, config);
 
     impl_->reverse_server_ = std::make_unique<ReverseInterface>(config.reverse_port);
@@ -191,7 +194,11 @@ void EliteDriver::init(const EliteDriverConfig& config) {
         }
         impl_->robot_script_ += "end";
 
-        sendExternalControlScript();
+        if (sendExternalControlScript()) {
+            ELITE_LOG_DEBUG("Sent external control script to robot.");
+        } else {
+            ELITE_LOG_DEBUG("Send external control script to robot fail.");
+        }
     } else {
         impl_->robot_script_ = control_script;
         impl_->script_sender_ = std::make_unique<ScriptSender>(config.script_sender_port, impl_->robot_script_);

@@ -11,9 +11,13 @@ TcpServer::TcpServer(int port, int recv_buf_size) : read_buffer_(recv_buf_size) 
         throw EliteException(EliteException::Code::TCP_SERVER_CONTEXT_NULL);
     }
     io_context_ = s_resource->io_context_ptr_;
-
-    acceptor_ = std::make_unique<boost::asio::ip::tcp::acceptor>(
-        *io_context_, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port), true);
+    try {
+        acceptor_ = std::make_unique<boost::asio::ip::tcp::acceptor>(
+            *io_context_, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port), true);
+    } catch(const boost::system::system_error& error) {
+        ELITE_LOG_FATAL("Create TCP server on port %d fail: %s", port, error.what());
+        throw EliteException(EliteException::Code::SOCKET_FAIL, error.what());
+    }
     acceptor_->listen(1);
 }
 
@@ -110,7 +114,14 @@ void TcpServer::doRead(std::shared_ptr<boost::asio::ip::tcp::socket> sock) {
                 if (sock->is_open()) {
                     boost::system::error_code ignore_ec;
                     auto local_point = sock->local_endpoint(ignore_ec);
+                    if (ignore_ec) {
+                        ELITE_LOG_WARN("Get local endpoint fail: %s", ignore_ec.message().c_str());
+                        ignore_ec = boost::system::error_code();
+                    }
                     auto remote_point = sock->remote_endpoint(ignore_ec);
+                    if (ignore_ec) {
+                        ELITE_LOG_WARN("Get remote endpoint fail: %s", ignore_ec.message().c_str());
+                    }
                     self->closeSocket(sock, ignore_ec);
                     ELITE_LOG_INFO("TCP port %d close client: %s:%d %s. Reason: %s", local_point.port(),
                                    remote_point.address().to_string().c_str(), remote_point.port(),
@@ -135,7 +146,8 @@ int TcpServer::writeClient(void* data, int size) {
     if (socket_) {
         boost::system::error_code ec;
         int wb = boost::asio::write(*socket_, boost::asio::buffer(data, size), ec);
-        if(wb < 0 || ec) {
+        if(ec) {
+            ELITE_LOG_DEBUG("Port %d write TCP client fail: %s", socket_->local_endpoint().port(), ec.message().c_str());
             return -1;
         }
         return wb;

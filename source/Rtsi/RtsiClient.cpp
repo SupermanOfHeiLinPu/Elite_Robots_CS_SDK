@@ -3,6 +3,7 @@
 #include "RtsiRecipeInternal.hpp"
 #include "Utils.hpp"
 #include "VersionInfo.hpp"
+#include "Log.hpp"
 
 #include <array>
 #include <iostream>
@@ -29,6 +30,9 @@ void RtsiClient::connect(const std::string& ip, int port) {
         socket_ptr_->async_connect(endpoint, [&](const boost::system::error_code& error) {
             if (!error) {
                 connection_state = ConnectionState::CONNECTED;
+            } else {
+                connection_state = ConnectionState::DISCONNECTED;
+                ELITE_LOG_ERROR("Connect to RTSI server %s:%d fail: %s", ip.c_str(), port, error.message().c_str());
             }
         });
         io_context_.run();
@@ -192,6 +196,7 @@ void RtsiClient::sendAll(const PackageType& cmd, const std::vector<uint8_t>& pay
     boost::system::error_code ec;
     socket_ptr_->write_some(boost::asio::buffer(message), ec);
     if (ec) {
+        ELITE_LOG_FATAL("RTSI socket send fail: %s", ec.message().c_str());
         throw EliteException(EliteException::Code::SOCKET_FAIL, ec.message());
     }
 }
@@ -209,6 +214,7 @@ int RtsiClient::receiveSocket(std::vector<uint8_t>& buff, int size, int offset, 
     boost::asio::async_read(*socket_ptr_, boost::asio::buffer(buff.data() + offset, size),
                             [&](const boost::system::error_code& ec, std::size_t nb) {
                                 if (ec) {
+                                    ELITE_LOG_FATAL("RTSI socket receive fail: %s", ec.message().c_str());
                                     throw EliteException(EliteException::Code::SOCKET_FAIL, ec.message());
                                 }
                                 read_len = nb;
