@@ -140,7 +140,19 @@ void DashboardClient::reboot() {
     impl_->disconnect();
 }
 
-std::string DashboardClient::robot() { return sendAndRequest("robot\n"); }
+std::string DashboardClient::robot() { return sendAndRequest("robot -t\n"); }
+
+std::string DashboardClient::robotType() {
+    return sendAndRequest("robot -t\n");
+}
+
+std::string DashboardClient::robotSerialNumber() {
+    return sendAndRequest("robot -s\n");
+}
+
+std::string DashboardClient::robotID() {
+    return sendAndRequest("robot -id\n");
+}
 
 bool DashboardClient::powerOn() {
     std::string response = sendAndRequest("robotControl -on\n", "Powering on\r\n");

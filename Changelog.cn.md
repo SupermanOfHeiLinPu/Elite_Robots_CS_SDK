@@ -8,6 +8,10 @@
   - 新增字符串列表构造函数。
   - 新增判断是否连接的接口:`isConnected()`。
   - 新增判断是否开始数据同步的接口`isStarted()`。
+- `DashboardClient`
+  - 新增获取机器人类型接口：`robotType()`
+  - 新增获取机器人序列号接口：`robotSerialNumber()`
+  - 新增获取机器人ID接口：`robotID()`
 
 ### Changed
 - 调整 `external_control.script` 中 “trajectory_socket” 的“timeout”值。
@@ -19,6 +23,9 @@
 - 修复解析30001机器人错误异常报文时，错误等级不正确的问题。
 - 修复收到30001不完整的报文后，出现的内存问题。
 - 修复`TcpServer`中静态资源析构顺序提前的问题。
+
+### Deprecated
+- 弃用 `DashboardClient::robot()` 未来版本将移除，请改用 `DashboardClient::robotType()`
 
 ## [v1.2.0] - 2025-08-14
 
