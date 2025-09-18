@@ -72,10 +72,19 @@ void TcpServer::doAccept() {
 #endif
                 // Update alive socket
                 self->socket_ = new_socket;
-                auto local_point = self->socket_->local_endpoint(ignore_ec);
-                auto remote_point = self->socket_->remote_endpoint(ignore_ec);
-                ELITE_LOG_INFO("TCP port %d accept client: %s:%d %s", local_point.port(),
-                               remote_point.address().to_string().c_str(), remote_point.port(),
+                // If accept success, get local and remote endpoint
+                // Save endpoint info for log
+                self->local_endpoint_ = new_socket->local_endpoint(ignore_ec);
+                if (ignore_ec) {
+                    ELITE_LOG_WARN("Get local endpoint fail: %s", ignore_ec.message().c_str());
+                    ignore_ec = boost::system::error_code();
+                }
+                self->remote_endpoint_ = new_socket->remote_endpoint(ignore_ec);
+                if (ignore_ec) {
+                    ELITE_LOG_WARN("Get remote endpoint fail: %s", ignore_ec.message().c_str());
+                }
+                ELITE_LOG_INFO("TCP port %d accept client: %s:%d %s", self->local_endpoint_.port(),
+                               self->remote_endpoint_.address().to_string().c_str(), self->remote_endpoint_.port(),
                                boost::system::system_error(ec).what());
                 // Start async read
                 self->doRead(new_socket);
@@ -113,18 +122,9 @@ void TcpServer::doRead(std::shared_ptr<boost::asio::ip::tcp::socket> sock) {
             } else {
                 if (sock->is_open()) {
                     boost::system::error_code ignore_ec;
-                    auto local_point = sock->local_endpoint(ignore_ec);
-                    if (ignore_ec) {
-                        ELITE_LOG_WARN("Get local endpoint fail: %s", ignore_ec.message().c_str());
-                        ignore_ec = boost::system::error_code();
-                    }
-                    auto remote_point = sock->remote_endpoint(ignore_ec);
-                    if (ignore_ec) {
-                        ELITE_LOG_WARN("Get remote endpoint fail: %s", ignore_ec.message().c_str());
-                    }
                     self->closeSocket(sock, ignore_ec);
-                    ELITE_LOG_INFO("TCP port %d close client: %s:%d %s. Reason: %s", local_point.port(),
-                                   remote_point.address().to_string().c_str(), remote_point.port(),
+                    ELITE_LOG_INFO("TCP port %d close client: %s:%d %s. Reason: %s", self->local_endpoint_.port(),
+                                   self->remote_endpoint_.address().to_string().c_str(), self->remote_endpoint_.port(),
                                    boost::system::system_error(ignore_ec).what(), boost::system::system_error(ec).what());
                 }
             }
@@ -147,7 +147,7 @@ int TcpServer::writeClient(void* data, int size) {
         boost::system::error_code ec;
         int wb = boost::asio::write(*socket_, boost::asio::buffer(data, size), ec);
         if(ec) {
-            ELITE_LOG_DEBUG("Port %d write TCP client fail: %s", socket_->local_endpoint().port(), ec.message().c_str());
+            ELITE_LOG_DEBUG("Port %d write TCP client fail: %s", local_endpoint_.port(), ec.message().c_str());
             return -1;
         }
         return wb;

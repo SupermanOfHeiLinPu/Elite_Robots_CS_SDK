@@ -86,6 +86,9 @@ class TcpServer : public std::enable_shared_from_this<TcpServer> {
    private:
     // Save connected client. In this project, each server is only connected to one client.
     std::shared_ptr<boost::asio::ip::tcp::socket> socket_;
+    boost::asio::ip::tcp::endpoint remote_endpoint_;
+    boost::asio::ip::tcp::endpoint local_endpoint_;
+
     std::vector<uint8_t> read_buffer_;
     ReceiveCallback receive_cb_;
     std::mutex socket_mutex_;
