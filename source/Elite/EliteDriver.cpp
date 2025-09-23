@@ -345,3 +345,7 @@ bool EliteDriver::primaryReconnect() {
     impl_->primary_port_->disconnect();
     return impl_->primary_port_->connect(impl_->robot_ip_);
 }
+
+void EliteDriver::registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)> cb) {
+    impl_->primary_port_->registerRobotExceptionCallback(cb);
+}

@@ -23,6 +23,7 @@
 - 修复解析30001机器人错误异常报文时，错误等级不正确的问题。
 - 修复收到30001不完整的报文后，出现的内存问题。
 - 修复`TcpServer`中静态资源析构顺序提前的问题。
+- 修复`EliteDriver::registerRobotExceptionCallback()`接口没有实现的问题。
 
 ### Deprecated
 - 弃用 `DashboardClient::robot()` 未来版本将移除，请改用 `DashboardClient::robotType()`
