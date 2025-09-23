@@ -86,15 +86,27 @@ class TcpServer : public std::enable_shared_from_this<TcpServer> {
    private:
     // Save connected client. In this project, each server is only connected to one client.
     std::shared_ptr<boost::asio::ip::tcp::socket> socket_;
+    boost::asio::ip::tcp::endpoint remote_endpoint_;
+    boost::asio::ip::tcp::endpoint local_endpoint_;
+
     std::vector<uint8_t> read_buffer_;
     ReceiveCallback receive_cb_;
     std::mutex socket_mutex_;
 
     // Boost io_context and backend thread.
     // All servers use the same io_comtext and thread.
-    static std::unique_ptr<std::thread> s_server_thread_;
-    static std::shared_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> s_work_guard_ptr_;
-    static std::shared_ptr<boost::asio::io_context> s_io_context_ptr_;
+    class StaticResource {
+    public:
+        std::unique_ptr<std::thread> server_thread_;
+        std::shared_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> work_guard_ptr_;
+        std::shared_ptr<boost::asio::io_context> io_context_ptr_;
+        StaticResource();
+        ~StaticResource();
+        
+        StaticResource(const StaticResource&) = delete;
+        StaticResource& operator=(const StaticResource&) = delete;
+    };
+    static std::unique_ptr<StaticResource> s_resource;
 
     /**
      * @brief Async accept client connection and add async read task

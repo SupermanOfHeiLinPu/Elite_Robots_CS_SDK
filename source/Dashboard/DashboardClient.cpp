@@ -140,7 +140,19 @@ void DashboardClient::reboot() {
     impl_->disconnect();
 }
 
-std::string DashboardClient::robot() { return sendAndRequest("robot\n"); }
+std::string DashboardClient::robot() { return sendAndRequest("robot -t\n"); }
+
+std::string DashboardClient::robotType() {
+    return sendAndRequest("robot -t\n");
+}
+
+std::string DashboardClient::robotSerialNumber() {
+    return sendAndRequest("robot -s\n");
+}
+
+std::string DashboardClient::robotID() {
+    return sendAndRequest("robot -id\n");
+}
 
 bool DashboardClient::powerOn() {
     std::string response = sendAndRequest("robotControl -on\n", "Powering on\r\n");
@@ -388,7 +400,7 @@ std::string DashboardClient::asyncReadLine(unsigned timeout_ms) {
                                   [&](const boost::system::error_code& error, std::size_t nb) { ec = error; });
 
     do {
-        impl_->io_context_.run_for(std::chrono::steady_clock::duration(std::chrono::milliseconds(timeout_ms)));
+        impl_->io_context_.run_for(std::chrono::milliseconds(timeout_ms));
         // TODO: When all tasks in the io_context are completed, the io_context enters a 'stopped' state.
         // How can we prevent the io_context from entering the 'stopped' state without using the 'restart' method?
         if (impl_->io_context_.stopped()) {

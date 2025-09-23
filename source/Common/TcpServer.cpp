@@ -7,13 +7,17 @@
 namespace ELITE {
 
 TcpServer::TcpServer(int port, int recv_buf_size) : read_buffer_(recv_buf_size) {
-    if (!s_io_context_ptr_) {
+    if (!s_resource) {
         throw EliteException(EliteException::Code::TCP_SERVER_CONTEXT_NULL);
     }
-    io_context_ = s_io_context_ptr_;
-
-    acceptor_ = std::make_unique<boost::asio::ip::tcp::acceptor>(
-        *io_context_, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port), true);
+    io_context_ = s_resource->io_context_ptr_;
+    try {
+        acceptor_ = std::make_unique<boost::asio::ip::tcp::acceptor>(
+            *io_context_, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port), true);
+    } catch(const boost::system::system_error& error) {
+        ELITE_LOG_FATAL("Create TCP server on port %d fail: %s", port, error.what());
+        throw EliteException(EliteException::Code::SOCKET_FAIL, error.what());
+    }
     acceptor_->listen(1);
 }
 
@@ -68,10 +72,19 @@ void TcpServer::doAccept() {
 #endif
                 // Update alive socket
                 self->socket_ = new_socket;
-                auto local_point = self->socket_->local_endpoint(ignore_ec);
-                auto remote_point = self->socket_->remote_endpoint(ignore_ec);
-                ELITE_LOG_INFO("TCP port %d accept client: %s:%d %s", local_point.port(),
-                               remote_point.address().to_string().c_str(), remote_point.port(),
+                // If accept success, get local and remote endpoint
+                // Save endpoint info for log
+                self->local_endpoint_ = new_socket->local_endpoint(ignore_ec);
+                if (ignore_ec) {
+                    ELITE_LOG_WARN("Get local endpoint fail: %s", ignore_ec.message().c_str());
+                    ignore_ec = boost::system::error_code();
+                }
+                self->remote_endpoint_ = new_socket->remote_endpoint(ignore_ec);
+                if (ignore_ec) {
+                    ELITE_LOG_WARN("Get remote endpoint fail: %s", ignore_ec.message().c_str());
+                }
+                ELITE_LOG_INFO("TCP port %d accept client: %s:%d %s", self->local_endpoint_.port(),
+                               self->remote_endpoint_.address().to_string().c_str(), self->remote_endpoint_.port(),
                                boost::system::system_error(ec).what());
                 // Start async read
                 self->doRead(new_socket);
@@ -109,11 +122,9 @@ void TcpServer::doRead(std::shared_ptr<boost::asio::ip::tcp::socket> sock) {
             } else {
                 if (sock->is_open()) {
                     boost::system::error_code ignore_ec;
-                    auto local_point = sock->local_endpoint(ignore_ec);
-                    auto remote_point = sock->remote_endpoint(ignore_ec);
                     self->closeSocket(sock, ignore_ec);
-                    ELITE_LOG_INFO("TCP port %d close client: %s:%d %s. Reason: %s", local_point.port(),
-                                   remote_point.address().to_string().c_str(), remote_point.port(),
+                    ELITE_LOG_INFO("TCP port %d close client: %s:%d %s. Reason: %s", self->local_endpoint_.port(),
+                                   self->remote_endpoint_.address().to_string().c_str(), self->remote_endpoint_.port(),
                                    boost::system::system_error(ignore_ec).what(), boost::system::system_error(ec).what());
                 }
             }
@@ -123,39 +134,11 @@ void TcpServer::doRead(std::shared_ptr<boost::asio::ip::tcp::socket> sock) {
 }
 
 void TcpServer::start() {
-    if (s_server_thread_) {
-        return;
-    }
-    if (!s_io_context_ptr_) {
-        s_io_context_ptr_ = std::make_shared<boost::asio::io_context>();
-    }
-    s_work_guard_ptr_.reset(new boost::asio::executor_work_guard<boost::asio::io_context::executor_type>(
-        boost::asio::make_work_guard(*s_io_context_ptr_)));
-    s_server_thread_.reset(new std::thread([]() {
-        try {
-            if (s_io_context_ptr_->stopped()) {
-                s_io_context_ptr_->restart();
-            }
-            s_io_context_ptr_->run();
-            ELITE_LOG_INFO("TCP server exit thread");
-        } catch (const boost::system::system_error& e) {
-            ELITE_LOG_FATAL("TCP server thread error: %s", e.what());
-        }
-    }));
-
-    std::thread::native_handle_type thread_headle = s_server_thread_->native_handle();
-    RT_UTILS::setThreadFiFoScheduling(thread_headle, RT_UTILS::getThreadFiFoMaxPriority());
+    s_resource.reset(new StaticResource());
 }
 
 void TcpServer::stop() {
-    s_work_guard_ptr_->reset();
-    s_io_context_ptr_->stop();
-    if (s_server_thread_ && s_server_thread_->joinable()) {
-        s_server_thread_->join();
-    }
-    s_work_guard_ptr_.reset();
-    s_server_thread_.reset();
-    s_io_context_ptr_.reset();
+    s_resource.reset();
 }
 
 int TcpServer::writeClient(void* data, int size) {
@@ -163,7 +146,8 @@ int TcpServer::writeClient(void* data, int size) {
     if (socket_) {
         boost::system::error_code ec;
         int wb = boost::asio::write(*socket_, boost::asio::buffer(data, size), ec);
-        if(wb < 0 || ec) {
+        if(ec) {
+            ELITE_LOG_DEBUG("Port %d write TCP client fail: %s", local_endpoint_.port(), ec.message().c_str());
             return -1;
         }
         return wb;
@@ -187,8 +171,42 @@ void TcpServer::closeSocket(std::shared_ptr<boost::asio::ip::tcp::socket> sock, 
     }
 }
 
-std::unique_ptr<std::thread> TcpServer::s_server_thread_;
-std::shared_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> TcpServer::s_work_guard_ptr_;
-std::shared_ptr<boost::asio::io_context> TcpServer::s_io_context_ptr_;
+TcpServer::StaticResource::StaticResource() {
+    if (server_thread_) {
+        return;
+    }
+    if (!io_context_ptr_) {
+        io_context_ptr_ = std::make_shared<boost::asio::io_context>();
+    }
+    work_guard_ptr_.reset(new boost::asio::executor_work_guard<boost::asio::io_context::executor_type>(
+        boost::asio::make_work_guard(*io_context_ptr_)));
+    server_thread_.reset(new std::thread([&]() {
+        try {
+            if (io_context_ptr_->stopped()) {
+                io_context_ptr_->restart();
+            }
+            io_context_ptr_->run();
+            ELITE_LOG_INFO("TCP server exit thread");
+        } catch (const boost::system::system_error& e) {
+            ELITE_LOG_FATAL("TCP server thread error: %s", e.what());
+        }
+    }));
+
+    std::thread::native_handle_type thread_headle = server_thread_->native_handle();
+    RT_UTILS::setThreadFiFoScheduling(thread_headle, RT_UTILS::getThreadFiFoMaxPriority());
+}
+
+TcpServer::StaticResource::~StaticResource() {
+    work_guard_ptr_->reset();
+    io_context_ptr_->stop();
+    if (server_thread_ && server_thread_->joinable()) {
+        server_thread_->join();
+    }
+    work_guard_ptr_.reset();
+    server_thread_.reset();
+    io_context_ptr_.reset();
+}
+
+std::unique_ptr<TcpServer::StaticResource> TcpServer::s_resource;
 
 }  // namespace ELITE

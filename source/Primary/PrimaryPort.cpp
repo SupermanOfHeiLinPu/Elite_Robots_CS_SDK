@@ -13,11 +13,11 @@ PrimaryPort::PrimaryPort() { message_head_.resize(HEAD_LENGTH); }
 PrimaryPort::~PrimaryPort() { disconnect(); }
 
 bool PrimaryPort::connect(const std::string& ip, int port) {
+    std::lock_guard<std::mutex> lock(socket_mutex_);
     if (!socketConnect(ip, port)) {
         return false;
     }
     if (!socket_async_thread_) {
-        std::lock_guard<std::mutex> lock(socket_mutex_);
         // Start async thread
         socket_async_thread_alive_ = true;
         socket_async_thread_.reset(new std::thread([&](std::string ip, int port) { socketAsyncLoop(ip, port); }, ip, port));
@@ -49,7 +49,7 @@ bool PrimaryPort::sendScript(const std::string& script) {
     boost::system::error_code ec;
     socket_ptr_->write_some(boost::asio::buffer(*script_with_newline), ec);
     if (ec) {
-        ELITE_LOG_ERROR("Send script to robot fail : ", boost::system::system_error(ec).what());
+        ELITE_LOG_ERROR("Send script to robot fail : %s", boost::system::system_error(ec).what());
         return false;
     } else {
         return true;
@@ -103,7 +103,7 @@ RobotErrorSharedPtr PrimaryPort::parserRobotError(uint64_t timestamp, RobotError
     offset += sizeof(int32_t);
 
     int32_t level = 0;
-    UTILS::EndianUtils::unpack(msg_body.begin() + offset, sub_code);
+    UTILS::EndianUtils::unpack(msg_body.begin() + offset, level);
     offset += sizeof(int32_t);
 
     uint32_t data_type;
@@ -135,6 +135,13 @@ RobotErrorSharedPtr PrimaryPort::parserRobotError(uint64_t timestamp, RobotError
                 data.push_back(msg_body[i]);
             }
 
+            return std::make_shared<RobotError>(timestamp, code, sub_code, static_cast<RobotError::Source>(source),
+                                                static_cast<RobotError::Level>(level), static_cast<RobotError::DataType>(data_type),
+                                                data);
+        } break;
+        case RobotError::DataType::FLOAT: {
+            float data;
+            UTILS::EndianUtils::unpack(msg_body.begin() + offset, data);
             return std::make_shared<RobotError>(timestamp, code, sub_code, static_cast<RobotError::Source>(source),
                                                 static_cast<RobotError::Level>(level), static_cast<RobotError::DataType>(data_type),
                                                 data);
@@ -198,7 +205,7 @@ bool PrimaryPort::parserMessageBody(int type, int package_len) {
     if (io_context_.stopped()) {
         io_context_.restart();
     }
-    io_context_.run_for(std::chrono::steady_clock::duration(500ms));
+    io_context_.run_for(500ms);
     if (ec) {
         ELITE_LOG_ERROR("Primary port receive package body had expection: %s", boost::system::system_error(ec).what());
         return false;
@@ -242,6 +249,13 @@ bool PrimaryPort::parserMessageBody(int type, int package_len) {
     return true;
 }
 
+bool PrimaryPort::socketReconnect(const std::string& ip, int port, bool is_last_connect_success) {
+    // Disconnect and reconnect
+    std::lock_guard<std::mutex> lock(socket_mutex_);
+    socketDisconnect();
+    return socketConnect(ip, port, is_last_connect_success);
+}
+
 void PrimaryPort::socketAsyncLoop(const std::string& ip, int port) {
     bool is_last_connect_success = true;
     while (socket_async_thread_alive_) {
@@ -254,7 +268,7 @@ void PrimaryPort::socketAsyncLoop(const std::string& ip, int port) {
                 if (robot_exception_cb_ && is_last_connect_success) {
                     robot_exception_cb_(ex);
                 }
-                is_last_connect_success = socketConnect(ip, port, is_last_connect_success);
+                is_last_connect_success = socketReconnect(ip, port, is_last_connect_success);
             }
             std::this_thread::sleep_for(10ms);
         } catch (const std::exception& e) {
@@ -265,7 +279,6 @@ void PrimaryPort::socketAsyncLoop(const std::string& ip, int port) {
 
 bool PrimaryPort::socketConnect(const std::string& ip, int port, bool is_last_connect_success) {
     try {
-        std::lock_guard<std::mutex> lock(socket_mutex_);
         socket_ptr_.reset(new boost::asio::ip::tcp::socket(io_context_));
         socket_ptr_->open(boost::asio::ip::tcp::v4());
         socket_ptr_->set_option(boost::asio::ip::tcp::no_delay(true));
@@ -281,7 +294,7 @@ bool PrimaryPort::socketConnect(const std::string& ip, int port, bool is_last_co
         if (io_context_.stopped()) {
             io_context_.restart();
         }
-        io_context_.run_for(std::chrono::steady_clock::duration(500ms));
+        io_context_.run_for(500ms);
         if (connect_ec) {
             socket_ptr_.reset();
             if (is_last_connect_success) {
@@ -311,10 +324,18 @@ bool PrimaryPort::socketConnect(const std::string& ip, int port, bool is_last_co
 
 void PrimaryPort::socketDisconnect() {
     if (socket_ptr_ && socket_ptr_->is_open()) {
-        boost::system::error_code ignore_ec;
-        socket_ptr_->cancel(ignore_ec);
-        socket_ptr_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignore_ec);
-        socket_ptr_->close(ignore_ec);
+        try {
+            boost::system::error_code ignore_ec;
+            socket_ptr_->cancel(ignore_ec);
+            socket_ptr_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignore_ec);
+            socket_ptr_->close(ignore_ec);
+            if (io_context_.stopped()) {
+                io_context_.restart();
+            }
+            io_context_.run_for(500ms);
+        } catch (const std::exception& e) {
+            ELITE_LOG_WARN("Primary port socket disconnect throw exception:%s", e.what());
+        }
     }
 }
 

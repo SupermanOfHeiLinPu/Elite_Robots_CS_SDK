@@ -1,6 +1,8 @@
 #ifndef __RT_UTILS_HPP__
 #define __RT_UTILS_HPP__
 
+#include <Elite/EliteOptions.hpp>
+
 #include <thread>
 #include <vector>
 
@@ -16,14 +18,14 @@ namespace RT_UTILS {
  * @return true success
  * @return false fail
  */
-bool setThreadFiFoScheduling(std::thread::native_handle_type& thread, const int priority);
+ELITE_EXPORT bool setThreadFiFoScheduling(std::thread::native_handle_type& thread, const int priority);
 
 /**
  * @brief Get the maximum priority of the thread.
  *
  * @return int The max thread priority
  */
-int getThreadFiFoMaxPriority();
+ELITE_EXPORT int getThreadFiFoMaxPriority();
 
 /**
  * @brief Bind a thread to a specific CPU core to run.
@@ -33,7 +35,7 @@ int getThreadFiFoMaxPriority();
  * @return true success
  * @return false fail
  */
-bool bindThreadToCpus(std::thread::native_handle_type& thread, const int cpu);
+ELITE_EXPORT bool bindThreadToCpus(std::thread::native_handle_type& thread, const int cpu);
 
 }  // namespace RT_UTILS
 

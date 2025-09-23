@@ -104,7 +104,31 @@ class DashboardClient {
      *
      * @return string Robot type
      */
-    ELITE_EXPORT std::string robot();
+    [[deprecated(
+        "This interface is deprecated. Please use robotType() instead. This function will be removed in September "
+        "2027.")]] ELITE_EXPORT std::string
+    robot();
+
+    /**
+     * @brief Get robot type
+     *
+     * @return string Robot type
+     */
+    ELITE_EXPORT std::string robotType();
+
+    /**
+     * @brief Get robot serial number
+     *
+     * @return string Robot serial number
+     */
+    ELITE_EXPORT std::string robotSerialNumber();
+
+    /**
+     * @brief Get robot ID
+     *
+     * @return string Robot ID
+     */
+    ELITE_EXPORT std::string robotID();
 
     /**
      * @brief Robot power-on

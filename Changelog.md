@@ -1,5 +1,33 @@
 # Changelog for Elite Robots CS SDK
 
+## [Unrelease]
+
+### Added
+- Add a "servoj" example with speed planning.
+- The `RtsiIOInterface`:
+  - Adds a string list constructor.
+  - Add an interface to determine if connected: `isConnected()`.
+  - Add an interface to determine if data synchronization has started: `isStarted()`.
+- `DashboardClient`
+  - Added interface to get robot type: `robotType()`
+  - Added interface to get robot serial number: `robotSerialNumber()`
+  - Added interface to get robot ID: `robotID()`
+
+### Changed
+- Adjust the "timeout" value of "trajectory_socket" in `external_control.script`.
+- The `RtsiIOInterface` allows input of empty paths and empty lists.
+
+### Fixed
+- Fix the issue where the step size calculated by the `extrapolate()` function in `external_control.script` is a fixed steptime.
+- Fix the error of missing the "float" type when parsing the 30001 robot error exception message.
+- Fix the issue where the error level was incorrect when parsing the 30001 robot error exception message.
+- Fix the memory issue that occurs after receiving incomplete messages from 30001.
+- Fix the issue where static resources in `TcpServer` are destructed prematurely.
+- - Fixed the issue where the `EliteDriver::registerRobotExceptionCallback()` interface was not implemented.
+
+### Deprecated
+- Deprecated `DashboardClient::robot()` it will be removed in future versions. Please use `DashboardClient::robotType()` instead.
+
 ## [v1.2.0] - 2025-08-14
 
 ### Added

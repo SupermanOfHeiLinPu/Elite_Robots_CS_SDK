@@ -357,7 +357,7 @@ class EliteDriver {
      * @param cb A callback function that takes a RobotExceptionSharedPtr
      *           representing the received exception.
      */
-    void registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)> cb);
+    ELITE_EXPORT void registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)> cb);
 };
 
 }  // namespace ELITE

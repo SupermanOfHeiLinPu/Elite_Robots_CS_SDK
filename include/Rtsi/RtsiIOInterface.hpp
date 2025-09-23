@@ -36,11 +36,21 @@ class RtsiIOInterface : protected RtsiClientInterface {
      * @brief Construct a new Rtsi I O Interface object
      *
      * @param output_recipe_file Output recipe configuration file
-     * @param input_recipe_file Input recipe configuration file
+     * @param input_recipe_file Input recipe configuration file. If empty
      * @param frequency Output frequency
      */
     ELITE_EXPORT explicit RtsiIOInterface(const std::string& output_recipe_file, const std::string& input_recipe_file,
                                           double frequency);
+
+    /**
+     * @brief Construct a new Rtsi I O Interface object
+     *
+     * @param output_recipe_file Output recipe configuration
+     * @param input_recipe_file Input recipe configuration
+     * @param frequency Output frequency
+     */
+    ELITE_EXPORT explicit RtsiIOInterface(const std::vector<std::string>& output_recipe,
+                                          const std::vector<std::string>& input_recipe, double frequency);
 
     ELITE_EXPORT virtual ~RtsiIOInterface();
 
@@ -59,6 +69,22 @@ class RtsiIOInterface : protected RtsiClientInterface {
      * @note The function will block to wait for thread finish
      */
     ELITE_EXPORT virtual void disconnect();
+
+    /**
+     * @brief Get connection state
+     *
+     * @return true connected
+     * @return false disconnect
+     */
+    ELITE_EXPORT virtual bool isConnected();
+
+    /**
+     * @brief Is start to sync robot data
+     *
+     * @return true started
+     * @return false not started
+     */
+    ELITE_EXPORT virtual bool isStarted();
 
     /**
      * @brief Get the Controller Version

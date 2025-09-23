@@ -193,9 +193,26 @@ Subscription Item 1
 Subscription Item 2
 ```
 - ***Parameters***
-    - output_recipe_file: The path of the output recipe file.
-    - input_recipe_file: The path of the input recipe file.
+    - output_recipe_file: The path of the output recipe file. If empty, no subscription will be made.
+    - input_recipe_file: The path of the input recipe file. If empty, no subscription will be made.
     - frequency: The data synchronization frequency.
+
+---
+
+```cpp
+RtsiIOInterface(const std::vector<std::string>& output_recipe, const std::vector<std::string>& input_recipe, double frequency)
+```
+- ***Function***
+
+    Initialize data
+
+- ***Parameters***
+    - output_recipe: Input recipe string. If empty, no subscription will be made.
+
+    - input_recipe: Output recipe string. If empty, no subscription will be made.
+
+    - frequency: Data synchronization frequency.
+
 
 ---
 

@@ -1,12 +1,14 @@
-#include "RtsiIOInterface.hpp"
+#include <chrono>
 #include <cstring>
 #include <fstream>
 #include <future>
 #include <iostream>
 #include <sstream>
+
 #include "EliteException.hpp"
 #include "Log.hpp"
 #include "RtUtils.hpp"
+#include "RtsiIOInterface.hpp"
 
 using namespace ELITE;
 
@@ -14,6 +16,11 @@ RtsiIOInterface::RtsiIOInterface(const std::string& output_recipe_file, const st
     : output_recipe_string_(readRecipe(output_recipe_file)),
       input_recipe_string_(readRecipe(input_recipe_file)),
       target_frequency_(frequency) {}
+
+RtsiIOInterface::RtsiIOInterface(const std::vector<std::string>& output_recipe, const std::vector<std::string>& input_recipe,
+                                 double frequency)
+    : output_recipe_string_(output_recipe), input_recipe_string_(input_recipe), target_frequency_(frequency) {
+}
 
 RtsiIOInterface::~RtsiIOInterface() { disconnect(); }
 
@@ -82,6 +89,16 @@ void RtsiIOInterface::disconnect() {
         recv_thread_->join();
     }
     RtsiClientInterface::disconnect();
+}
+
+
+bool RtsiIOInterface::isConnected() {
+    return is_recv_thread_alive_ && RtsiClientInterface::isConnected();
+}
+
+
+bool RtsiIOInterface::isStarted() {
+    return is_recv_thread_alive_ && RtsiClientInterface::isStarted();
 }
 
 VersionInfo RtsiIOInterface::getControllerVersion() { return controller_version_; }
@@ -566,6 +583,11 @@ double RtsiIOInterface::getOutDoubleRegister(int index) {
 }
 
 std::vector<std::string> RtsiIOInterface::readRecipe(const std::string& recipe_file) {
+    // If empty, return empty
+    if (recipe_file.empty()) {
+        return std::vector<std::string>();
+    }
+
     std::vector<std::string> recipe;
     std::ifstream file(recipe_file);
     if (file.fail()) {
@@ -589,8 +611,12 @@ std::vector<std::string> RtsiIOInterface::readRecipe(const std::string& recipe_f
 }
 
 void RtsiIOInterface::setupRecipe() {
-    input_recipe_ = setupInputRecipe(input_recipe_string_);
-    output_recipe_ = setupOutputRecipe(output_recipe_string_, target_frequency_);
+    if (!input_recipe_string_.empty()) {
+        input_recipe_ = setupInputRecipe(input_recipe_string_);
+    }
+    if (!output_recipe_string_.empty()) {
+        output_recipe_ = setupOutputRecipe(output_recipe_string_, target_frequency_);
+    }
 }
 
 void RtsiIOInterface::recvLoop() {
@@ -599,8 +625,12 @@ void RtsiIOInterface::recvLoop() {
     ELITE_LOG_INFO("RTSI IO interface sync thread start, period %lfms", period_ms);
     while (is_recv_thread_alive_) {
         try {
-            receiveData(output_recipe_, false);
-            if (input_new_cmd_) {
+            if (output_recipe_) {
+                receiveData(output_recipe_, false);
+            } else {
+                std::this_thread::sleep_for(std::chrono::milliseconds((uint64_t)period_ms));
+            }
+            if (input_new_cmd_ && input_recipe_) {
                 send(input_recipe_);
                 input_new_cmd_ = false;
             }
@@ -608,5 +638,6 @@ void RtsiIOInterface::recvLoop() {
             is_recv_thread_alive_ = false;
         }
     }
+    is_recv_thread_alive_ = false;
     ELITE_LOG_INFO("RTSI IO interface sync thread dropped");
 }

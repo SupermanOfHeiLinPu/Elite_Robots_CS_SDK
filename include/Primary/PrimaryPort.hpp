@@ -81,6 +81,8 @@ private:
      */
     void socketDisconnect();
 
+    bool socketReconnect(const std::string& ip, int port, bool is_last_connect_success);
+
     RobotExceptionSharedPtr parserException(const std::vector<uint8_t>& msg_body);
 
     RobotErrorSharedPtr parserRobotError(uint64_t timestamp, RobotError::Source source, const std::vector<uint8_t>& msg_body, int offset);
