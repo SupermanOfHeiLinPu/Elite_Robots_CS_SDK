@@ -9,7 +9,7 @@ find_package(Boost REQUIRED COMPONENTS program_options)
 # On Windows systems, when using CMake in the main directory, 
 # the ELITE_EXPORT_LIBRARY macro definition must be removed to avoid compilation errors.
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    remove_definitions(-DELITE_EXPORT_LIBRARY)
+    add_definitions(-DELITE_STATIC_LIBRARY)
 endif()
 
 find_package(Boost REQUIRED)
