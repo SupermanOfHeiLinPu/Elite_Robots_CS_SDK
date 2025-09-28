@@ -2,7 +2,9 @@
 #define __ELITE_OPTIONS_HPP__
 
 #if defined(_WIN32) || defined(_WIN64)
-	#ifdef ELITE_EXPORT_LIBRARY
+	#if defined(ELITE_STATIC_LIBRARY)
+        #define ELITE_EXPORT
+	#elif defined ELITE_EXPORT_LIBRARY
 		#define ELITE_EXPORT __declspec(dllexport)
 	#else
 		#define ELITE_EXPORT __declspec(dllimport)
