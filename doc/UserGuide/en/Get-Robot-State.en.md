@@ -8,7 +8,36 @@ Call the relevant interfaces of the SDK to obtain the robot's joint angles and s
 ## Background
 RTSI is a communication interface for Elite CS series robots, which can read and write robot I/O at a maximum frequency of 250Hz. The SDK provides two types of interfaces. The first is the basic RTSI interface (RtsiClientInterface), which can control every step of RTSI communication. The second interface encapsulates various robot data (RtsiIOInterface), such as joint angles, into functions that can be called directly.  
 
-The specific description of the RTSI protocol can be found in the RTSI documentation downloaded from the official website.
+The specific description of the RTSI protocol can be found in the RTSI documentation downloaded from the official website. The following diagram briefly illustrates the workflow of the RTSI protocol.
+
+```
+               +------+
+               | 连接 |
+               +------+
+                  |
+                  |
+                  v
+            +-------------+
+            | 验证协议版本 |
+            +-------------+
+                   |
+         +---------+------------+
+         |                      |
+         |                      |
++-------------------+       +------------------+       
+| 配置输入、输出订阅 |       | 获取控制器版本信息|
++-------------------+       +------------------+
+        |
+        |
++-------------+ 
+| 发送启动信号 |
++-------------+ 
+       |
+       |
++-------------+ 
+| 开始数据同步 |
++-------------+ 
+```
 
 ## Tasks
 
