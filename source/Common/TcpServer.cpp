@@ -144,13 +144,18 @@ void TcpServer::stop() {
 int TcpServer::writeClient(void* data, int size) {
     std::lock_guard<std::mutex> lock(socket_mutex_);
     if (socket_) {
-        boost::system::error_code ec;
-        int wb = boost::asio::write(*socket_, boost::asio::buffer(data, size), ec);
-        if(ec) {
-            ELITE_LOG_DEBUG("Port %d write TCP client fail: %s", local_endpoint_.port(), ec.message().c_str());
+        try {
+            boost::system::error_code ec;
+            int wb = boost::asio::write(*socket_, boost::asio::buffer(data, size), ec);
+            if(ec) {
+                ELITE_LOG_DEBUG("Port %d write TCP client fail: %s", local_endpoint_.port(), ec.message().c_str());
+                return -1;
+            }
+            return wb;
+        } catch (const boost::system::system_error& e) {
+            ELITE_LOG_DEBUG("Port %d write TCP client exception: %s", local_endpoint_.port(), e.what());
             return -1;
         }
-        return wb;
     }
     return -1;
 }
