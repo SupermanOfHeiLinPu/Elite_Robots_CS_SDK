@@ -557,7 +557,7 @@ vector6d_t getActualJointTemperatures()
 
 ### 获取实际TCP位姿
 ```cpp
-vector6d_t getAcutalTCPPose()
+vector6d_t getActualTCPPose()
 ```
 - ***功能***
 
@@ -569,7 +569,7 @@ vector6d_t getAcutalTCPPose()
 
 ### 获取实际TCP速度
 ```cpp
-vector6d_t getAcutalTCPVelocity()
+vector6d_t getActualTCPVelocity()
 ```
 - ***功能***
 
@@ -581,7 +581,7 @@ vector6d_t getAcutalTCPVelocity()
 
 ### 获取实际TCP力
 ```cpp
-vector6d_t getAcutalTCPForce()
+vector6d_t getActualTCPForce()
 ```
 - ***功能***
 

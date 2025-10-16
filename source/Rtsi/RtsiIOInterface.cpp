@@ -314,13 +314,31 @@ vector6d_t RtsiIOInterface::getAcutalTCPPose() {
     return result;
 }
 
+vector6d_t RtsiIOInterface::getActualTCPPose() {
+    vector6d_t result{0};
+    getRecipeValue("actual_TCP_pose", result);
+    return result;
+}
+
 vector6d_t RtsiIOInterface::getAcutalTCPVelocity() {
     vector6d_t result{0};
     getRecipeValue("actual_TCP_speed", result);
     return result;
 }
 
+vector6d_t RtsiIOInterface::getActualTCPVelocity() {
+    vector6d_t result{0};
+    getRecipeValue("actual_TCP_speed", result);
+    return result;
+}
+
 vector6d_t RtsiIOInterface::getAcutalTCPForce() {
+    vector6d_t result{0};
+    getRecipeValue("actual_TCP_force", result);
+    return result;
+}
+
+vector6d_t RtsiIOInterface::getActualTCPForce() {
     vector6d_t result{0};
     getRecipeValue("actual_TCP_force", result);
     return result;

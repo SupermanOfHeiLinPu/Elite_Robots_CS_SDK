@@ -190,7 +190,7 @@ int main(int argc, const char** argv) {
     ELITE_LOG_INFO("Joints moved to target");
 
 
-    vector6d_t actual_pose = rtsi_client->getAcutalTCPPose();
+    vector6d_t actual_pose = rtsi_client->getActualTCPPose();
     std::vector<vector6d_t> trajectory;
 
     actual_pose[2] -= 0.2;

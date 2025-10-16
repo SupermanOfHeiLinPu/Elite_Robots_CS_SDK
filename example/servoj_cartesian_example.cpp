@@ -126,7 +126,7 @@ int main(int argc, char** argv) {
 
     bool up_move = false;
     bool down_move = false;
-    vector6d_t start_pose = s_rtsi_client->getAcutalTCPPose();
+    vector6d_t start_pose = s_rtsi_client->getActualTCPPose();
     vector6d_t actual_pose = start_pose;
     vector6d_t target_pose = actual_pose;
     double increment = 0;
@@ -137,7 +137,7 @@ int main(int argc, char** argv) {
                    start_pose[4], start_pose[5]);
 
     while (!(up_move && down_move)) {
-        actual_pose = s_rtsi_client->getAcutalTCPPose();
+        actual_pose = s_rtsi_client->getActualTCPPose();
         // Set the increment of
         if (down_move == false) {
             increment = -0.00004;

@@ -457,7 +457,7 @@ Gets the actual joint temperatures.
 
 ### Get the Actual TCP Pose
 ```cpp
-vector6d_t getAcutalTCPPose()
+vector6d_t getActualTCPPose()
 ```
 - ***Function***
 Gets the actual Cartesian coordinates of the tool.
@@ -467,7 +467,7 @@ Gets the actual Cartesian coordinates of the tool.
 
 ### Get the Actual TCP Velocity
 ```cpp
-vector6d_t getAcutalTCPVelocity()
+vector6d_t getActualTCPVelocity()
 ```
 - ***Function***
 Gets the actual Cartesian velocity of the tool.
@@ -477,7 +477,7 @@ Gets the actual Cartesian velocity of the tool.
 
 ### Get the Actual TCP Force
 ```cpp
-vector6d_t getAcutalTCPForce()
+vector6d_t getActualTCPForce()
 ```
 - ***Function***
 Gets the generalized force of the TCP (subtracting the force data caused by the payload).
