@@ -204,8 +204,8 @@ int main(int argc, char** argv) {
 
     bool positive_rotation = false;
     bool negative_rotation = false;
-    vector6d_t acutal_joint = s_rtsi_client->getActualJointPositions();
-    vector6d_t target_joint = acutal_joint;
+    vector6d_t actual_joint = s_rtsi_client->getActualJointPositions();
+    vector6d_t target_joint = actual_joint;
     double increment = 0;
     auto next = steady_clock::now();
     constexpr double JOINT_FINAL_TARGET = 3.0;

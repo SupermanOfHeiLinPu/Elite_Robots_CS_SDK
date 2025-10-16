@@ -127,8 +127,8 @@ int main(int argc, char** argv) {
     bool up_move = false;
     bool down_move = false;
     vector6d_t start_pose = s_rtsi_client->getAcutalTCPPose();
-    vector6d_t acutal_pose = start_pose;
-    vector6d_t target_pose = acutal_pose;
+    vector6d_t actual_pose = start_pose;
+    vector6d_t target_pose = actual_pose;
     double increment = 0;
     bool first_point = true;
     auto next = steady_clock::now();
@@ -137,16 +137,16 @@ int main(int argc, char** argv) {
                    start_pose[4], start_pose[5]);
 
     while (!(up_move && down_move)) {
-        acutal_pose = s_rtsi_client->getAcutalTCPPose();
+        actual_pose = s_rtsi_client->getAcutalTCPPose();
         // Set the increment of
         if (down_move == false) {
             increment = -0.00004;
-            if ((acutal_pose[2] - start_pose[2]) <= -0.1) {
+            if ((actual_pose[2] - start_pose[2]) <= -0.1) {
                 down_move = true;
             }
         } else if (up_move == false) {
             increment = 0.00004;
-            if ((acutal_pose[2] - start_pose[2]) >= -0.01) {
+            if ((actual_pose[2] - start_pose[2]) >= -0.01) {
                 up_move = true;
             }
         }
