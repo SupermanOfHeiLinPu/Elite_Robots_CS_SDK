@@ -113,28 +113,28 @@ int main(int argc, char** argv) {
 
     bool positive_rotation = false;  
     bool negative_rotation = false;  
-    vector6d_t acutal_joint;  
+    vector6d_t actual_joint;  
     vector6d_t target_joint;  
     double increment = 0;  
     bool first_point = true;  
     auto next = steady_clock::now();  
     while (!(positive_rotation && negative_rotation)) {  
-        acutal_joint = s_rtsi_client->getActualJointPositions();  
+        actual_joint = s_rtsi_client->getActualJointPositions();  
         // If first point init target_joint  
         if (first_point) {  
-            target_joint = acutal_joint;  
+            target_joint = actual_joint;  
             first_point = false;  
         }  
 
         // Set the increment of positive rotation and negative rotation  
         if (positive_rotation == false) {  
             increment = 0.0005;  
-            if (acutal_joint[5] >= 3) {  
+            if (actual_joint[5] >= 3) {  
                 positive_rotation = true;  
             }  
         } else if (negative_rotation == false) {  
             increment = -0.0005;  
-            if (acutal_joint[5] <= -3) {  
+            if (actual_joint[5] <= -3) {  
                 negative_rotation = true;  
             }  
         }  
@@ -221,31 +221,31 @@ while (!s_driver->isRobotConnected()) {
 ```cpp  
 bool positive_rotation = false;  
 bool negative_rotation = false;  
-vector6d_t acutal_joint;  
+vector6d_t actual_joint;  
 vector6d_t target_joint;  
 double increment = 0;  
 bool first_point = true;  
 auto next = steady_clock::now();  
 
 while (!(positive_rotation && negative_rotation)) {  
-    acutal_joint = s_rtsi_client->getActualJointPositions();  
+    actual_joint = s_rtsi_client->getActualJointPositions();  
 
     if (first_point) {  
-        target_joint = acutal_joint; // Initialize target position  
+        target_joint = actual_joint; // Initialize target position  
         first_point = false;  
     }  
 
     // Rotate forward to Joint 6 ≥ 3 rad  
     if (!positive_rotation) {  
         increment = 0.0005;  
-        if (acutal_joint[5] >= 3) {  
+        if (actual_joint[5] >= 3) {  
             positive_rotation = true;  
         }  
     }  
     // Rotate backward to Joint 6 ≤ -3 rad  
     else if (!negative_rotation) {  
         increment = -0.0005;  
-        if (acutal_joint[5] <= -3) {  
+        if (actual_joint[5] <= -3) {  
             negative_rotation = true;  
         }  
     }  

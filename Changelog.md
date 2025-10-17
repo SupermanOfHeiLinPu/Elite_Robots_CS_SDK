@@ -8,6 +8,7 @@
   - Adds a string list constructor.
   - Add an interface to determine if connected: `isConnected()`.
   - Add an interface to determine if data synchronization has started: `isStarted()`.
+  - Added interfaces `getActualTCPPose()`, `getActualTCPVelocity()`, and `getActualTCPForce()` (corrected previous spelling errors).
 - `DashboardClient`
   - Added interface to get robot type: `robotType()`
   - Added interface to get robot serial number: `robotSerialNumber()`
@@ -27,6 +28,10 @@
 
 ### Deprecated
 - Deprecated `DashboardClient::robot()` it will be removed in future versions. Please use `DashboardClient::robotType()` instead.
+- Due to spelling errors, the following interfaces have been deprecated and will be removed in future versions. Please use the corresponding new interfaces:
+  - `RtsiIOInterface::getAcutalTCPPose()` -> `RtsiIOInterface::getActualTCPPose()`
+  - `RtsiIOInterface::getAcutalTCPVelocity()` -> `RtsiIOInterface::getActualTCPVelocity()`
+  - `RtsiIOInterface::getAcutalTCPForce()` -> `RtsiIOInterface::getActualTCPForce()`
 
 ## [v1.2.0] - 2025-08-14
 
