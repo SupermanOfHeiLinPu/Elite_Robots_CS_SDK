@@ -9,7 +9,6 @@
 #include <iostream>
 
 using namespace ELITE;
-using namespace ELITE::UTILS;
 
 #define RTSI_HEADR_SIZE (3)
 

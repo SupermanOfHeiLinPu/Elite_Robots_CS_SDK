@@ -2,7 +2,7 @@
 #include <sstream>
 #include <iostream>
 
-using namespace ELITE::UTILS;
+using namespace ELITE;
 
 std::vector<std::string> StringUtils::splitString(const std::string& input, const std::string& delimiter) {
     std::vector<std::string> tokens;

@@ -15,7 +15,7 @@ void RtsiRecipeInternal::parserTypePackage(int package_len, const std::vector<st
 
     std::string types_string;
     std::copy(package.begin() + 4, package.begin() + package_len, std::back_inserter(types_string));
-    std::vector<std::string> types_list = UTILS::StringUtils::splitString(types_string, ",");
+    std::vector<std::string> types_list = StringUtils::splitString(types_string, ",");
     if (types_list.size() != recipe_list_.size()) {
         throw EliteException(EliteException::Code::RTSI_RECIPE_PARSER_FAIL, "not match recipe");
     }
@@ -74,31 +74,31 @@ bool RtsiRecipeInternal::parserDataPackage(int package_len, const std::vector<st
             offset++;
 
         } else if (std::holds_alternative<uint16_t>(value)) {
-            UTILS::EndianUtils::unpack(package, offset, std::get<uint16_t>(value));
+            EndianUtils::unpack(package, offset, std::get<uint16_t>(value));
 
         } else if (std::holds_alternative<uint32_t>(value)) {
-            UTILS::EndianUtils::unpack(package, offset, std::get<uint32_t>(value));
+            EndianUtils::unpack(package, offset, std::get<uint32_t>(value));
 
         } else if (std::holds_alternative<uint64_t>(value)) {
-            UTILS::EndianUtils::unpack(package, offset, std::get<uint64_t>(value));
+            EndianUtils::unpack(package, offset, std::get<uint64_t>(value));
 
         } else if (std::holds_alternative<int32_t>(value)) {
-            UTILS::EndianUtils::unpack(package, offset, std::get<int32_t>(value));
+            EndianUtils::unpack(package, offset, std::get<int32_t>(value));
 
         } else if (std::holds_alternative<double>(value)) {
-            UTILS::EndianUtils::unpack(package, offset, std::get<double>(value));
+            EndianUtils::unpack(package, offset, std::get<double>(value));
 
         } else if (std::holds_alternative<vector3d_t>(value)) {
-            UTILS::EndianUtils::unpack<double, 3>(package, offset, std::get<vector3d_t>(value));
+            EndianUtils::unpack<double, 3>(package, offset, std::get<vector3d_t>(value));
 
         } else if (std::holds_alternative<vector6d_t>(value)) {
-            UTILS::EndianUtils::unpack<double, 6>(package, offset, std::get<vector6d_t>(value));
+            EndianUtils::unpack<double, 6>(package, offset, std::get<vector6d_t>(value));
 
         } else if (std::holds_alternative<vector6int32_t>(value)) {
-            UTILS::EndianUtils::unpack<int32_t, 6>(package, offset, std::get<vector6int32_t>(value));
+            EndianUtils::unpack<int32_t, 6>(package, offset, std::get<vector6int32_t>(value));
 
         } else if (std::holds_alternative<vector6uint32_t>(value)) {
-            UTILS::EndianUtils::unpack<uint32_t, 6>(package, offset, std::get<vector6uint32_t>(value));
+            EndianUtils::unpack<uint32_t, 6>(package, offset, std::get<vector6uint32_t>(value));
 
         } else {
             return false;
@@ -117,31 +117,31 @@ bool RtsiRecipeInternal::parserDataPackage(int package_len, const std::vector<st
             offset++;
 
         } else if (boost::get<uint16_t>(&value)) {
-            UTILS::EndianUtils::unpack(package, offset, boost::get<uint16_t>(value));
+            EndianUtils::unpack(package, offset, boost::get<uint16_t>(value));
 
         } else if (boost::get<uint32_t>(&value)) {
-            UTILS::EndianUtils::unpack(package, offset, boost::get<uint32_t>(value));
+            EndianUtils::unpack(package, offset, boost::get<uint32_t>(value));
 
         } else if (boost::get<uint64_t>(&value)) {
-            UTILS::EndianUtils::unpack(package, offset, boost::get<uint64_t>(value));
+            EndianUtils::unpack(package, offset, boost::get<uint64_t>(value));
 
         } else if (boost::get<int32_t>(&value)) {
-            UTILS::EndianUtils::unpack(package, offset, boost::get<int32_t>(value));
+            EndianUtils::unpack(package, offset, boost::get<int32_t>(value));
 
         } else if (boost::get<double>(&value)) {
-            UTILS::EndianUtils::unpack(package, offset, boost::get<double>(value));
+            EndianUtils::unpack(package, offset, boost::get<double>(value));
 
         } else if (boost::get<vector3d_t>(&value)) {
-            UTILS::EndianUtils::unpack<double, 3>(package, offset, boost::get<vector3d_t>(value));
+            EndianUtils::unpack<double, 3>(package, offset, boost::get<vector3d_t>(value));
 
         } else if (boost::get<vector6d_t>(&value)) {
-            UTILS::EndianUtils::unpack<double, 6>(package, offset, boost::get<vector6d_t>(value));
+            EndianUtils::unpack<double, 6>(package, offset, boost::get<vector6d_t>(value));
 
         } else if (boost::get<vector6int32_t>(&value)) {
-            UTILS::EndianUtils::unpack<int32_t, 6>(package, offset, boost::get<vector6int32_t>(value));
+            EndianUtils::unpack<int32_t, 6>(package, offset, boost::get<vector6int32_t>(value));
 
         } else if (boost::get<vector6uint32_t>(&value)) {
-            UTILS::EndianUtils::unpack<uint32_t, 6>(package, offset, boost::get<vector6uint32_t>(value));
+            EndianUtils::unpack<uint32_t, 6>(package, offset, boost::get<vector6uint32_t>(value));
 
         } else {
             return false;
@@ -172,39 +172,39 @@ std::vector<uint8_t> RtsiRecipeInternal::packToBytes() {
             result.push_back(*va);
 
         } else if (auto va = std::get_if<uint16_t>(&iter->second)) {
-            bytes = UTILS::EndianUtils::pack(*va);
+            bytes = EndianUtils::pack(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
         } else if (auto va = std::get_if<uint32_t>(&iter->second)) {
-            bytes = UTILS::EndianUtils::pack(*va);
+            bytes = EndianUtils::pack(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
         } else if (auto va = std::get_if<uint64_t>(&iter->second)) {
-            bytes = UTILS::EndianUtils::pack(*va);
+            bytes = EndianUtils::pack(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
         } else if (auto va = std::get_if<int32_t>(&iter->second)) {
-            bytes = UTILS::EndianUtils::pack(*va);
+            bytes = EndianUtils::pack(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
         } else if (auto va = std::get_if<double>(&iter->second)) {
-            bytes = UTILS::EndianUtils::pack(*va);
+            bytes = EndianUtils::pack(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
         } else if (auto va = std::get_if<vector3d_t>(&iter->second)) {
-            bytes = UTILS::EndianUtils::pack<double, 3>(*va);
+            bytes = EndianUtils::pack<double, 3>(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
         } else if (auto va = std::get_if<vector6d_t>(&iter->second)) {
-            bytes = UTILS::EndianUtils::pack<double, 6>(*va);
+            bytes = EndianUtils::pack<double, 6>(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
         } else if (auto va = std::get_if<vector6int32_t>(&iter->second)) {
-            bytes = UTILS::EndianUtils::pack<int32_t, 6>(*va);
+            bytes = EndianUtils::pack<int32_t, 6>(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
         } else if (auto va = std::get_if<vector6uint32_t>(&iter->second)) {
-            bytes = UTILS::EndianUtils::pack<uint32_t, 6>(*va);
+            bytes = EndianUtils::pack<uint32_t, 6>(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
         }
     }
@@ -222,39 +222,39 @@ std::vector<uint8_t> RtsiRecipeInternal::packToBytes() {
             result.push_back(*va);
 
         } else if (auto va = boost::get<uint16_t>(&iter->second)) {
-            bytes = UTILS::EndianUtils::pack(*va);
+            bytes = EndianUtils::pack(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
         } else if (auto va = boost::get<uint32_t>(&iter->second)) {
-            bytes = UTILS::EndianUtils::pack(*va);
+            bytes = EndianUtils::pack(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
         } else if (auto va = boost::get<uint64_t>(&iter->second)) {
-            bytes = UTILS::EndianUtils::pack(*va);
+            bytes = EndianUtils::pack(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
         } else if (auto va = boost::get<int32_t>(&iter->second)) {
-            bytes = UTILS::EndianUtils::pack(*va);
+            bytes = EndianUtils::pack(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
         } else if (auto va = boost::get<double>(&iter->second)) {
-            bytes = UTILS::EndianUtils::pack(*va);
+            bytes = EndianUtils::pack(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
         } else if (auto va = boost::get<vector3d_t>(&iter->second)) {
-            bytes = UTILS::EndianUtils::pack<double, 3>(*va);
+            bytes = EndianUtils::pack<double, 3>(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
         } else if (auto va = boost::get<vector6d_t>(&iter->second)) {
-            bytes = UTILS::EndianUtils::pack<double, 6>(*va);
+            bytes = EndianUtils::pack<double, 6>(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
         } else if (auto va = boost::get<vector6int32_t>(&iter->second)) {
-            bytes = UTILS::EndianUtils::pack<int32_t, 6>(*va);
+            bytes = EndianUtils::pack<int32_t, 6>(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
 
         } else if (auto va = boost::get<vector6uint32_t>(&iter->second)) {
-            bytes = UTILS::EndianUtils::pack<uint32_t, 6>(*va);
+            bytes = EndianUtils::pack<uint32_t, 6>(*va);
             result.insert(result.end(), std::make_move_iterator(bytes.begin()), std::make_move_iterator(bytes.end()));
         }
     }

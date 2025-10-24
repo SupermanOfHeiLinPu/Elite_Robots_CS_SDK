@@ -38,7 +38,7 @@ configure_file(
 # Source file list
 set(
     ELITE_LIB_SOURCE_FILE
-    source/Common/Utils.cpp
+    source/Common/StringUtils.cpp
     source/Common/TcpServer.cpp
     source/Common/EliteException.cpp
     source/Common/SshUtils.cpp
@@ -95,6 +95,10 @@ set(
     Elite/ControllerLog.hpp
     Elite/RobotException.hpp
     Common/RtUtils.hpp
+    Common/SshUtils.hpp
+    Common/Utils.hpp
+    Common/EndianUtils.hpp
+    Common/StringUtils.hpp
 )
 
 # Set output library default name
