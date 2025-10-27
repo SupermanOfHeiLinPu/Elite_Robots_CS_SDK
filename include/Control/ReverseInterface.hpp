@@ -27,9 +27,10 @@ public:
     /**
      * @brief Construct a new Reverse Interface object include TcpServer
      * 
-     * @param port Port the Server is started on
+     * @param port Port the Server is started 
+     * @param resource TCP resource shared pointer
      */
-    ReverseInterface(int port);
+    ReverseInterface(int port, std::shared_ptr<TcpServer::StaticResource> resource);
 
     /**
      * @brief Destroy the Reverse Interface object. Will disconnect robot connection.

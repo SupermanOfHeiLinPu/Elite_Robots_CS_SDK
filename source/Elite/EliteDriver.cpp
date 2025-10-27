@@ -37,13 +37,16 @@ static const std::string SERVOJ_QUEUE_PRE_RECV_TIMEOUT_REPLACE = "{{SERVOJ_QUEUE
 class EliteDriver::Impl {
    public:
     Impl() = delete;
-    explicit Impl(const std::string& robot_ip) : robot_ip_(robot_ip) { TcpServer::start(); }
+    explicit Impl(const std::string& robot_ip) : robot_ip_(robot_ip) { 
+        reverse_resource_ = std::make_shared<TcpServer::StaticResource>();
+    }
     ~Impl() { 
         reverse_server_.reset();
         trajectory_server_.reset();
         script_command_server_.reset();
         script_sender_.reset();
-        TcpServer::stop(); 
+        // Must release resource after all servers are destroyed.
+        reverse_resource_.reset();
     }
 
     std::string readScriptFile(const std::string& file);
@@ -57,6 +60,8 @@ class EliteDriver::Impl {
     std::unique_ptr<ScriptCommandInterface> script_command_server_;
     std::unique_ptr<PrimaryPortInterface> primary_port_;
     bool headless_mode_;
+
+    std::shared_ptr<TcpServer::StaticResource> reverse_resource_;
 };
 
 std::string EliteDriver::Impl::readScriptFile(const std::string& filepath) {
@@ -176,11 +181,11 @@ void EliteDriver::init(const EliteDriverConfig& config) {
     ELITE_LOG_DEBUG("Read script file '%s' success.", config.script_file_path.c_str());
     impl_->scriptParamWrite(control_script, config);
 
-    impl_->reverse_server_ = std::make_unique<ReverseInterface>(config.reverse_port);
+    impl_->reverse_server_ = std::make_unique<ReverseInterface>(config.reverse_port, impl_->reverse_resource_);
     ELITE_LOG_DEBUG("Created reverse interface");
-    impl_->trajectory_server_ = std::make_unique<TrajectoryInterface>(config.trajectory_port);
+    impl_->trajectory_server_ = std::make_unique<TrajectoryInterface>(config.trajectory_port, impl_->reverse_resource_);
     ELITE_LOG_DEBUG("Created trajectory interface");
-    impl_->script_command_server_ = std::make_unique<ScriptCommandInterface>(config.script_command_port);
+    impl_->script_command_server_ = std::make_unique<ScriptCommandInterface>(config.script_command_port, impl_->reverse_resource_);
     ELITE_LOG_DEBUG("Created script command interface");
 
     impl_->headless_mode_ = config.headless_mode;
@@ -201,7 +206,7 @@ void EliteDriver::init(const EliteDriverConfig& config) {
         }
     } else {
         impl_->robot_script_ = control_script;
-        impl_->script_sender_ = std::make_unique<ScriptSender>(config.script_sender_port, impl_->robot_script_);
+        impl_->script_sender_ = std::make_unique<ScriptSender>(config.script_sender_port, impl_->robot_script_, impl_->reverse_resource_);
         ELITE_LOG_DEBUG("Created script sender");
     }
 

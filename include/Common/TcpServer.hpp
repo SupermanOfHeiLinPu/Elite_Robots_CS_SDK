@@ -13,22 +13,19 @@ namespace ELITE {
 
 class TcpServer : public std::enable_shared_from_this<TcpServer> {
    public:
-    /**
-     * @brief Start the backend thread of the TCP server, where both accept and read operations of the TcpServer class will be
-     * completed
-     * @note
-     *      1. It must be called before instantiation of any TcpServer class, or the constructor of TcpServer will throw an
-     * exception
-     *      2. Currently called in the constructor of the EliteDriver class
-     */
-    static void start();
+    // Boost io_context and backend thread.
+    // All servers use the same io_comtext and thread.
+    class StaticResource {
+       public:
+        std::unique_ptr<std::thread> server_thread_;
+        std::shared_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> work_guard_ptr_;
+        std::shared_ptr<boost::asio::io_context> io_context_ptr_;
+        StaticResource();
+        ~StaticResource();
 
-    /**
-     * @brief Terminate the backend thread of the TCP server
-     * @note
-     *      1. Currently called in the destructor of the EliteDriver class
-     */
-    static void stop();
+        StaticResource(const StaticResource&) = delete;
+        StaticResource& operator=(const StaticResource&) = delete;
+    };
 
     // Read callback
     using ReceiveCallback = std::function<void(const uint8_t[], int)>;
@@ -40,7 +37,7 @@ class TcpServer : public std::enable_shared_from_this<TcpServer> {
      * @param recv_buf_size
      * @note Ensure that the start() method has been called before instantiation
      */
-    TcpServer(int port, int recv_buf_size);
+    TcpServer(int port, int recv_buf_size, std::shared_ptr<StaticResource> resource);
 
     /**
      * @brief Destroy the Tcp Server object
@@ -80,8 +77,7 @@ class TcpServer : public std::enable_shared_from_this<TcpServer> {
 
    protected:
     std::unique_ptr<boost::asio::ip::tcp::acceptor> acceptor_;
-    // Each instance will copy a the s_io_comtext_ptr_ pointer
-    std::shared_ptr<boost::asio::io_context> io_context_;
+    std::shared_ptr<StaticResource> resource_;
 
    private:
     // Save connected client. In this project, each server is only connected to one client.
@@ -92,21 +88,6 @@ class TcpServer : public std::enable_shared_from_this<TcpServer> {
     std::vector<uint8_t> read_buffer_;
     ReceiveCallback receive_cb_;
     std::mutex socket_mutex_;
-
-    // Boost io_context and backend thread.
-    // All servers use the same io_comtext and thread.
-    class StaticResource {
-    public:
-        std::unique_ptr<std::thread> server_thread_;
-        std::shared_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> work_guard_ptr_;
-        std::shared_ptr<boost::asio::io_context> io_context_ptr_;
-        StaticResource();
-        ~StaticResource();
-        
-        StaticResource(const StaticResource&) = delete;
-        StaticResource& operator=(const StaticResource&) = delete;
-    };
-    static std::unique_ptr<StaticResource> s_resource;
 
     /**
      * @brief Async accept client connection and add async read task
