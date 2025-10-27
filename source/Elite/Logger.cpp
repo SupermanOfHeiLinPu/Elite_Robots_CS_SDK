@@ -2,11 +2,9 @@
 
 namespace ELITE{
 
-
-static Logger s_logger;
-
 Logger& getLogger() {
-    return s_logger;
+    static Logger* s_logger = new Logger();
+    return *s_logger;
 }
 
 }
