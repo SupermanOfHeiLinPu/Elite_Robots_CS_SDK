@@ -2,16 +2,14 @@
 #include "ControlCommon.hpp"
 #include "Log.hpp"
 
-namespace ELITE
-{
+namespace ELITE {
 
-ScriptCommandInterface::ScriptCommandInterface(int port) : ReversePort(port, 4) {
+ScriptCommandInterface::ScriptCommandInterface(int port, std::shared_ptr<TcpServer::StaticResource> resource)
+    : ReversePort(port, 4, resource) {
     server_->startListen();
 }
 
-ScriptCommandInterface::~ScriptCommandInterface() {
-
-}
+ScriptCommandInterface::~ScriptCommandInterface() {}
 
 bool ScriptCommandInterface::zeroFTSensor() {
     int32_t buffer[SCRIPT_COMMAND_DATA_SIZE] = {0};
@@ -36,11 +34,8 @@ bool ScriptCommandInterface::setToolVoltage(const ToolVoltage& vol) {
     return write(buffer, sizeof(buffer)) > 0;
 }
 
-bool ScriptCommandInterface::startForceMode(const vector6d_t& task_frame, 
-                                                 const vector6int32_t& selection_vector,
-                                                 const vector6d_t& wrench, 
-                                                 const ForceMode& mode, 
-                                                 const vector6d_t& limits) {
+bool ScriptCommandInterface::startForceMode(const vector6d_t& task_frame, const vector6int32_t& selection_vector,
+                                            const vector6d_t& wrench, const ForceMode& mode, const vector6d_t& limits) {
     int32_t buffer[SCRIPT_COMMAND_DATA_SIZE] = {0};
     buffer[0] = htonl(static_cast<int32_t>(Cmd::START_FORCE_MODE));
     int32_t* bp = &buffer[1];
@@ -71,4 +66,4 @@ bool ScriptCommandInterface::endForceMode() {
     return write(buffer, sizeof(buffer)) > 0;
 }
 
-} // namespace ELITE
+}  // namespace ELITE

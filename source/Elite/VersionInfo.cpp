@@ -13,7 +13,7 @@ std::string VersionInfo::toString() const {
 }
 
 VersionInfo VersionInfo::fromString(const std::string& str) {
-    auto components = UTILS::StringUtils::splitString(str, ".");
+    auto components = StringUtils::splitString(str, ".");
     VersionInfo version;
     if (components.size() >= 2) {
         version.major = std::stoi(components[0]);

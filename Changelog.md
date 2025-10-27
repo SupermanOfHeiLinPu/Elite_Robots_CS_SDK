@@ -13,6 +13,7 @@
   - Added interface to get robot type: `robotType()`
   - Added interface to get robot serial number: `robotSerialNumber()`
   - Added interface to get robot ID: `robotID()`
+- Add timestamp information to the default log handler.
 
 ### Changed
 - Adjust the "timeout" value of "trajectory_socket" in `external_control.script`.
@@ -24,7 +25,8 @@
 - Fix the issue where the error level was incorrect when parsing the 30001 robot error exception message.
 - Fix the memory issue that occurs after receiving incomplete messages from 30001.
 - Fix the issue where static resources in `TcpServer` are destructed prematurely.
-- - Fixed the issue where the `EliteDriver::registerRobotExceptionCallback()` interface was not implemented.
+- Fixed the issue where the `EliteDriver::registerRobotExceptionCallback()` interface was not implemented.
+- Fix the crash issue during destruction.
 
 ### Deprecated
 - Deprecated `DashboardClient::robot()` it will be removed in future versions. Please use `DashboardClient::robotType()` instead.

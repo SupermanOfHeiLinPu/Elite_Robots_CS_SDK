@@ -13,6 +13,7 @@
   - 新增获取机器人类型接口：`robotType()`
   - 新增获取机器人序列号接口：`robotSerialNumber()`
   - 新增获取机器人ID接口：`robotID()`
+- 默认的日志句柄增加时间戳信息。
 
 ### Changed
 - 调整 `external_control.script` 中 “trajectory_socket” 的“timeout”值。
@@ -25,6 +26,7 @@
 - 修复收到30001不完整的报文后，出现的内存问题。
 - 修复`TcpServer`中静态资源析构顺序提前的问题。
 - 修复`EliteDriver::registerRobotExceptionCallback()`接口没有实现的问题。
+- 修复析构时会崩溃的问题。
 
 ### Deprecated
 - 弃用 `DashboardClient::robot()` 未来版本将移除，请改用 `DashboardClient::robotType()`
