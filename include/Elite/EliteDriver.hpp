@@ -14,6 +14,7 @@
 #include <Elite/EliteOptions.hpp>
 #include <Elite/PrimaryPackage.hpp>
 #include <Elite/PrimaryPortInterface.hpp>
+#include <Elite/SerialCommunication.hpp>
 
 #include <functional>
 #include <memory>
@@ -358,6 +359,47 @@ class EliteDriver {
      *           representing the received exception.
      */
     ELITE_EXPORT void registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)> cb);
+
+    /**
+     * @brief Start tool RS485 communication.
+     * This function will start a socat process on the robot control cabinet, mapping the serial port to the TCP port you specified.
+     * 
+     * 
+     * @param config Serial configuration
+     * @param tcp_port Socat TCP port
+     * @return SerialCommunicationSharedPtr A TCP communication object for RS485 communication. nullptr if start fail.
+     */
+    ELITE_EXPORT SerialCommunicationSharedPtr startToolRs485(const SerialConfig& config, int tcp_port = 54321);
+
+    /**
+     * @brief End tool RS485 communication
+     * 
+     * @param comm_ptr TCP communication object for RS485 communication. If not nullptr, it will be disconnected.
+     * @return true success
+     * @return false fail
+     */
+    ELITE_EXPORT bool endToolRs485(SerialCommunicationSharedPtr comm_ptr);
+
+    /**
+     * @brief Start board RS485 communication.
+     * This function will start a socat process on the robot control cabinet, mapping the serial port to the TCP port you specified.
+     * 
+     * @param config Serial configuration
+     * @param tcp_port Socat TCP port
+     * @return SerialCommunicationSharedPtr A TCP communication object for RS485 communication. nullptr if start fail.
+     */
+    ELITE_EXPORT SerialCommunicationSharedPtr startBoardRs485(const SerialConfig& config, int tcp_port = 54322);
+
+    /**
+     * @brief End board RS485 communication
+     * 
+     * @param comm_ptr TCP communication object for RS485 communication. If not nullptr, it will be disconnected.
+     * @return true success
+     * @return false fail
+     */
+    ELITE_EXPORT bool endBoardRs485(SerialCommunicationSharedPtr comm_ptr);
+
+
 };
 
 }  // namespace ELITE

@@ -1,3 +1,12 @@
+/**
+ * @file ControllerLog.hpp
+ * @author yanxiaojia
+ * @brief Controller log for Elite robot
+ * @date 2025-11-05
+ * 
+ * @copyright Copyright (c) 2025
+ * 
+ */
 #ifndef ___ELITE_CONTROLLER_LOG_HPP__
 #define ___ELITE_CONTROLLER_LOG_HPP__
 
