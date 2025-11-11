@@ -8,10 +8,12 @@
   - 新增字符串列表构造函数。
   - 新增判断是否连接的接口:`isConnected()`。
   - 新增判断是否开始数据同步的接口`isStarted()`。
+  - 新增接口 `getActualTCPPose()`、`getActualTCPVelocity()`、`getActualTCPForce()`（修正原拼写错误）。
 - `DashboardClient`
   - 新增获取机器人类型接口：`robotType()`
   - 新增获取机器人序列号接口：`robotSerialNumber()`
   - 新增获取机器人ID接口：`robotID()`
+- 默认的日志句柄增加时间戳信息。
 
 ### Changed
 - 调整 `external_control.script` 中 “trajectory_socket” 的“timeout”值。
@@ -24,9 +26,14 @@
 - 修复收到30001不完整的报文后，出现的内存问题。
 - 修复`TcpServer`中静态资源析构顺序提前的问题。
 - 修复`EliteDriver::registerRobotExceptionCallback()`接口没有实现的问题。
+- 修复析构时会崩溃的问题。
 
 ### Deprecated
 - 弃用 `DashboardClient::robot()` 未来版本将移除，请改用 `DashboardClient::robotType()`
+- 由于拼写错误，以下接口已弃用，将在未来版本移除，请使用对应的新接口：
+  - `RtsiIOInterface::getAcutalTCPPose()` -> `RtsiIOInterface::getActualTCPPose()`
+  - `RtsiIOInterface::getAcutalTCPVelocity()` -> `RtsiIOInterface::getActualTCPVelocity()`
+  - `RtsiIOInterface::getAcutalTCPForce()` -> `RtsiIOInterface::getActualTCPForce()`
 
 ## [v1.2.0] - 2025-08-14
 

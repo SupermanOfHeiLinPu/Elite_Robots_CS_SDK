@@ -1,20 +1,17 @@
 #include "TcpServer.hpp"
 #include <iostream>
+#include "Common/RtUtils.hpp"
 #include "EliteException.hpp"
 #include "Log.hpp"
-#include "Common/RtUtils.hpp"
 
 namespace ELITE {
 
-TcpServer::TcpServer(int port, int recv_buf_size) : read_buffer_(recv_buf_size) {
-    if (!s_resource) {
-        throw EliteException(EliteException::Code::TCP_SERVER_CONTEXT_NULL);
-    }
-    io_context_ = s_resource->io_context_ptr_;
+TcpServer::TcpServer(int port, int recv_buf_size, std::shared_ptr<StaticResource> resource) : read_buffer_(recv_buf_size) {
+    resource_ = resource;
     try {
         acceptor_ = std::make_unique<boost::asio::ip::tcp::acceptor>(
-            *io_context_, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port), true);
-    } catch(const boost::system::system_error& error) {
+            *(resource_->io_context_ptr_), boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port), true);
+    } catch (const boost::system::system_error& error) {
         ELITE_LOG_FATAL("Create TCP server on port %d fail: %s", port, error.what());
         throw EliteException(EliteException::Code::SOCKET_FAIL, error.what());
     }
@@ -45,7 +42,7 @@ void TcpServer::doAccept() {
     if (!acceptor_) {
         return;
     }
-    auto new_socket = std::make_shared<boost::asio::ip::tcp::socket>(*io_context_);
+    auto new_socket = std::make_shared<boost::asio::ip::tcp::socket>(*(resource_->io_context_ptr_));
     std::weak_ptr<TcpServer> weak_self = shared_from_this();
     // Accept call back
     auto accept_cb = [weak_self, new_socket](boost::system::error_code ec) {
@@ -133,24 +130,21 @@ void TcpServer::doRead(std::shared_ptr<boost::asio::ip::tcp::socket> sock) {
     boost::asio::async_read(*sock, boost::asio::buffer(read_buffer_), read_cb);
 }
 
-void TcpServer::start() {
-    s_resource.reset(new StaticResource());
-}
-
-void TcpServer::stop() {
-    s_resource.reset();
-}
-
 int TcpServer::writeClient(void* data, int size) {
     std::lock_guard<std::mutex> lock(socket_mutex_);
     if (socket_) {
-        boost::system::error_code ec;
-        int wb = boost::asio::write(*socket_, boost::asio::buffer(data, size), ec);
-        if(ec) {
-            ELITE_LOG_DEBUG("Port %d write TCP client fail: %s", local_endpoint_.port(), ec.message().c_str());
+        try {
+            boost::system::error_code ec;
+            int wb = boost::asio::write(*socket_, boost::asio::buffer(data, size), ec);
+            if (ec) {
+                ELITE_LOG_DEBUG("Port %d write TCP client fail: %s", local_endpoint_.port(), ec.message().c_str());
+                return -1;
+            }
+            return wb;
+        } catch (const boost::system::system_error& e) {
+            ELITE_LOG_DEBUG("Port %d write TCP client exception: %s", local_endpoint_.port(), e.what());
             return -1;
         }
-        return wb;
     }
     return -1;
 }
@@ -206,7 +200,5 @@ TcpServer::StaticResource::~StaticResource() {
     server_thread_.reset();
     io_context_ptr_.reset();
 }
-
-std::unique_ptr<TcpServer::StaticResource> TcpServer::s_resource;
 
 }  // namespace ELITE

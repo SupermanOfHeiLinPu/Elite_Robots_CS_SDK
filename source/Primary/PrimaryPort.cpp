@@ -83,7 +83,7 @@ bool PrimaryPort::parserMessage() {
         }
     }
     uint32_t package_len = 0;
-    UTILS::EndianUtils::unpack(message_head_.begin(), package_len);
+    EndianUtils::unpack(message_head_.begin(), package_len);
     if (package_len <= HEAD_LENGTH) {
         ELITE_LOG_ERROR("Primary port package len error: %d", package_len);
         return false;
@@ -95,19 +95,19 @@ bool PrimaryPort::parserMessage() {
 RobotErrorSharedPtr PrimaryPort::parserRobotError(uint64_t timestamp, RobotError::Source source,
                                                   const std::vector<uint8_t>& msg_body, int offset) {
     int32_t code = 0;
-    UTILS::EndianUtils::unpack(msg_body.begin() + offset, code);
+    EndianUtils::unpack(msg_body.begin() + offset, code);
     offset += sizeof(int32_t);
 
     int32_t sub_code = 0;
-    UTILS::EndianUtils::unpack(msg_body.begin() + offset, sub_code);
+    EndianUtils::unpack(msg_body.begin() + offset, sub_code);
     offset += sizeof(int32_t);
 
     int32_t level = 0;
-    UTILS::EndianUtils::unpack(msg_body.begin() + offset, level);
+    EndianUtils::unpack(msg_body.begin() + offset, level);
     offset += sizeof(int32_t);
 
     uint32_t data_type;
-    UTILS::EndianUtils::unpack(msg_body.begin() + offset, data_type);
+    EndianUtils::unpack(msg_body.begin() + offset, data_type);
     offset += sizeof(uint32_t);
 
     switch ((RobotError::DataType)data_type) {
@@ -115,7 +115,7 @@ RobotErrorSharedPtr PrimaryPort::parserRobotError(uint64_t timestamp, RobotError
         case RobotError::DataType::UNSIGNED:
         case RobotError::DataType::HEX: {
             uint32_t data;
-            UTILS::EndianUtils::unpack(msg_body.begin() + offset, data);
+            EndianUtils::unpack(msg_body.begin() + offset, data);
             return std::make_shared<RobotError>(timestamp, code, sub_code, static_cast<RobotError::Source>(source),
                                                 static_cast<RobotError::Level>(level), static_cast<RobotError::DataType>(data_type),
                                                 data);
@@ -124,7 +124,7 @@ RobotErrorSharedPtr PrimaryPort::parserRobotError(uint64_t timestamp, RobotError
         case RobotError::DataType::SIGNED:
         case RobotError::DataType::JOINT: {
             int32_t data;
-            UTILS::EndianUtils::unpack(msg_body.begin() + offset, data);
+            EndianUtils::unpack(msg_body.begin() + offset, data);
             return std::make_shared<RobotError>(timestamp, code, sub_code, static_cast<RobotError::Source>(source),
                                                 static_cast<RobotError::Level>(level), static_cast<RobotError::DataType>(data_type),
                                                 data);
@@ -141,7 +141,7 @@ RobotErrorSharedPtr PrimaryPort::parserRobotError(uint64_t timestamp, RobotError
         } break;
         case RobotError::DataType::FLOAT: {
             float data;
-            UTILS::EndianUtils::unpack(msg_body.begin() + offset, data);
+            EndianUtils::unpack(msg_body.begin() + offset, data);
             return std::make_shared<RobotError>(timestamp, code, sub_code, static_cast<RobotError::Source>(source),
                                                 static_cast<RobotError::Level>(level), static_cast<RobotError::DataType>(data_type),
                                                 data);
@@ -153,11 +153,11 @@ RobotErrorSharedPtr PrimaryPort::parserRobotError(uint64_t timestamp, RobotError
 RobotRuntimeExceptionSharedPtr PrimaryPort::paraserRuntimeException(uint64_t timestamp, const std::vector<uint8_t>& msg_body,
                                                                     int offset) {
     int32_t line;
-    UTILS::EndianUtils::unpack(msg_body.begin() + offset, line);
+    EndianUtils::unpack(msg_body.begin() + offset, line);
     offset += sizeof(int32_t);
 
     int32_t column;
-    UTILS::EndianUtils::unpack(msg_body.begin() + offset, column);
+    EndianUtils::unpack(msg_body.begin() + offset, column);
     offset += sizeof(int32_t);
 
     std::string text_msg;
@@ -171,7 +171,7 @@ RobotRuntimeExceptionSharedPtr PrimaryPort::paraserRuntimeException(uint64_t tim
 RobotExceptionSharedPtr PrimaryPort::parserException(const std::vector<uint8_t>& msg_body) {
     uint64_t timestamp;
     int offset = 0;
-    UTILS::EndianUtils::unpack<uint64_t>(msg_body.begin(), timestamp);
+    EndianUtils::unpack<uint64_t>(msg_body.begin(), timestamp);
     offset += sizeof(uint64_t);
 
     // Only robot error message
@@ -227,7 +227,7 @@ bool PrimaryPort::parserMessageBody(int type, int package_len) {
     if (type == ROBOT_STATE_MSG_TYPE) {
         uint32_t sub_len = 0;
         for (auto iter = message_body_.begin(); iter < message_body_.end(); iter += sub_len) {
-            UTILS::EndianUtils::unpack(iter, sub_len);
+            EndianUtils::unpack(iter, sub_len);
             int sub_type = *(iter + 4);
 
             std::lock_guard<std::mutex> lock(mutex_);

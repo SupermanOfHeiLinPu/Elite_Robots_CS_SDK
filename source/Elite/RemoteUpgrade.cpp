@@ -3,7 +3,7 @@
 #include <string>
 
 #include "Common/SshUtils.hpp"
-#include "Elite/Logger.hpp"
+#include "Elite/Log.hpp"
 #include "RemoteUpgrade.hpp"
 
 using namespace ELITE::SSH_UTILS;

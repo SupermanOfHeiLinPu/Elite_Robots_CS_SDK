@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(elite-cs-series-sdk VERSION 1.2.0)
+project(elite-cs-series-sdk VERSION 1.3.0)
 
 option(ELITE_COMPILE_TESTS "Compile tests" OFF)
 option(ELITE_COMPILE_DOC "Compile documentation" OFF)
@@ -22,7 +22,7 @@ else()
     message(FATAL_ERROR  "C++ standard must C++14 or higher")
 endif()
 
-# --- MODIFIED: 使用现代化的 CONFIG 模式查找 Boost，并移除了写死的版本号 ---
+
 find_package(Boost REQUIRED CONFIG COMPONENTS system thread)
 find_package(libssh)
 if(libssh_FOUND)
@@ -38,7 +38,7 @@ configure_file(
 # Source file list
 set(
     ELITE_LIB_SOURCE_FILE
-    source/Common/Utils.cpp
+    source/Common/StringUtils.cpp
     source/Common/TcpServer.cpp
     source/Common/EliteException.cpp
     source/Common/SshUtils.cpp
@@ -78,17 +78,31 @@ set(
 
 set(
     ELITE_HEADER_FILES
-    Elite/DataType.hpp Elite/VersionInfo.hpp Dashboard/DashboardClient.hpp
-    Rtsi/RtsiClientInterface.hpp Rtsi/RtsiIOInterface.hpp Rtsi/RtsiRecipe.hpp
-    Primary/PrimaryPackage.hpp Primary/RobotConfPackage.hpp Primary/PrimaryPortInterface.hpp
-    EliteException.hpp Elite/EliteDriver.hpp Elite/Log.hpp Elite/RemoteUpgrade.hpp
-    Elite/ControllerLog.hpp Elite/RobotException.hpp Common/RtUtils.hpp
+    Elite/DataType.hpp
+    Elite/VersionInfo.hpp
+    Dashboard/DashboardClient.hpp
+    Rtsi/RtsiClientInterface.hpp
+    Rtsi/RtsiIOInterface.hpp
+    Rtsi/RtsiRecipe.hpp
+    Primary/PrimaryPackage.hpp
+    Primary/RobotConfPackage.hpp
+    Primary/PrimaryPortInterface.hpp
+    EliteException.hpp
+    Elite/EliteDriver.hpp
+    Elite/Log.hpp
+    Elite/RemoteUpgrade.hpp
+    Elite/ControllerLog.hpp
+    Elite/RobotException.hpp
+    Common/RtUtils.hpp
+    Common/SshUtils.hpp
+    Common/Utils.hpp
+    Common/EndianUtils.hpp
+    Common/StringUtils.hpp
 )
 
 set(SDK_STATIC_LIB_OUTPUT_NAME "${PROJECT_NAME}")
 set(SDK_SHARED_LIB_OUTPUT_NAME "${PROJECT_NAME}")
 
-# --- MODIFIED: 增加对 macOS (APPLE) 的支持 ---
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     message(STATUS "SYSTEM: Windows")
     add_definitions(-D_WIN32_WINNT=0x0601)
@@ -108,7 +122,6 @@ endif()
 add_library(${PROJECT_NAME}_SHARED SHARED ${ELITE_LIB_SOURCE_FILE})
 add_library(${PROJECT_NAME}_STATIC STATIC ${ELITE_LIB_SOURCE_FILE})
 
-# --- MODIFIED: 使用现代化的方式为目标添加 ELITE_EXPORT_LIBRARY 编译定义 ---
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     target_compile_definitions(${PROJECT_NAME}_SHARED PRIVATE ELITE_EXPORT_LIBRARY)
     target_compile_definitions(${PROJECT_NAME}_STATIC PRIVATE ELITE_EXPORT_LIBRARY)
@@ -151,7 +164,6 @@ endif()
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" is_top_level)
 option(ELITE_INSTALL "Include packaging rules" "${is_top_level}")
 
-# --- MODIFIED: 增加对 macOS (APPLE) 的支持 ---
 if((CMAKE_SYSTEM_NAME STREQUAL "Linux" OR APPLE) AND ELITE_INSTALL)
     include(GNUInstallDirs)
     install(TARGETS ${PROJECT_NAME}_SHARED ${PROJECT_NAME}_STATIC EXPORT ${PROJECT_NAME}Targets LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})

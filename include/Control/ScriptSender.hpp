@@ -4,14 +4,13 @@
 #include "TcpServer.hpp"
 
 #include <boost/asio.hpp>
-#include <string>
 #include <memory>
+#include <string>
 
-namespace ELITE
-{
+namespace ELITE {
 
 class ScriptSender : protected TcpServer {
-private:
+   private:
     const std::string PROGRAM_REQUEST_ = std::string("request_program");
     const std::string& program_;
     boost::asio::streambuf recv_request_buffer_;
@@ -20,23 +19,11 @@ private:
 
     virtual void doAccept() override;
 
-public:
-    ScriptSender(int port, const std::string& program);
+   public:
+    ScriptSender(int port, const std::string& program, std::shared_ptr<TcpServer::StaticResource> resource);
     ~ScriptSender();
 };
 
-
-
-
-
-
-
-
-} // namespace ELITE
-
-
-
-
-
+}  // namespace ELITE
 
 #endif

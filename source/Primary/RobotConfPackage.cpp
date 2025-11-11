@@ -49,15 +49,15 @@ namespace ELITE
 void KinematicsInfo::parser(int len, const std::vector<uint8_t>::const_iterator& iter) {
     int offset = DH_PARAM_OFFSET;
     for (size_t i = 0; i < 6; i++) {
-        UTILS::EndianUtils::unpack(iter + offset, dh_a_[i]);
+        EndianUtils::unpack(iter + offset, dh_a_[i]);
         offset += sizeof(double);
     }
     for (size_t i = 0; i < 6; i++) {
-        UTILS::EndianUtils::unpack(iter + offset, dh_d_[i]);
+        EndianUtils::unpack(iter + offset, dh_d_[i]);
         offset += sizeof(double);
     }
     for (size_t i = 0; i < 6; i++) {
-        UTILS::EndianUtils::unpack(iter + offset, dh_alpha_[i]);
+        EndianUtils::unpack(iter + offset, dh_alpha_[i]);
         offset += sizeof(double);
     }
 }

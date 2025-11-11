@@ -69,6 +69,7 @@ bool RtsiIOInterface::connect(const std::string& ip) {
             }
         } catch (const std::exception& e) {
             thread_prom.set_value(false);
+            ELITE_LOG_FATAL("RTSI init receive data fail: %s", e.what());
             return;
         }
 
@@ -80,7 +81,12 @@ bool RtsiIOInterface::connect(const std::string& ip) {
 
     // Wait for recv_thread_ run
     std::future<bool> thread_fut = thread_prom.get_future();
-    return thread_fut.get();
+    bool init_ret = thread_fut.get();
+    if (!init_ret) {
+        ELITE_LOG_FATAL("RTSI recv thread start fail.");
+        disconnect();
+    }
+    return init_ret;
 }
 
 void RtsiIOInterface::disconnect() {
@@ -308,13 +314,31 @@ vector6d_t RtsiIOInterface::getAcutalTCPPose() {
     return result;
 }
 
+vector6d_t RtsiIOInterface::getActualTCPPose() {
+    vector6d_t result{0};
+    getRecipeValue("actual_TCP_pose", result);
+    return result;
+}
+
 vector6d_t RtsiIOInterface::getAcutalTCPVelocity() {
     vector6d_t result{0};
     getRecipeValue("actual_TCP_speed", result);
     return result;
 }
 
+vector6d_t RtsiIOInterface::getActualTCPVelocity() {
+    vector6d_t result{0};
+    getRecipeValue("actual_TCP_speed", result);
+    return result;
+}
+
 vector6d_t RtsiIOInterface::getAcutalTCPForce() {
+    vector6d_t result{0};
+    getRecipeValue("actual_TCP_force", result);
+    return result;
+}
+
+vector6d_t RtsiIOInterface::getActualTCPForce() {
     vector6d_t result{0};
     getRecipeValue("actual_TCP_force", result);
     return result;
@@ -635,6 +659,7 @@ void RtsiIOInterface::recvLoop() {
                 input_new_cmd_ = false;
             }
         } catch (const std::exception& e) {
+            ELITE_LOG_FATAL("RTSI receive data fail: %s", e.what());
             is_recv_thread_alive_ = false;
         }
     }

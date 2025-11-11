@@ -16,8 +16,8 @@ protected:
     }
 
 public:
-    ReversePort(int port, int buffer_size = 4) {
-        server_ = std::make_shared<TcpServer>(port, 4);
+    ReversePort(int port, int receive_buffer_size, std::shared_ptr<TcpServer::StaticResource> resource) {
+        server_ = std::make_shared<TcpServer>(port, receive_buffer_size, resource);
     }
     ~ReversePort() = default;
 

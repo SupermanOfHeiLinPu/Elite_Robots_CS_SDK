@@ -1,13 +1,14 @@
 #include "TrajectoryInterface.hpp"
+#include <boost/asio.hpp>
 #include "ControlCommon.hpp"
 #include "EliteException.hpp"
 #include "Log.hpp"
-#include <boost/asio.hpp>
 
 using namespace ELITE;
 
-TrajectoryInterface::TrajectoryInterface(int port) : ReversePort(port, sizeof(TrajectoryMotionResult)) {
-    server_->setReceiveCallback([&](const uint8_t data[], int nb){
+TrajectoryInterface::TrajectoryInterface(int port, std::shared_ptr<TcpServer::StaticResource> resource_)
+    : ReversePort(port, sizeof(TrajectoryMotionResult), resource_) {
+    server_->setReceiveCallback([&](const uint8_t data[], int nb) {
         if (nb != sizeof(TrajectoryMotionResult)) {
             return;
         }
@@ -19,16 +20,9 @@ TrajectoryInterface::TrajectoryInterface(int port) : ReversePort(port, sizeof(Tr
     server_->startListen();
 }
 
+TrajectoryInterface::~TrajectoryInterface() {}
 
-TrajectoryInterface::~TrajectoryInterface() {
-    
-}
-
-
-bool TrajectoryInterface::writeTrajectoryPoint( const vector6d_t& positions, 
-                                                float time, 
-                                                float blend_radius, 
-                                                bool cartesian) {
+bool TrajectoryInterface::writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_radius, bool cartesian) {
     int32_t buffer[TRAJECTORY_MESSAGE_LEN] = {0};
     for (size_t i = 0; i < 6; i++) {
         buffer[i] = htonl(round(positions[i] * CONTROL::POS_ZOOM_RATIO));

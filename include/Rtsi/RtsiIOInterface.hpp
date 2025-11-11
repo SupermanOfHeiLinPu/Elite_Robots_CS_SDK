@@ -222,18 +222,24 @@ class RtsiIOInterface : protected RtsiClientInterface {
      * @return vector6d_t Actual cartesian coordinates of the tool: [x, y, z, rx, ry, rz],
      * where x, y, z is a position vection, and rx, ry, rz is a rotation vector.
      */
+    [[deprecated("Use getActualTCPPose() instead. This function will be removed in June 2027.")]]
     ELITE_EXPORT vector6d_t getAcutalTCPPose();
+    ELITE_EXPORT vector6d_t getActualTCPPose();
 
     /**
      * @return vector6d_t Actual speed of the tool given in cartesian coordinates: [x, y, z, rx, ry, rz]/s,
      * where x, y, z is a position vection, and rx, ry, rz is a rotation vector.
      */
+    [[deprecated("Use getActualTCPPose() instead. This function will be removed in June 2027.")]]
     ELITE_EXPORT vector6d_t getAcutalTCPVelocity();
+    ELITE_EXPORT vector6d_t getActualTCPVelocity();
 
     /**
      * @returns vector6d_t Generalized forces in the TCP. (Subtract the force data caused by the load.)
      */
+    [[deprecated("Use getActualTCPPose() instead. This function will be removed in June 2027.")]]
     ELITE_EXPORT vector6d_t getAcutalTCPForce();
+    ELITE_EXPORT vector6d_t getActualTCPForce();
 
     /**
      * @returns vector6d_t Target cartesian coordinates of the tool: [x, y, z, rx, ry, rz],

@@ -73,7 +73,7 @@ class TrajectoryControl {
         ELITE_LOG_INFO("Start releasing brake...");
         if (!dashboard_->brakeRelease()) {
             ELITE_LOG_FATAL("Brake release failed");
-            return 1;
+            return false;
         }
         ELITE_LOG_INFO("Brake released");
 
@@ -109,10 +109,8 @@ class TrajectoryControl {
             return false;
         }
 
-        for (const auto& points : target_points) {
-            ELITE_LOG_INFO("Moving joints to target: [%lf, %lf, %lf, %lf, %lf, %lf]", points[0], points[1], points[2], points[3], points[4], points[5]);
-
-            if (!driver_->writeTrajectoryPoint(points, point_time, blend_radius, is_cartesian)) {
+        for (const auto& joints : target_points) {
+            if (!driver_->writeTrajectoryPoint(joints, point_time, blend_radius, is_cartesian)) {
                 ELITE_LOG_ERROR("Failed to write trajectory point");
                 return false;
             }
@@ -134,17 +132,8 @@ class TrajectoryControl {
         auto result = move_done_future.get();
         ELITE_LOG_INFO("Trajectory motion completed with result: %d", result);
 
-        std::promise<TrajectoryMotionResult> cancel_done_promise;
-        driver_->setTrajectoryResultCallback([&](TrajectoryMotionResult result) { cancel_done_promise.set_value(result); });
-
         if(!driver_->writeIdle(0)) {
             ELITE_LOG_ERROR("Failed to write idle command");
-            return false;
-        }
-
-        auto cancel_done_future = cancel_done_promise.get_future();
-        if (cancel_done_future.wait_for(std::chrono::seconds(10)) != std::future_status::ready) {
-            ELITE_LOG_ERROR("Failed to wait for cancel done");
             return false;
         }
 
@@ -460,7 +449,7 @@ int main(int argc, const char** argv) {
     ELITE_LOG_INFO("Joints moved to target");
 
 
-    vector6d_t actual_pose = rtsi_client->getAcutalTCPPose();
+    vector6d_t actual_pose = rtsi_client->getActualTCPPose();
     std::vector<vector6d_t> trajectory;
 
     actual_pose[2] -= 0.2;
@@ -618,7 +607,7 @@ cp /your/path/external_control.script ./
 
 3. 获取当前TCP位姿，规划一个三角形轨迹，并运行
     ```cpp
-    vector6d_t actual_pose = rtsi_client->getAcutalTCPPose();
+    vector6d_t actual_pose = rtsi_client->getActualTCPPose();
     std::vector<vector6d_t> trajectory;
 
     actual_pose[2] -= 0.2;
