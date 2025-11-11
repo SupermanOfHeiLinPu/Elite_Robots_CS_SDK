@@ -22,12 +22,6 @@
 #include <libssh/libssh.h>
 #endif
 
-#ifndef FILE_PERMISSIONS
-#define FILE_PERMISSIONS 0644
-#endif
-
-
-
 #include "Common/SshUtils.hpp"
 #include "Elite/Log.hpp"
 
