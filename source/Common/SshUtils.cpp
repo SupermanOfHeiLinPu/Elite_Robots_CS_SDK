@@ -302,7 +302,7 @@ bool uploadFile(const std::string& server, const std::string& user, const std::s
 
     std::ifstream local_file(local_path, std::ios::binary | std::ios::ate);
     if (!local_file) {
-        ELITE_LOG_ERROR("Failed to open local file: %s", local_path);
+        ELITE_LOG_ERROR("Failed to open local file: %s", local_path.c_str());
         ssh_disconnect(session);
         ssh_free(session);
         return false;
@@ -329,7 +329,7 @@ bool uploadFile(const std::string& server, const std::string& user, const std::s
 
 #if defined(_WIN32) || defined(_WIN64)
 #define FILE_PERMISSIONS (S_IREAD | S_IWRITE)
-#elif defined(__linux) || defined(linux) || defined(__linux__)
+#elif defined(__linux) || defined(linux) || defined(__linux__) || defined(__APPLE__)
 #define FILE_PERMISSIONS (S_IRUSR | S_IWUSR)
 #endif
     // File's infomation
