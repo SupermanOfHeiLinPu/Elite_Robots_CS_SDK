@@ -378,4 +378,68 @@ void registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)>
 - ***参数***
     - registerRobotExceptionCallback: 回调函数，用于处理接收到的机器人异常。参数为机器人异常的共享指针(参考：[RobotException](./RobotException.cn.md))。
     
+---
+
+### ***启用工具RS485通讯***
+```cpp
+SerialCommunicationSharedPtr startToolRs485(const SerialConfig& config, int tcp_port = 54321)
+```
+
+- ***功能***
+    启用工具RS485通讯。此接口会在机器人控制器上启动一个 socat 进程，将工具RS485串口的数据转发到指定的 TCP/IP 端口。
+
+- ***参数***
+    - config：串口配置。详情可查看：[串口通讯](./SerialCommunication.cn.md)
+    - tcp_port：TCP 端口。
+
+- ***返回值***：一个可以操作串口的对象，其本质是一个 TCP 客户端。详情可查看：[串口通讯](./SerialCommunication.cn.md)
+
+---
+
+### ***停止工具RS485通讯***
+```cpp
+bool endToolRs485(SerialCommunicationSharedPtr comm_ptr)
+```
+
+- ***功能***
+    停止工具RS485通讯。
+
+- ***参数***
+    - comm_ptr：如果不为`nullptr`，会调用`SerialCommunication::disconnect()`方法。详情可查看：[串口通讯](./SerialCommunication.cn.md)
+
+- ***返回值***：成功停止工具RS485通讯。
+
+---
+
+### ***启用工具RS485通讯***
+```cpp
+SerialCommunicationSharedPtr startBoardRs485(const SerialConfig& config, int tcp_port = 54321)
+```
+
+- ***功能***
+    启用控制柜RS485通讯。此接口会在机器人控制器上启动一个 socat 进程，将控制柜RS485串口的数据转发到指定的 TCP/IP 端口。
+
+- ***参数***
+    - config：串口配置。详情可查看：[串口通讯](./SerialCommunication.cn.md)
+    - tcp_port：TCP 端口。
+
+- ***返回值***：一个可以操作串口的对象，其本质是一个 TCP 客户端。详情可查看：[串口通讯](./SerialCommunication.cn.md)
+
+---
+
+### ***停止工具RS485通讯***
+```cpp
+bool endBoardRs485(SerialCommunicationSharedPtr comm_ptr)
+```
+
+- ***功能***
+    停止控制柜RS485通讯。
+
+- ***参数***
+    - comm_ptr：如果不为`nullptr`，会调用`SerialCommunication::disconnect()`方法。详情可查看：[串口通讯](./SerialCommunication.cn.md)
+
+- ***返回值***：成功停止主板RS485通讯。
+
+---
+
 

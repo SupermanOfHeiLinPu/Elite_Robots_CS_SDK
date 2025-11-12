@@ -119,10 +119,10 @@ int SerialCommunication::read(uint8_t* data, size_t size, int timeout_ms) {
         return -1;
     }
     int read_len = 0;
-    boost::system::error_code error_code = boost::asio::error::would_block;
+    boost::system::error_code error_code;
     if (timeout_ms <= 0) {
         read_len = boost::asio::read(*impl_->socket_ptr_, boost::asio::buffer(data, size), error_code);
-        if (error_code) {
+        if (error_code && read_len <= 0) {
             ELITE_LOG_ERROR("Serial socket receive fail: %s", error_code.message().c_str());
             return -1;
         }
@@ -134,7 +134,7 @@ int SerialCommunication::read(uint8_t* data, size_t size, int timeout_ms) {
                                     read_len = nb;
                                 });
         impl_->io_context_->run_for(std::chrono::milliseconds(timeout_ms));
-        if (error_code) {
+        if (error_code && read_len <= 0) {
             ELITE_LOG_ERROR("Serial socket receive fail: %s", error_code.message().c_str());
             return -1;
         }

@@ -67,7 +67,18 @@ private:
     class Impl;
     std::unique_ptr<Impl> impl_;
 public:
+    /**
+     * @brief Construct a new Serial Communication object
+     * 
+     * @param ip IP address of the RS485 TCP server
+     * @param port Port number of the RS485 TCP server
+     */
     ELITE_EXPORT SerialCommunication(const std::string& ip, int port);
+
+    /**
+     * @brief Destroy the Serial Communication object
+     * 
+     */
     ELITE_EXPORT ~SerialCommunication();
     
     /**
