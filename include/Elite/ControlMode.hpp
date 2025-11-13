@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2025, Elite Robotics.
+// Copyright (c) 2025, Elite Robots.
 //
 // ControlMode.hpp
 // Provides the ControlMode enum class for robot control modes.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
 #include <Elite/DashboardClient.hpp>
 #include <Elite/EliteDriver.hpp>
 #include <Elite/Log.hpp>
@@ -98,7 +100,7 @@ int main(int argc, char** argv) {
     serial_config.stop_bits = SerialConfig::StopBits::ONE;
     SerialCommunicationSharedPtr serial;
     if (which_serial == "tool") {
-        serial = driver->startToolCommunication(serial_config);
+        serial = driver->startToolRs485(serial_config);
     } else if (which_serial == "board") {
         serial = driver->startBoardRs485(serial_config);
     }
@@ -128,7 +130,7 @@ int main(int argc, char** argv) {
 
     ELITE_LOG_INFO("Ending serial communication...");
     serial->disconnect();
-    driver->endToolCommunication(serial);
+    driver->endToolRs485(serial);
     driver->endBoardRs485(serial);
     driver->stopControl();
     ELITE_LOG_INFO("Serial communication ended.");

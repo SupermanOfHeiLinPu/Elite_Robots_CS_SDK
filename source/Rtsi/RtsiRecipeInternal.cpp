@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
 #include "RtsiRecipeInternal.hpp"
 #include "EliteException.hpp"
 #include "Utils.hpp"

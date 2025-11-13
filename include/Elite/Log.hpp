@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2025, Elite Robotics.
+// Copyright (c) 2025, Elite Robots.
 //
 // Log.hpp
 // Provides logging functionality for the Elite Robotics SDK.

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2025, Elite Robotics.
+// Copyright (c) 2025, Elite Robots.
 //
 // RtsiRecipeInternal.hpp
 // Provides the RtsiRecipeInternal class for internal RTSI recipe handling.

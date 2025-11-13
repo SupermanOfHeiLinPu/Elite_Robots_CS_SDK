@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2025, Elite Robotics.
+// Copyright (c) 2025, Elite Robots.
 //
 // EliteDriver.hpp
-// Provides the EliteDriver class for interfacing with Elite robots.
+// Provides the EliteDriver class for interfacing with Elite Robots..
 #ifndef __ELITE_DRIVER_HPP__
 #define __ELITE_DRIVER_HPP__
 

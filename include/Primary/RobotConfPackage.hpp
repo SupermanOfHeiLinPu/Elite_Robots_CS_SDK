@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2025, Elite Robotics.
+// Copyright (c) 2025, Elite Robots.
 //
 // RobotConfPackage.hpp
 // Provides the RobotConfPackage class for handling robot configuration data packages.

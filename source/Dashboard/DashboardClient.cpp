@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
 #include "DashboardClient.hpp"
 #include <boost/asio.hpp>
 #include <iostream>
@@ -89,7 +91,7 @@ bool DashboardClient::closeSafetyDialog() {
 }
 
 bool DashboardClient::echo() {
-    std::string response = sendAndRequest("echo\n", "Hello ELITE ROBOTS.\r\n");
+    std::string response = sendAndRequest("echo\n", "Hello Elite Robots..\r\n");
     return !response.empty();
 }
 

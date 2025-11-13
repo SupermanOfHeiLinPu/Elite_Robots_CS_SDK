@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2025, Elite Robotics.
+// Copyright (c) 2025, Elite Robots.
 //
 // ScriptCommandInterface.hpp
 // Provides the ScriptCommandInterface class for robot script commands.

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2025, Elite Robotics.
+// Copyright (c) 2025, Elite Robots.
 //
 // SerialCommunication.hpp
 // Provides the SerialCommunication class for RS485 communication over TCP.

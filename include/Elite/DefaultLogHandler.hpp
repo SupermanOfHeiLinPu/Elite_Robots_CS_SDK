@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2025, Elite Robotics.
+// Copyright (c) 2025, Elite Robots.
 //
 // DefaultLogHandler.hpp
 // Provides the DefaultLogHandler class for logging messages to the console.

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2025, Elite Robotics.
+// Copyright (c) 2025, Elite Robots.
 //
 // TrajectoryInterface.hpp
 // Provides the TrajectoryInterface class for robot trajectory control.

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2025, Elite Robotics.
+// Copyright (c) 2025, Elite Robots.
 //
 // RtsiIOInterface.hpp
 // Wraps the RtsiClientInterface class for RTSI I/O communication with the robot.

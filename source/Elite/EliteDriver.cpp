@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
 #include "EliteDriver.hpp"
 #include <boost/asio.hpp>
 #include <fstream>
