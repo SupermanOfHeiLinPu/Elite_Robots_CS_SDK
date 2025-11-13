@@ -1,4 +1,6 @@
-﻿#include <fcntl.h>
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
+#include <fcntl.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>

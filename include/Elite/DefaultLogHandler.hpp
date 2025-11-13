@@ -1,10 +1,15 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
+//
+// DefaultLogHandler.hpp
+// Provides the DefaultLogHandler class for logging messages to the console.
 #ifndef __ELITE__DEFATULT_LOG_HPP__
 #define __ELITE__DEFATULT_LOG_HPP__
 
-#include <iostream>
 #include <chrono>
 #include <ctime>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include "Log.hpp"

@@ -1,4 +1,6 @@
-﻿#include <Elite/DashboardClient.hpp>
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
+#include <Elite/DashboardClient.hpp>
 #include <Elite/DataType.hpp>
 #include <Elite/EliteDriver.hpp>
 #include <Elite/Log.hpp>

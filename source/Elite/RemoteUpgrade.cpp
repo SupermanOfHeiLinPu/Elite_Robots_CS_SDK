@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
 #include <iostream>
 #include <cstdio>
 #include <string>

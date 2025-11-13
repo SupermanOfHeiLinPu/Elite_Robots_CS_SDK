@@ -1,20 +1,24 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
+//
+// SerialCommunication.hpp
+// Provides the SerialCommunication class for RS485 communication over TCP.
 #ifndef __ELITE__SERIAL_COMMUNICATION_HPP__
 #define __ELITE__SERIAL_COMMUNICATION_HPP__
 
-#include <memory>
 #include <Elite/EliteOptions.hpp>
+#include <memory>
 
-namespace ELITE
-{
+namespace ELITE {
 /**
  * @brief RS485 configuration structure
- * 
+ *
  */
 class SerialConfig {
-public:
+   public:
     /**
      * @brief Baud rate enumeration
-     * 
+     *
      */
     enum class BaudRate : int {
         BR_2400 = 2400,
@@ -31,7 +35,7 @@ public:
 
     /**
      * @brief Parity enumeration
-     * 
+     *
      */
     enum class Parity : int {
         NONE = 0,
@@ -41,12 +45,9 @@ public:
 
     /**
      * @brief Stop bits enumeration
-     * 
+     *
      */
-    enum class StopBits : int {
-        ONE = 1,
-        TWO = 2
-    };
+    enum class StopBits : int { ONE = 1, TWO = 2 };
 
     BaudRate baud_rate = BaudRate::BR_115200;
     Parity parity = Parity::NONE;
@@ -58,18 +59,19 @@ public:
 
 /**
  * @brief RS485 communication class.
- * 
+ *
  * This class provides an interface for RS485 communication over TCP.
- * 
+ *
  */
 class SerialCommunication {
-private:
+   private:
     class Impl;
     std::unique_ptr<Impl> impl_;
-public:
+
+   public:
     /**
      * @brief Construct a new Serial Communication object
-     * 
+     *
      * @param ip IP address of the RS485 TCP server
      * @param port Port number of the RS485 TCP server
      */
@@ -77,28 +79,28 @@ public:
 
     /**
      * @brief Destroy the Serial Communication object
-     * 
+     *
      */
     ELITE_EXPORT ~SerialCommunication();
-    
+
     /**
      * @brief Connect to the RS485 TCP server.
-     * 
+     *
      * @param timeout_ms Timeout in milliseconds.
      * @return true success
      * @return false fail
      */
     ELITE_EXPORT bool connect(int timeout_ms);
-    
+
     /**
      * @brief Disconnect from the RS485 TCP server.
-     * 
+     *
      */
     ELITE_EXPORT void disconnect();
-    
+
     /**
      * @brief Write data to the RS485 TCP server.
-     * 
+     *
      * @param data data buffer
      * @param size data size
      * @return int success write size, -1 fail
@@ -107,7 +109,7 @@ public:
 
     /**
      * @brief Read data from the RS485 TCP server.
-     * 
+     *
      * @param data data buffer
      * @param size data size
      * @param timeout_ms timeout in milliseconds
@@ -117,7 +119,7 @@ public:
 
     /**
      * @brief Check if connected to the RS485 TCP server.
-     * 
+     *
      * @return true connected
      * @return false disconnect
      */
@@ -126,6 +128,6 @@ public:
 
 using SerialCommunicationSharedPtr = std::shared_ptr<SerialCommunication>;
 
-} // namespace ELITE
+}  // namespace ELITE
 
 #endif

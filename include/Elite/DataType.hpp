@@ -1,12 +1,8 @@
-/**
- * @file DataType.hpp
- * @author yanxiaojia
- * @brief The data type of sdk
- * @date 2024-08-21
- *
- * @copyright Copyright (c) 2024
- *
- */
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
+//
+// DataType.hpp
+// Provides various data type definitions and enumerations for robot states and configurations.
 #ifndef __DATA_TYPE_HPP__
 #define __DATA_TYPE_HPP__
 

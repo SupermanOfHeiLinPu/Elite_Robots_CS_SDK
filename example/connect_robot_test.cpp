@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
 #include <Elite/Log.hpp>
 #include <Elite/PrimaryPortInterface.hpp>
 #include <boost/asio.hpp>

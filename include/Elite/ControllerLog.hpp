@@ -1,12 +1,8 @@
-/**
- * @file ControllerLog.hpp
- * @author yanxiaojia
- * @brief Controller log for Elite robot
- * @date 2025-11-05
- * 
- * @copyright Copyright (c) 2025
- * 
- */
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
+//
+// ControllerLog.hpp
+// Provides the ControllerLog class for downloading robot system logs.
 #ifndef ___ELITE_CONTROLLER_LOG_HPP__
 #define ___ELITE_CONTROLLER_LOG_HPP__
 

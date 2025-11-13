@@ -1,25 +1,28 @@
-﻿#ifndef __ELITE__PRIMARY_PORT_HPP__
+﻿// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
+//
+// PrimaryPort.hpp
+// Provides the PrimaryPort class for interfacing with the robot's primary port.
+#ifndef __ELITE__PRIMARY_PORT_HPP__
 #define __ELITE__PRIMARY_PORT_HPP__
 
-#include "PrimaryPackage.hpp"
 #include "DataType.hpp"
+#include "PrimaryPackage.hpp"
 #include "RobotException.hpp"
 
 #include <boost/asio.hpp>
+#include <functional>
+#include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
-#include <memory>
-#include <vector>
-#include <functional>
 #include <unordered_map>
-#include <mutex>
+#include <vector>
 
-namespace ELITE
-{
+namespace ELITE {
 
-class PrimaryPort
-{
-private:
+class PrimaryPort {
+   private:
     // The primary port package head length
     static constexpr int HEAD_LENGTH = 5;
     // The type of 'RobotState' package
@@ -30,7 +33,7 @@ private:
     std::mutex socket_mutex_;
     boost::asio::io_context io_context_;
     std::unique_ptr<boost::asio::ip::tcp::socket> socket_ptr_;
-    
+
     std::function<void(RobotExceptionSharedPtr)> robot_exception_cb_;
 
     // The buffer of package head
@@ -43,7 +46,7 @@ private:
     std::unique_ptr<std::thread> socket_async_thread_;
     std::mutex mutex_;
     bool socket_async_thread_alive_;
-    
+
     /**
      * @brief The background thread.
      *  Receive and parser package.
@@ -52,32 +55,32 @@ private:
 
     /**
      * @brief Receive and parser package.
-     * 
+     *
      */
     bool parserMessage();
 
     /**
      * @brief Receive and parser package body.
      *  Only parser 'RobotState' package
-     * @param type 
-     * @param len 
+     * @param type
+     * @param len
      */
     bool parserMessageBody(int type, int package_len);
 
     /**
      * @brief Connect to robot primary port.
-     * 
+     *
      * @param ip The robot ip
      * @param port The port(30001 or 30002)
      * @param is_last_connect_success Indicate whether the last connection was successful.
-     * @return true 
-     * @return false 
+     * @return true
+     * @return false
      */
     bool socketConnect(const std::string& ip, int port, bool is_last_connect_success = false);
 
     /**
      * @brief Close connection socket
-     * 
+     *
      */
     void socketDisconnect();
 
@@ -85,11 +88,12 @@ private:
 
     RobotExceptionSharedPtr parserException(const std::vector<uint8_t>& msg_body);
 
-    RobotErrorSharedPtr parserRobotError(uint64_t timestamp, RobotError::Source source, const std::vector<uint8_t>& msg_body, int offset);
+    RobotErrorSharedPtr parserRobotError(uint64_t timestamp, RobotError::Source source, const std::vector<uint8_t>& msg_body,
+                                         int offset);
 
     RobotRuntimeExceptionSharedPtr paraserRuntimeException(uint64_t timestamp, const std::vector<uint8_t>& msg_body, int offset);
 
-public:
+   public:
     PrimaryPort();
     ~PrimaryPort();
 
@@ -100,7 +104,7 @@ public:
      * @param port The port(30001 or 30002)
      * @return true success
      * @return false fail
-     * @note 
+     * @note
      *      1. Warning: Repeated calls to this function without intermediate disconnect() will force-close the active connection.
      *      2. Usage constraint: Call rate must be ≤ 2Hz (once per 500ms minimum interval).
      */
@@ -115,7 +119,7 @@ public:
 
     /**
      * @brief Sends a custom script program to the robot.
-     * 
+     *
      * @param script Script code that shall be executed by the robot.
      * @return true success
      * @return false fail
@@ -124,8 +128,8 @@ public:
 
     /**
      * @brief Get primary sub-package data.
-     * 
-     * @param pkg Primary sub-package. 
+     *
+     * @param pkg Primary sub-package.
      * @param timeout_ms Wait time
      * @return true success
      * @return false fail
@@ -134,7 +138,7 @@ public:
 
     /**
      * @brief Get the local IP
-     * 
+     *
      * @return std::string Local IP. If empty, connection had some errors.
      */
     std::string getLocalIP();
@@ -148,11 +152,9 @@ public:
      * @param cb A callback function that takes a RobotExceptionSharedPtr
      *           representing the received exception.
      */
-    void registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)> cb) {
-        robot_exception_cb_ = cb;
-    }
+    void registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)> cb) { robot_exception_cb_ = cb; }
 };
 
-} // namespace ELITE
+}  // namespace ELITE
 
 #endif

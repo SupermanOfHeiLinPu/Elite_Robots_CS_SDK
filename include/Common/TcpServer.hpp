@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
+//
+// TcpServer.hpp
+// Provides utility functions for string manipulation.
 #ifndef __TCP_SERVER_HPP__
 #define __TCP_SERVER_HPP__
 
@@ -54,7 +59,7 @@ class TcpServer : public std::enable_shared_from_this<TcpServer> {
 
     /**
      * @brief Unset the Receive Callback
-     * 
+     *
      */
     void unsetReceiveCallback();
 
@@ -119,7 +124,7 @@ class TcpServer : public std::enable_shared_from_this<TcpServer> {
 
     /**
      * @brief Call receive callback
-     * 
+     *
      * @param data received data
      * @param size received data size
      */
