@@ -61,6 +61,7 @@ set(
     source/Elite/Logger.cpp
     source/Elite/RemoteUpgrade.cpp
     source/Elite/ControllerLog.cpp
+    source/Elite/SerialCommunication.cpp
 )
 
 set(
@@ -93,6 +94,7 @@ set(
     Elite/RemoteUpgrade.hpp
     Elite/ControllerLog.hpp
     Elite/RobotException.hpp
+    Elite/SerialCommunication.hpp
     Common/RtUtils.hpp
     Common/SshUtils.hpp
     Common/Utils.hpp

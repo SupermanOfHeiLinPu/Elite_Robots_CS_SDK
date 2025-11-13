@@ -21,3 +21,5 @@ Applicable SDK version: ***v1.2.0***
 - [Controller log](./ControllerLog.en.md)
 
 - [Real time utils](./RTUtils.en.md)
+
+- [Serial communication](./SerialCommunication.en.md)

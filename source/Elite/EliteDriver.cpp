@@ -354,3 +354,31 @@ bool EliteDriver::primaryReconnect() {
 void EliteDriver::registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)> cb) {
     impl_->primary_port_->registerRobotExceptionCallback(cb);
 }
+
+SerialCommunicationSharedPtr EliteDriver::startToolRs485(const SerialConfig& config, int tcp_port) {
+    if(!impl_->script_command_server_->startToolRs485(config, tcp_port)) {
+        return nullptr;
+    }
+    return std::make_shared<SerialCommunication>(impl_->robot_ip_, tcp_port);
+}
+
+bool EliteDriver::endToolRs485(SerialCommunicationSharedPtr comm_ptr) {
+    if (comm_ptr) {
+        comm_ptr->disconnect();
+    }
+    return impl_->script_command_server_->endToolRs485();
+}
+
+SerialCommunicationSharedPtr EliteDriver::startBoardRs485(const SerialConfig& config, int tcp_port) {
+    if(!impl_->script_command_server_->startBoardRs485(config, tcp_port)) {
+        return nullptr;
+    }
+    return std::make_shared<SerialCommunication>(impl_->robot_ip_, tcp_port);
+}
+
+bool EliteDriver::endBoardRs485(SerialCommunicationSharedPtr comm_ptr) {
+    if (comm_ptr) {
+        comm_ptr->disconnect();
+    }
+    return impl_->script_command_server_->endBoardRs485();
+}

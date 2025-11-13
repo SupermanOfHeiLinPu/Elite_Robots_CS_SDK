@@ -33,7 +33,15 @@ TcpServer::~TcpServer() {
     }
 }
 
-void TcpServer::setReceiveCallback(ReceiveCallback cb) { receive_cb_ = std::move(cb); }
+void TcpServer::setReceiveCallback(ReceiveCallback cb) { 
+    std::lock_guard<std::mutex> lock(receive_cb_mutex_);
+    receive_cb_ = std::move(cb); 
+}
+
+void TcpServer::unsetReceiveCallback() {  
+    std::lock_guard<std::mutex> lock(receive_cb_mutex_);
+    receive_cb_ = nullptr; 
+}
 
 void TcpServer::startListen() { doAccept(); }
 
@@ -111,9 +119,7 @@ void TcpServer::doRead(std::shared_ptr<boost::asio::ip::tcp::socket> sock) {
     auto read_cb = [weak_self, sock](boost::system::error_code ec, std::size_t n) {
         if (auto self = weak_self.lock()) {
             if (!ec) {
-                if (self->receive_cb_) {
-                    self->receive_cb_(self->read_buffer_.data(), n);
-                }
+                self->callReceiveCallback(self->read_buffer_.data(), n);
                 // Continue read
                 self->doRead(sock);
             } else {
@@ -162,6 +168,13 @@ void TcpServer::closeSocket(std::shared_ptr<boost::asio::ip::tcp::socket> sock, 
         sock->cancel(ec);
         sock->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
         sock->close(ec);
+    }
+}
+
+void TcpServer::callReceiveCallback(const uint8_t data[], int size) {
+    std::lock_guard<std::mutex> lock(receive_cb_mutex_);
+    if (receive_cb_) {
+        receive_cb_(data, size);
     }
 }
 

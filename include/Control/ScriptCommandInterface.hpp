@@ -4,6 +4,7 @@
 #include "DataType.hpp"
 #include "ReversePort.hpp"
 #include "TcpServer.hpp"
+#include "SerialCommunication.hpp"
 
 #include <boost/asio.hpp>
 #include <memory>
@@ -18,7 +19,26 @@ class ScriptCommandInterface : public ReversePort {
         SET_TOOL_VOLTAGE = 2,
         START_FORCE_MODE = 3,
         END_FORCE_MODE = 4,
+        START_TOOL_COMMUNICATION = 5,
+        END_TOOL_COMMUNICATION = 6,
+        START_BOARD_RS485 = 7,
+        END_BOARD_RS485 = 8,
     };
+
+    enum class SerialResult {
+        START = 1,
+        END = 2,
+    };
+
+    /**
+     * @brief Wait for serial command result
+     * 
+     * @param expected_result expected result
+     * @param timeout_ms timeout in milliseconds
+     * @return true 
+     * @return false 
+     */
+    bool waitForSerialResult(SerialResult expected_result, int timeout_ms);
 
    public:
     static constexpr int SCRIPT_COMMAND_DATA_SIZE = 26;
@@ -97,6 +117,42 @@ class ScriptCommandInterface : public ReversePort {
      * @return false fail
      */
     bool endForceMode();
+
+    /**
+     * @brief Send command to start tool RS485 communication
+     * 
+     * @param config Serial configuration
+     * @param tcp_port Socat TCP port
+     * @return true Send command success
+     * @return false Send command fail
+     */
+    bool startToolRs485(const SerialConfig& config, int tcp_port);
+
+    /**
+     * @brief Send command to end tool RS485 communication
+     * 
+     * @return true Send command success
+     * @return false Send command fail
+     */
+    bool endToolRs485();
+
+    /**
+     * @brief Send command to start board RS485 communication
+     * 
+     * @param config Serial configuration
+     * @param tcp_port Socat TCP port
+     * @return true Send command success
+     * @return false Send command fail
+     */
+    bool startBoardRs485(const SerialConfig& config, int tcp_port);
+
+    /**
+     * @brief Send command to end board RS485 communication
+     * 
+     * @return true Send command success
+     * @return false Send command fail
+     */
+    bool endBoardRs485();
 };
 
 }  // namespace ELITE

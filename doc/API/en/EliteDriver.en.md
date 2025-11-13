@@ -326,3 +326,67 @@ void registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)>
 
 - ***Parameters***
     - `cb`: The callback function to handle received robot exceptions. The parameter is a shared pointer to a robot exception (see: [RobotException](./RobotException.en.md)).
+
+---
+
+### ***Enable Tool RS485 Communication***
+```cpp
+SerialCommunicationSharedPtr startToolRs485(const SerialConfig& config, int tcp_port = 54321)
+```
+
+- ***Description***  
+    Enables tool RS485 communication. This interface launches a socat process on the robot controller to forward data from the tool RS485 serial port to the specified TCP/IP port.
+
+- ***Parameters***
+    - `config`: Serial port configuration.
+    - `tcp_port`: TCP port.
+
+- ***Return Value***: An object for operating the serial port, which essentially functions as a TCP client. See [serial communication](./SerialCommunication.en.md).
+
+---
+
+### ***Disable Tool RS485 Communication***
+```cpp
+bool endToolRs485(SerialCommunicationSharedPtr comm_ptr)
+```
+
+- ***Description***  
+    Disables tool RS485 communication.
+
+- ***Parameters***
+    - `comm_ptr`: If not `nullptr`, the `SerialCommunication::disconnect()` method will be called. See [serial communication](./SerialCommunication.en.md).
+
+- ***Return Value***: Indicates whether the tool RS485 communication was successfully disabled.
+
+---
+
+### ***Enable Control Cabinet RS485 Communication***
+```cpp
+SerialCommunicationSharedPtr startBoardRs485(const SerialConfig& config, int tcp_port = 54321)
+```
+
+- ***Description***  
+    Enables control cabinet RS485 communication. This interface launches a socat process on the robot controller to forward data from the control cabinet RS485 serial port to the specified TCP/IP port.
+
+- ***Parameters***
+    - `config`: Serial port configuration.
+    - `tcp_port`: TCP port.
+
+- ***Return Value***: An object for operating the serial port, which essentially functions as a TCP client. See [serial communication](./SerialCommunication.en.md).
+
+---
+
+### ***Disable Control Cabinet RS485 Communication***
+```cpp
+bool endBoardRs485(SerialCommunicationSharedPtr comm_ptr)
+```
+
+- ***Description***  
+    Disables control cabinet RS485 communication.
+
+- ***Parameters***
+    - `comm_ptr`: If not `nullptr`, the `SerialCommunication::disconnect()` method will be called. See [serial communication](./SerialCommunication.en.md).
+
+- ***Return Value***: Indicates whether the control cabinet RS485 communication was successfully disabled. See [serial communication](./SerialCommunication.en.md).
+
+---

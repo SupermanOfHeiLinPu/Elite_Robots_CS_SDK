@@ -1,3 +1,5 @@
+#include <future>
+
 #include "ScriptCommandInterface.hpp"
 #include "ControlCommon.hpp"
 #include "Log.hpp"
@@ -64,6 +66,74 @@ bool ScriptCommandInterface::endForceMode() {
     int32_t buffer[SCRIPT_COMMAND_DATA_SIZE] = {0};
     buffer[0] = htonl(static_cast<int32_t>(Cmd::END_FORCE_MODE));
     return write(buffer, sizeof(buffer)) > 0;
+}
+
+bool ScriptCommandInterface::startToolRs485(const SerialConfig& config, int tcp_port) {
+    int32_t buffer[SCRIPT_COMMAND_DATA_SIZE] = {0};
+    buffer[0] = htonl(static_cast<int32_t>(Cmd::START_TOOL_COMMUNICATION));
+    buffer[1] = htonl(static_cast<int32_t>(config.baud_rate));
+    buffer[2] = htonl(static_cast<int32_t>(config.parity));
+    buffer[3] = htonl(static_cast<int32_t>(config.stop_bits));
+    buffer[4] = htonl(tcp_port);
+    if(write(buffer, sizeof(buffer)) <= 0) {
+        return false;
+    }
+    return waitForSerialResult(SerialResult::START, 5000);
+}
+
+bool ScriptCommandInterface::endToolRs485() {
+    int32_t buffer[SCRIPT_COMMAND_DATA_SIZE] = {0};
+    buffer[0] = htonl(static_cast<int32_t>(Cmd::END_TOOL_COMMUNICATION));
+    if (write(buffer, sizeof(buffer)) <= 0) {
+        return false;
+    }
+    return waitForSerialResult(SerialResult::END, 5000);
+}
+
+bool ScriptCommandInterface::startBoardRs485(const SerialConfig& config, int tcp_port) {
+    int32_t buffer[SCRIPT_COMMAND_DATA_SIZE] = {0};
+    buffer[0] = htonl(static_cast<int32_t>(Cmd::START_BOARD_RS485));
+    buffer[1] = htonl(static_cast<int32_t>(config.baud_rate));
+    buffer[2] = htonl(static_cast<int32_t>(config.parity));
+    buffer[3] = htonl(static_cast<int32_t>(config.stop_bits));
+    buffer[4] = htonl(tcp_port);
+    if(write(buffer, sizeof(buffer)) <= 0) {
+        return false;
+    }
+    return waitForSerialResult(SerialResult::START, 5000);
+}
+
+bool ScriptCommandInterface::endBoardRs485() {
+    int32_t buffer[SCRIPT_COMMAND_DATA_SIZE] = {0};
+    buffer[0] = htonl(static_cast<int32_t>(Cmd::END_BOARD_RS485));
+    if (write(buffer, sizeof(buffer)) <= 0) {
+        return false;
+    }
+    return waitForSerialResult(SerialResult::END, 5000);
+}
+
+bool ScriptCommandInterface::waitForSerialResult(SerialResult expected_result, int timeout_ms) {
+    std::promise<SerialResult> result_promise;
+    server_->setReceiveCallback([&](const uint8_t data[], int size) {
+        SerialResult result = (SerialResult)htonl(*((const uint32_t*)data));
+        result_promise.set_value(result);
+    });
+    auto result_future = result_promise.get_future();
+    auto status = result_future.wait_for(std::chrono::milliseconds(timeout_ms));
+    if (status == std::future_status::ready) {
+        SerialResult result = result_future.get();
+        server_->unsetReceiveCallback();
+        if (result == expected_result) {
+            return true;
+        } else {
+            ELITE_LOG_ERROR("Serial command failed, result: %d", static_cast<int>(result));
+            return false;
+        }
+    } else {
+        server_->unsetReceiveCallback();
+        ELITE_LOG_ERROR("Serial command timeout");
+        return false;
+    }
 }
 
 }  // namespace ELITE
