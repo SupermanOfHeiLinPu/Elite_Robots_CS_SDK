@@ -1,10 +1,15 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robotics.
+//
+// ScriptCommandInterface.hpp
+// Provides the ScriptCommandInterface class for robot script commands.
 #ifndef __SCRIPT_COMMAND_INTERFACE_HPP__
 #define __SCRIPT_COMMAND_INTERFACE_HPP__
 
 #include "DataType.hpp"
 #include "ReversePort.hpp"
-#include "TcpServer.hpp"
 #include "SerialCommunication.hpp"
+#include "TcpServer.hpp"
 
 #include <boost/asio.hpp>
 #include <memory>
@@ -32,11 +37,11 @@ class ScriptCommandInterface : public ReversePort {
 
     /**
      * @brief Wait for serial command result
-     * 
+     *
      * @param expected_result expected result
      * @param timeout_ms timeout in milliseconds
-     * @return true 
-     * @return false 
+     * @return true
+     * @return false
      */
     bool waitForSerialResult(SerialResult expected_result, int timeout_ms);
 
@@ -120,7 +125,7 @@ class ScriptCommandInterface : public ReversePort {
 
     /**
      * @brief Send command to start tool RS485 communication
-     * 
+     *
      * @param config Serial configuration
      * @param tcp_port Socat TCP port
      * @return true Send command success
@@ -130,7 +135,7 @@ class ScriptCommandInterface : public ReversePort {
 
     /**
      * @brief Send command to end tool RS485 communication
-     * 
+     *
      * @return true Send command success
      * @return false Send command fail
      */
@@ -138,7 +143,7 @@ class ScriptCommandInterface : public ReversePort {
 
     /**
      * @brief Send command to start board RS485 communication
-     * 
+     *
      * @param config Serial configuration
      * @param tcp_port Socat TCP port
      * @return true Send command success
@@ -148,7 +153,7 @@ class ScriptCommandInterface : public ReversePort {
 
     /**
      * @brief Send command to end board RS485 communication
-     * 
+     *
      * @return true Send command success
      * @return false Send command fail
      */

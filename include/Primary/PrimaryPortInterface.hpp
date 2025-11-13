@@ -1,35 +1,30 @@
-/**
- * @file PrimaryPortInterface.hpp
- * @author yanxiaojia
- * @brief Robot primary port interface
- * @date 2024-08-21
- * 
- * @copyright Copyright (c) 2024
- * 
- */
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robotics.
+//
+// PrimaryPortInterface.hpp
+// Provides the PrimaryPortInterface class for robot primary port communication.
 #ifndef __ELITE__PRIMARY_PORT_INTERFACE_HPP__
 #define __ELITE__PRIMARY_PORT_INTERFACE_HPP__
 
-#include <Elite/PrimaryPackage.hpp>
 #include <Elite/EliteOptions.hpp>
+#include <Elite/PrimaryPackage.hpp>
 #include <Elite/RobotException.hpp>
+#include <functional>
 #include <memory>
 #include <string>
-#include <functional>
 
-namespace ELITE
-{
+namespace ELITE {
 
 /**
  * @brief Robot primary port interface
- * 
+ *
  */
-class PrimaryPortInterface
-{
-private:
+class PrimaryPortInterface {
+   private:
     class Impl;
     std::unique_ptr<Impl> impl_;
-public:
+
+   public:
     static constexpr int PRIMARY_PORT = 30001;
 
     ELITE_EXPORT PrimaryPortInterface();
@@ -53,7 +48,7 @@ public:
 
     /**
      * @brief Sends a custom script program to the robot.
-     * 
+     *
      * @param script Script code that shall be executed by the robot.
      * @return true success
      * @return false fail
@@ -62,8 +57,8 @@ public:
 
     /**
      * @brief Get primary sub-package data.
-     * 
-     * @param pkg Primary sub-package. 
+     *
+     * @param pkg Primary sub-package.
      * @param timeout_ms Wait time
      * @return true success
      * @return false fail
@@ -72,7 +67,7 @@ public:
 
     /**
      * @brief Get the local IP
-     * 
+     *
      * @return std::string Local IP. If empty, connection had some errors.
      */
     ELITE_EXPORT std::string getLocalIP();
@@ -87,10 +82,8 @@ public:
      *           representing the received exception.
      */
     ELITE_EXPORT void registerRobotExceptionCallback(std::function<void(RobotExceptionSharedPtr)> cb);
-
 };
 
-} // namespace ELITE
-
+}  // namespace ELITE
 
 #endif

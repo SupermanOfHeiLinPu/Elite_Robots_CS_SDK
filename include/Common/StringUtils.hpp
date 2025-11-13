@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robotics.
+//
+// StringUtils.hpp
+// Provides utility functions for string manipulation.
 #ifndef __ELITE__STRING_UTILS_HPP__
 #define __ELITE__STRING_UTILS_HPP__
 
@@ -7,17 +12,16 @@
 namespace ELITE {
 
 class StringUtils {
-private:
-    
-public:
+   private:
+   public:
     StringUtils() = default;
     virtual ~StringUtils() = default;
 
     /**
      * @brief Split the string by the given delimiter.
-     * 
-     * @param input 
-     * @param delimiter 
+     *
+     * @param input
+     * @param delimiter
      * @return std::vector<std::string> string list
      */
     static std::vector<std::string> splitString(const std::string& input, const std::string& delimiter);

@@ -1,13 +1,8 @@
-/**
- * @file RtsiIOInterface.hpp
- * @author yanxiaojia
- * @brief The RTSI interface has been functionally encapsulated.
- * @version 0.1
- * @date 2024-08-21
- *
- * @copyright Copyright (c) 2024
- *
- */
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robotics.
+//
+// RtsiIOInterface.hpp
+// Wraps the RtsiClientInterface class for RTSI I/O communication with the robot.
 #ifndef __RTSI_IO_INTERFACE_HPP__
 #define __RTSI_IO_INTERFACE_HPP__
 
@@ -222,23 +217,23 @@ class RtsiIOInterface : protected RtsiClientInterface {
      * @return vector6d_t Actual cartesian coordinates of the tool: [x, y, z, rx, ry, rz],
      * where x, y, z is a position vection, and rx, ry, rz is a rotation vector.
      */
-    [[deprecated("Use getActualTCPPose() instead. This function will be removed in June 2027.")]]
-    ELITE_EXPORT vector6d_t getAcutalTCPPose();
+    [[deprecated("Use getActualTCPPose() instead. This function will be removed in June 2027.")]] ELITE_EXPORT vector6d_t
+    getAcutalTCPPose();
     ELITE_EXPORT vector6d_t getActualTCPPose();
 
     /**
      * @return vector6d_t Actual speed of the tool given in cartesian coordinates: [x, y, z, rx, ry, rz]/s,
      * where x, y, z is a position vection, and rx, ry, rz is a rotation vector.
      */
-    [[deprecated("Use getActualTCPPose() instead. This function will be removed in June 2027.")]]
-    ELITE_EXPORT vector6d_t getAcutalTCPVelocity();
+    [[deprecated("Use getActualTCPPose() instead. This function will be removed in June 2027.")]] ELITE_EXPORT vector6d_t
+    getAcutalTCPVelocity();
     ELITE_EXPORT vector6d_t getActualTCPVelocity();
 
     /**
      * @returns vector6d_t Generalized forces in the TCP. (Subtract the force data caused by the load.)
      */
-    [[deprecated("Use getActualTCPPose() instead. This function will be removed in June 2027.")]]
-    ELITE_EXPORT vector6d_t getAcutalTCPForce();
+    [[deprecated("Use getActualTCPPose() instead. This function will be removed in June 2027.")]] ELITE_EXPORT vector6d_t
+    getAcutalTCPForce();
     ELITE_EXPORT vector6d_t getActualTCPForce();
 
     /**

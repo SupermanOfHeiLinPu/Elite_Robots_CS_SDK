@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robotics.
+//
+// EliteOptions.hpp
+// Provides build configuration options for the Elite Robotics SDK.
 #ifndef __ELITE_OPTIONS_HPP__
 #define __ELITE_OPTIONS_HPP__
 

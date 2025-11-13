@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robotics.
+//
+// RemoteUpgrade.hpp
+// Provides the UPGRADE namespace for upgrading robot control software.
 #ifndef __ELITE__REMOTE_UPGRADE_HPP__
 #define __ELITE__REMOTE_UPGRADE_HPP__
 

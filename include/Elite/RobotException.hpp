@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robotics.
+//
+// RobotException.hpp
+// Provides the RobotException and RobotError classes for handling robot exceptions.
 #ifndef __ELITE_ROBOT_EXCEPTION_HPP__
 #define __ELITE_ROBOT_EXCEPTION_HPP__
 

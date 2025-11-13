@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robotics.
+//
+// RtsiClient.hpp
+// Provides the RtsiClient class for RTSI communication with the robot.
 #ifndef __RTSICLIENT_HPP__
 #define __RTSICLIENT_HPP__
 

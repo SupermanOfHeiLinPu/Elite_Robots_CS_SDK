@@ -1,12 +1,8 @@
-/**
- * @file EliteException.hpp
- * @author yanxiaojia
- * @brief Exception of the sdk
- * @date 2024-08-21
- * 
- * @copyright Copyright (c) 2024
- * 
- */
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robotics.
+//
+// EliteException.hpp
+// Provides the EliteException class for SDK exception handling.
 #ifndef __ELITE_EXCEPTION_HPP__
 #define __ELITE_EXCEPTION_HPP__
 
@@ -18,13 +14,13 @@ namespace ELITE {
 
 /**
  * @brief Exception of the sdk
- * 
+ *
  */
 class EliteException : virtual public std::runtime_error {
-public:
+   public:
     /**
      * @brief The exception code
-     * 
+     *
      */
     enum class Code {
         /// success
@@ -52,34 +48,29 @@ public:
 
     /**
      * @brief Construct a new Elite Exception object
-     * 
+     *
      * @param code The exception code
      * @param addition addition message
      */
-    explicit EliteException(Code code, const std::string& addition) 
-                                : std::runtime_error(std::string(exceptionCodeToString(code)) + ": " + addition), 
-                                exception_code_(code)  { }
+    explicit EliteException(Code code, const std::string& addition)
+        : std::runtime_error(std::string(exceptionCodeToString(code)) + ": " + addition), exception_code_(code) {}
 
     /**
      * @brief Construct a new Elite Exception object
-     * 
+     *
      * @param code The exception code
      */
-    explicit EliteException(Code code) : std::runtime_error(exceptionCodeToString(code)), exception_code_(code)  { }
+    explicit EliteException(Code code) : std::runtime_error(exceptionCodeToString(code)), exception_code_(code) {}
 
-    virtual ~EliteException() { }
+    virtual ~EliteException() {}
 
-    bool operator==(Code code) const {
-        return exception_code_ == code;
-    }
+    bool operator==(Code code) const { return exception_code_ == code; }
 
-    operator bool() const {
-        return exception_code_ != Code::SUCCESS;
-    }
+    operator bool() const { return exception_code_ != Code::SUCCESS; }
 
     const char* exceptionCodeToString(const Code& ec);
 
-private:
+   private:
     std::string exceptionStringDeal(const std::string& what) {
         std::string exception_string = what;
         exceptionStringReplace(&exception_string, "\n", "\\n");
@@ -97,6 +88,6 @@ private:
     Code exception_code_;
 };
 
-} // namespace ELITE
+}  // namespace ELITE
 
 #endif

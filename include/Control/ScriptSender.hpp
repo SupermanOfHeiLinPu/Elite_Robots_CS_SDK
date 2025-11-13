@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robotics.
+//
+// ScriptSender.hpp
+// Provides the ScriptSender class for sending robot scripts.
 #ifndef __SCRIPT_SENDER_HPP__
 #define __SCRIPT_SENDER_HPP__
 

@@ -1,12 +1,8 @@
-/**
- * @file EliteDriver.hpp
- * @author yanxiaojia
- * @brief This file include main interface.
- * @date 2024-08-21
- *
- * @copyright Copyright (c) 2024
- *
- */
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robotics.
+//
+// EliteDriver.hpp
+// Provides the EliteDriver class for interfacing with Elite robots.
 #ifndef __ELITE_DRIVER_HPP__
 #define __ELITE_DRIVER_HPP__
 
@@ -363,8 +359,8 @@ class EliteDriver {
     /**
      * @brief Start tool RS485 communication.
      * This function will start a socat process on the robot control cabinet, mapping the serial port to the TCP port you specified.
-     * 
-     * 
+     *
+     *
      * @param config Serial configuration
      * @param tcp_port Socat TCP port
      * @return SerialCommunicationSharedPtr A TCP communication object for RS485 communication. nullptr if start fail.
@@ -373,7 +369,7 @@ class EliteDriver {
 
     /**
      * @brief End tool RS485 communication
-     * 
+     *
      * @param comm_ptr TCP communication object for RS485 communication. If not nullptr, it will be disconnected.
      * @return true success
      * @return false fail
@@ -383,7 +379,7 @@ class EliteDriver {
     /**
      * @brief Start board RS485 communication.
      * This function will start a socat process on the robot control cabinet, mapping the serial port to the TCP port you specified.
-     * 
+     *
      * @param config Serial configuration
      * @param tcp_port Socat TCP port
      * @return SerialCommunicationSharedPtr A TCP communication object for RS485 communication. nullptr if start fail.
@@ -392,14 +388,12 @@ class EliteDriver {
 
     /**
      * @brief End board RS485 communication
-     * 
+     *
      * @param comm_ptr TCP communication object for RS485 communication. If not nullptr, it will be disconnected.
      * @return true success
      * @return false fail
      */
     ELITE_EXPORT bool endBoardRs485(SerialCommunicationSharedPtr comm_ptr);
-
-
 };
 
 }  // namespace ELITE

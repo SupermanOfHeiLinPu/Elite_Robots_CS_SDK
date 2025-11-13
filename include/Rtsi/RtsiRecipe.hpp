@@ -1,12 +1,8 @@
-/**
- * @file RtsiRecipe.hpp
- * @author yanxiaojia
- * @brief Abot RTSI recipe
- * @date 2024-08-21
- *
- * @copyright Copyright (c) 2024
- *
- */
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robotics.
+//
+// RtsiRecipe.hpp
+// Provides the RtsiRecipe class for RTSI recipe handling.
 #ifndef __RTSI_RECIPE_HPP__
 #define __RTSI_RECIPE_HPP__
 
