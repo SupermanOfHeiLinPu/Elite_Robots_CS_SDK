@@ -8,6 +8,7 @@
 
 #include <Elite/EliteOptions.hpp>
 #include <memory>
+#include <string>
 
 namespace ELITE {
 /**
