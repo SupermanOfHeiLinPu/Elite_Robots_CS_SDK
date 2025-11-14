@@ -14,6 +14,7 @@
   - Added interface to get robot serial number: `robotSerialNumber()`
   - Added interface to get robot ID: `robotID()`
 - Add timestamp information to the default log handler.
+- Add serial communication interface.
 
 ### Changed
 - Adjust the "timeout" value of "trajectory_socket" in `external_control.script`.
