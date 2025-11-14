@@ -91,7 +91,7 @@ bool DashboardClient::closeSafetyDialog() {
 }
 
 bool DashboardClient::echo() {
-    std::string response = sendAndRequest("echo\n", "Hello Elite Robots..\r\n");
+    std::string response = sendAndRequest("echo\n", "Hello ELITE ROBOTS.\r\n");
     return !response.empty();
 }
 

@@ -129,7 +129,6 @@ int main(int argc, char** argv) {
     ELITE_LOG_INFO("Receive:%s", receive_str.c_str());
 
     ELITE_LOG_INFO("Ending serial communication...");
-    serial->disconnect();
     driver->endToolRs485(serial);
     driver->endBoardRs485(serial);
     driver->stopControl();
