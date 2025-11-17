@@ -45,10 +45,10 @@ class DefaultLogHandler : public LogHandler {
                 std::cout << "[" << time_str << " DEBUG] " << file << ":" << line << ": " << log << std::endl;
                 break;
             case LogLevel::ELI_INFO:
-                std::cout << "[" << time_str << " INFO] " << file << ":" << line << ": " << log << std::endl;
+                std::cout << "[" << time_str << " INFO ] " << file << ":" << line << ": " << log << std::endl;
                 break;
             case LogLevel::ELI_WARN:
-                std::cout << "[" << time_str << " WARN] " << file << ":" << line << ": " << log << std::endl;
+                std::cout << "[" << time_str << " WARN ] " << file << ":" << line << ": " << log << std::endl;
                 break;
             case LogLevel::ELI_ERROR:
                 std::cout << "[" << time_str << " ERROR] " << file << ":" << line << ": " << log << std::endl;
@@ -57,7 +57,7 @@ class DefaultLogHandler : public LogHandler {
                 std::cout << "[" << time_str << " FATAL] " << file << ":" << line << ": " << log << std::endl;
                 break;
             case LogLevel::ELI_NONE:
-                std::cout << "[" << time_str << " NONE] " << file << ":" << line << ": " << log << std::endl;
+                std::cout << "[" << time_str << " NONE ] " << file << ":" << line << ": " << log << std::endl;
                 break;
             default:
                 break;
