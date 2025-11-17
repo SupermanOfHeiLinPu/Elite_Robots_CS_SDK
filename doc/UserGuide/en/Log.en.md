@@ -76,3 +76,5 @@ int main() {
     return 0;
 }
 ```
+
+[>>>Next Chapter: RS485 Communication](./Serial-Communication.en.md)
