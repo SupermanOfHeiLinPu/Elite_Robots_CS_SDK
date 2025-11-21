@@ -13,3 +13,4 @@ It is recommended to read this guide sequentially, but you can also jump directl
 5. [Make the Robot Move](./Let-Robot-Move.en.md)  
 6. [Passthrough: servoj](./Servoj-Move.en.md)  
 7. [Custom Logging](./Log.en.md)
+8. [RS485 Serial Communication](./Serial-Communication.en.md)

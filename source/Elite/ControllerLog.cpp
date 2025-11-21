@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
 #include "Elite/ControllerLog.hpp"
 #include "Elite/Log.hpp"
 #include "Common/SshUtils.hpp"

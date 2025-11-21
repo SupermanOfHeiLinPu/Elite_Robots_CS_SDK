@@ -1,12 +1,8 @@
-/**
- * @file RtsiClientInterface.hpp
- * @author yanxiaojia
- * @brief The RTSI client interface
- * @date 2024-08-21
- *
- * @copyright Copyright (c) 2024
- *
- */
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
+//
+// RtsiClientInterface.hpp
+// Wraps the RtsiClient class for RTSI communication with the robot.
 #ifndef __RTSI_CLIENT_INTERFACE_HPP__
 #define __RTSI_CLIENT_INTERFACE_HPP__
 

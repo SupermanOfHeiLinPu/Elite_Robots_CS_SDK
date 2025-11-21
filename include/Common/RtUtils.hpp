@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
+//
+// RtUtils.hpp
+// Provides utility functions for real-time thread management.
 #ifndef __RT_UTILS_HPP__
 #define __RT_UTILS_HPP__
 

@@ -14,6 +14,7 @@
   - 新增获取机器人序列号接口：`robotSerialNumber()`
   - 新增获取机器人ID接口：`robotID()`
 - 默认的日志句柄增加时间戳信息。
+- 新增串口通讯相关接口。
 
 ### Changed
 - 调整 `external_control.script` 中 “trajectory_socket” 的“timeout”值。

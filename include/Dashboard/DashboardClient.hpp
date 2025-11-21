@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
+//
+// DashboardClient.hpp
+// Provides an interface to interact with the robot's dashboard server.
 #ifndef __DASHBOARDCLIENT_HPP__
 #define __DASHBOARDCLIENT_HPP__
 

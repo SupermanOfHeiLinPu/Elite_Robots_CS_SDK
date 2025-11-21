@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
 #include "Common/RtUtils.hpp"
 #include <cstring>
 #include <stdexcept>

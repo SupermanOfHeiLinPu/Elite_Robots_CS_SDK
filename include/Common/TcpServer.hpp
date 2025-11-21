@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
+//
+// TcpServer.hpp
+// Provides utility functions for string manipulation.
 #ifndef __TCP_SERVER_HPP__
 #define __TCP_SERVER_HPP__
 
@@ -53,6 +58,12 @@ class TcpServer : public std::enable_shared_from_this<TcpServer> {
     void setReceiveCallback(ReceiveCallback cb);
 
     /**
+     * @brief Unset the Receive Callback
+     *
+     */
+    void unsetReceiveCallback();
+
+    /**
      * @brief Write data to client
      *
      * @param data data
@@ -87,6 +98,7 @@ class TcpServer : public std::enable_shared_from_this<TcpServer> {
 
     std::vector<uint8_t> read_buffer_;
     ReceiveCallback receive_cb_;
+    std::mutex receive_cb_mutex_;
     std::mutex socket_mutex_;
 
     /**
@@ -109,6 +121,14 @@ class TcpServer : public std::enable_shared_from_this<TcpServer> {
      * @param ec boost error code (Only close() function ec is available).
      */
     void closeSocket(std::shared_ptr<boost::asio::ip::tcp::socket> sock, boost::system::error_code& ec);
+
+    /**
+     * @brief Call receive callback
+     *
+     * @param data received data
+     * @param size received data size
+     */
+    void callReceiveCallback(const uint8_t data[], int size);
 };
 
 }  // namespace ELITE
