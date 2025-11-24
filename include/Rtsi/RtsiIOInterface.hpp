@@ -492,7 +492,7 @@ class RtsiIOInterface : protected RtsiClientInterface {
     }
 
    private:
-    volatile bool input_new_cmd_;
+    std::atomic_bool input_new_cmd_;
     std::vector<std::string> input_recipe_string_;
     std::vector<std::string> output_recipe_string_;
     double target_frequency_;
