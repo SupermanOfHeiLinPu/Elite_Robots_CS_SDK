@@ -17,12 +17,15 @@ using namespace ELITE;
 RtsiIOInterface::RtsiIOInterface(const std::string& output_recipe_file, const std::string& input_recipe_file, double frequency)
     : output_recipe_string_(readRecipe(output_recipe_file)),
       input_recipe_string_(readRecipe(input_recipe_file)),
-      target_frequency_(frequency) {}
+      target_frequency_(frequency),
+      input_new_cmd_(false) {}
 
 RtsiIOInterface::RtsiIOInterface(const std::vector<std::string>& output_recipe, const std::vector<std::string>& input_recipe,
                                  double frequency)
-    : output_recipe_string_(output_recipe), input_recipe_string_(input_recipe), target_frequency_(frequency) {
-}
+    : output_recipe_string_(output_recipe),
+      input_recipe_string_(input_recipe),
+      target_frequency_(frequency),
+      input_new_cmd_(false) {}
 
 RtsiIOInterface::~RtsiIOInterface() { disconnect(); }
 
@@ -99,15 +102,9 @@ void RtsiIOInterface::disconnect() {
     RtsiClientInterface::disconnect();
 }
 
+bool RtsiIOInterface::isConnected() { return is_recv_thread_alive_ && RtsiClientInterface::isConnected(); }
 
-bool RtsiIOInterface::isConnected() {
-    return is_recv_thread_alive_ && RtsiClientInterface::isConnected();
-}
-
-
-bool RtsiIOInterface::isStarted() {
-    return is_recv_thread_alive_ && RtsiClientInterface::isStarted();
-}
+bool RtsiIOInterface::isStarted() { return is_recv_thread_alive_ && RtsiClientInterface::isStarted(); }
 
 VersionInfo RtsiIOInterface::getControllerVersion() { return controller_version_; }
 
