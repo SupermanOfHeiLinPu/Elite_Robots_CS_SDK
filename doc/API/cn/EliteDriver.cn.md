@@ -411,7 +411,7 @@ bool endToolRs485(SerialCommunicationSharedPtr comm_ptr)
 
 ---
 
-### ***启用工具RS485通讯***
+### ***启用控制柜RS485通讯***
 ```cpp
 SerialCommunicationSharedPtr startBoardRs485(const SerialConfig& config, int tcp_port = 54321)
 ```
@@ -427,7 +427,7 @@ SerialCommunicationSharedPtr startBoardRs485(const SerialConfig& config, int tcp
 
 ---
 
-### ***停止工具RS485通讯***
+### ***停止控制柜RS485通讯***
 ```cpp
 bool endBoardRs485(SerialCommunicationSharedPtr comm_ptr)
 ```
