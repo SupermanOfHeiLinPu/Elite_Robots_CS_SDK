@@ -104,6 +104,10 @@ int main(int argc, char** argv) {
     } else if (which_serial == "board") {
         serial = driver->startBoardRs485(serial_config);
     }
+    if (!serial) {
+        ELITE_LOG_FATAL("Start serial communication fail.");
+        return 1;
+    }
 
     ELITE_LOG_INFO("Connecting to serial socat server...");
     if(!serial->connect(1000)) {
@@ -121,16 +125,20 @@ int main(int argc, char** argv) {
     ELITE_LOG_INFO("Data sent.");
 
     ELITE_LOG_INFO("Read data from serial...");
-    std::string receive_str(hello_str);
+    std::string receive_str;
+    receive_str.resize(hello_str.size());
     if(serial->read((uint8_t*)receive_str.data(), receive_str.size(), 5000) <= 0) {
-        ELITE_LOG_FATAL("Read data to serial fail.");
-        return 1;
+        ELITE_LOG_INFO("Read data to serial fail.");
     }
     ELITE_LOG_INFO("Receive:%s", receive_str.c_str());
 
     ELITE_LOG_INFO("Ending serial communication...");
-    driver->endToolRs485(serial);
-    driver->endBoardRs485(serial);
+    // serial->disconnect();
+    if (which_serial == "tool") {
+        driver->endToolRs485();
+    } else if (which_serial == "board") {
+        driver->endBoardRs485();
+    }
     driver->stopControl();
     ELITE_LOG_INFO("Serial communication ended.");
 

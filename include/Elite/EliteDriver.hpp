@@ -374,7 +374,7 @@ class EliteDriver {
      * @return true success
      * @return false fail
      */
-    ELITE_EXPORT bool endToolRs485(SerialCommunicationSharedPtr comm_ptr);
+    ELITE_EXPORT bool endToolRs485(int timeout_ms = 5000);
 
     /**
      * @brief Start board RS485 communication.
@@ -393,7 +393,7 @@ class EliteDriver {
      * @return true success
      * @return false fail
      */
-    ELITE_EXPORT bool endBoardRs485(SerialCommunicationSharedPtr comm_ptr);
+    ELITE_EXPORT bool endBoardRs485(int timeout_ms = 5000);
 };
 
 }  // namespace ELITE

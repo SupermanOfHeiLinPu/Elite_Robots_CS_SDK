@@ -364,11 +364,8 @@ SerialCommunicationSharedPtr EliteDriver::startToolRs485(const SerialConfig& con
     return std::make_shared<SerialCommunication>(impl_->robot_ip_, tcp_port);
 }
 
-bool EliteDriver::endToolRs485(SerialCommunicationSharedPtr comm_ptr) {
-    if (comm_ptr) {
-        comm_ptr->disconnect();
-    }
-    return impl_->script_command_server_->endToolRs485();
+bool EliteDriver::endToolRs485(int timeout_ms) {
+    return impl_->script_command_server_->endToolRs485(timeout_ms);
 }
 
 SerialCommunicationSharedPtr EliteDriver::startBoardRs485(const SerialConfig& config, int tcp_port) {
@@ -378,9 +375,6 @@ SerialCommunicationSharedPtr EliteDriver::startBoardRs485(const SerialConfig& co
     return std::make_shared<SerialCommunication>(impl_->robot_ip_, tcp_port);
 }
 
-bool EliteDriver::endBoardRs485(SerialCommunicationSharedPtr comm_ptr) {
-    if (comm_ptr) {
-        comm_ptr->disconnect();
-    }
-    return impl_->script_command_server_->endBoardRs485();
+bool EliteDriver::endBoardRs485(int timeout_ms) {
+    return impl_->script_command_server_->endBoardRs485(timeout_ms);
 }
