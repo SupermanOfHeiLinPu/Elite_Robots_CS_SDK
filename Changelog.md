@@ -15,6 +15,7 @@
   - Added interface to get robot ID: `robotID()`
 - Add timestamp information to the default log handler.
 - Add serial communication interface.
+- Added a script to launch the Docker simulation.
 
 ### Changed
 - Adjust the "timeout" value of "trajectory_socket" in `external_control.script`.

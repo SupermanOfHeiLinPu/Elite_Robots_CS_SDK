@@ -15,6 +15,7 @@
   - 新增获取机器人ID接口：`robotID()`
 - 默认的日志句柄增加时间戳信息。
 - 新增串口通讯相关接口。
+- 添加了一个启动docker仿真的脚本。
 
 ### Changed
 - 调整 `external_control.script` 中 “trajectory_socket” 的“timeout”值。
