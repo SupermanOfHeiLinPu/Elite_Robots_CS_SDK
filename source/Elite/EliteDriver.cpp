@@ -422,6 +422,9 @@ bool EliteDriver::endToolRs485(SerialCommunicationSharedPtr com, const std::stri
     if (!com) {
         return false;
     }
+    if (com->getSocatPid() < 0) {
+        return false;
+    }
     SSH_UTILS::executeCommand(impl_->robot_ip_, "root", ssh_password, "kill " + std::to_string(com->getSocatPid()));
     return true;
 }

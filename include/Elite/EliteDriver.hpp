@@ -362,6 +362,7 @@ class EliteDriver {
      *
      *
      * @param config Serial configuration
+     * @param ssh_password SSH password for robot control cabinet
      * @param tcp_port Socat TCP port
      * @return SerialCommunicationSharedPtr A TCP communication object for RS485 communication. nullptr if start fail.
      */
@@ -370,7 +371,8 @@ class EliteDriver {
     /**
      * @brief End tool RS485 communication
      *
-     * @param timeout_ms Timeout in milliseconds to wait for the robot to end RS485 communication.
+     * @param com TCP communication object for RS485 communication.
+     * @param ssh_password SSH password for robot control cabinet
      * @return true success
      * @return false fail
      */

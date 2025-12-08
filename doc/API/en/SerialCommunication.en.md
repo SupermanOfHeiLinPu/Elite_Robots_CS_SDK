@@ -123,3 +123,16 @@ bool isConnected()
 - ***Return Value***: Returns true if connected to the server.
 
 ---
+
+### ***Get socat PID***
+```cpp
+int getSocatPid() const
+```
+
+- ***Description***
+    Get the process ID (PID) of the port-mapping socat process on the robot control cabinet.
+
+    
+- ***Return Value***: The process ID (PID). If it is less than 0, it is an invalid PID.
+
+--- 
