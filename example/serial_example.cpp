@@ -14,7 +14,7 @@ using namespace std::chrono;
 
 int main(int argc, char** argv) {
     EliteDriverConfig config;
-    std::string which_serial;
+    std::string pw;
     // Parser param
     po::options_description desc(
         "Usage:\n"
@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
         ("help,h", "Print help message")
         ("robot-ip", po::value<std::string>(&config.robot_ip)->required(),"\tRequired. IP address of the robot.")
         ("use-headless-mode", po::value<bool>(&config.headless_mode)->required()->implicit_value(true), "\tRequired. Use headless mode.")
-        ("which-serial", po::value<std::string>(&which_serial)->default_value("tool"), "\tOptional. Choose which serial. Choices: [board, tool]")
+        ("ssh-pw", po::value<std::string>(&pw)->required(), "\tRequired. Controller box OS ssh password.")
         ("local-ip", po::value<std::string>(&config.local_ip)->default_value(""), "\tOptional. IP address of the local network interface.");
 
     po::variables_map vm;
@@ -98,12 +98,7 @@ int main(int argc, char** argv) {
     serial_config.baud_rate = SerialConfig::BaudRate::BR_115200;
     serial_config.parity = SerialConfig::Parity::NONE;
     serial_config.stop_bits = SerialConfig::StopBits::ONE;
-    SerialCommunicationSharedPtr serial;
-    if (which_serial == "tool") {
-        serial = driver->startToolRs485(serial_config);
-    } else if (which_serial == "board") {
-        serial = driver->startBoardRs485(serial_config);
-    }
+    auto serial = driver->startToolRs485(serial_config, pw);
     if (!serial) {
         ELITE_LOG_FATAL("Start serial communication fail.");
         return 1;
@@ -133,12 +128,8 @@ int main(int argc, char** argv) {
     ELITE_LOG_INFO("Receive:%s", receive_str.c_str());
 
     ELITE_LOG_INFO("Ending serial communication...");
-    // serial->disconnect();
-    if (which_serial == "tool") {
-        driver->endToolRs485();
-    } else if (which_serial == "board") {
-        driver->endBoardRs485();
-    }
+    serial->disconnect();
+    driver->endToolRs485(serial, pw);
     driver->stopControl();
     ELITE_LOG_INFO("Serial communication ended.");
 

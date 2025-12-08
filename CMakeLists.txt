@@ -61,7 +61,7 @@ set(
     source/Elite/Logger.cpp
     source/Elite/RemoteUpgrade.cpp
     source/Elite/ControllerLog.cpp
-    source/Elite/SerialCommunication.cpp
+    source/Elite/SerialCommunicationImpl.cpp
 )
 
 set(
