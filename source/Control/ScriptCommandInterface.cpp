@@ -83,13 +83,14 @@ bool ScriptCommandInterface::startToolRs485(const SerialConfig& config, int tcp_
     return waitForSerialResult(SerialResult::START, 5000);
 }
 
-bool ScriptCommandInterface::endToolRs485() {
+bool ScriptCommandInterface::endToolRs485(int timeout_ms) {
     int32_t buffer[SCRIPT_COMMAND_DATA_SIZE] = {0};
     buffer[0] = htonl(static_cast<int32_t>(Cmd::END_TOOL_COMMUNICATION));
+    buffer[1] = htonl(static_cast<int32_t>(timeout_ms));
     if (write(buffer, sizeof(buffer)) <= 0) {
         return false;
     }
-    return waitForSerialResult(SerialResult::END, 5000);
+    return waitForSerialResult(SerialResult::END, timeout_ms);
 }
 
 bool ScriptCommandInterface::startBoardRs485(const SerialConfig& config, int tcp_port) {
@@ -105,13 +106,14 @@ bool ScriptCommandInterface::startBoardRs485(const SerialConfig& config, int tcp
     return waitForSerialResult(SerialResult::START, 5000);
 }
 
-bool ScriptCommandInterface::endBoardRs485() {
+bool ScriptCommandInterface::endBoardRs485(int timeout_ms) {
     int32_t buffer[SCRIPT_COMMAND_DATA_SIZE] = {0};
     buffer[0] = htonl(static_cast<int32_t>(Cmd::END_BOARD_RS485));
+    buffer[1] = htonl(static_cast<int32_t>(timeout_ms));
     if (write(buffer, sizeof(buffer)) <= 0) {
         return false;
     }
-    return waitForSerialResult(SerialResult::END, 5000);
+    return waitForSerialResult(SerialResult::END, timeout_ms);
 }
 
 bool ScriptCommandInterface::waitForSerialResult(SerialResult expected_result, int timeout_ms) {

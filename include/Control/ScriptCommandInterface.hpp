@@ -139,7 +139,7 @@ class ScriptCommandInterface : public ReversePort {
      * @return true Send command success
      * @return false Send command fail
      */
-    bool endToolRs485();
+    bool endToolRs485(int timeout_ms);
 
     /**
      * @brief Send command to start board RS485 communication
@@ -157,7 +157,7 @@ class ScriptCommandInterface : public ReversePort {
      * @return true Send command success
      * @return false Send command fail
      */
-    bool endBoardRs485();
+    bool endBoardRs485(int timeout_ms);
 };
 
 }  // namespace ELITE

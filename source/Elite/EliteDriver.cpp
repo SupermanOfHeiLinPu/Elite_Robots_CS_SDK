@@ -16,8 +16,11 @@
 #include "ScriptSender.hpp"
 #include "TcpServer.hpp"
 #include "TrajectoryInterface.hpp"
+#include "SerialCommunicationImpl.hpp"
+#include "SshUtils.hpp"
 
 using namespace ELITE;
+using namespace std::chrono;
 
 static const std::string SERVER_IP_REPLACE = "{{SERVER_IP_REPLACE}}";
 static const std::string REVERSE_PORT_REPLACE = "{{REVERSE_PORT_REPLACE}}";
@@ -35,14 +38,13 @@ static const std::string SERVOJ_TIME_REPLACE = "{{SERVOJ_TIME_REPLACE}}";
 static const std::string SERVOJ_QUEUE_PRE_RECV_SIZE_REPLACE = "{{SERVOJ_QUEUE_PRE_RECV_SIZE_REPLACE}}";
 static const std::string SERVOJ_QUEUE_PRE_RECV_TIMEOUT_REPLACE = "{{SERVOJ_QUEUE_PRE_RECV_TIMEOUT_REPLACE}}";
 
-
 class EliteDriver::Impl {
    public:
     Impl() = delete;
-    explicit Impl(const std::string& robot_ip) : robot_ip_(robot_ip) { 
+    explicit Impl(const std::string& robot_ip) : robot_ip_(robot_ip) {
         reverse_resource_ = std::make_shared<TcpServer::StaticResource>();
     }
-    ~Impl() { 
+    ~Impl() {
         reverse_server_.reset();
         trajectory_server_.reset();
         script_command_server_.reset();
@@ -53,6 +55,7 @@ class EliteDriver::Impl {
 
     std::string readScriptFile(const std::string& file);
     void scriptParamWrite(std::string& file_string, const EliteDriverConfig& config);
+    int getSocatPid(const std::string& ssh_password, int port);
     std::string robot_script_;
     std::string robot_ip_;
     std::string local_ip_;
@@ -91,7 +94,8 @@ void EliteDriver::Impl::scriptParamWrite(std::string& file_string, const EliteDr
     }
 
     while (file_string.find(REVERSE_PORT_REPLACE) != std::string::npos) {
-        file_string.replace(file_string.find(REVERSE_PORT_REPLACE), REVERSE_PORT_REPLACE.length(), std::to_string(config.reverse_port));
+        file_string.replace(file_string.find(REVERSE_PORT_REPLACE), REVERSE_PORT_REPLACE.length(),
+                            std::to_string(config.reverse_port));
     }
 
     while (file_string.find(SCRIPT_COMMAND_PORT_REPLACE) != std::string::npos) {
@@ -106,7 +110,8 @@ void EliteDriver::Impl::scriptParamWrite(std::string& file_string, const EliteDr
     }
 
     while (file_string.find(SERVOJ_TIME_REPLACE) != std::string::npos) {
-        file_string.replace(file_string.find(SERVOJ_TIME_REPLACE), SERVOJ_TIME_REPLACE.length(), std::to_string(config.servoj_time));
+        file_string.replace(file_string.find(SERVOJ_TIME_REPLACE), SERVOJ_TIME_REPLACE.length(),
+                            std::to_string(config.servoj_time));
     }
 
     while (file_string.find(POS_ZOOM_RATIO_REPLACE) != std::string::npos) {
@@ -144,19 +149,20 @@ void EliteDriver::Impl::scriptParamWrite(std::string& file_string, const EliteDr
     }
 
     while (file_string.find(SERVOJ_QUEUE_PRE_RECV_SIZE_REPLACE) != std::string::npos) {
-        file_string.replace(file_string.find(SERVOJ_QUEUE_PRE_RECV_SIZE_REPLACE), SERVOJ_QUEUE_PRE_RECV_SIZE_REPLACE.length(), std::to_string(config.servoj_queue_pre_recv_size));
+        file_string.replace(file_string.find(SERVOJ_QUEUE_PRE_RECV_SIZE_REPLACE), SERVOJ_QUEUE_PRE_RECV_SIZE_REPLACE.length(),
+                            std::to_string(config.servoj_queue_pre_recv_size));
     }
 
     float servoj_queue_pre_recv_timeout = 0;
     if (config.servoj_queue_pre_recv_timeout <= 0) {
-       servoj_queue_pre_recv_timeout = config.servoj_queue_pre_recv_size * config.servoj_time;
+        servoj_queue_pre_recv_timeout = config.servoj_queue_pre_recv_size * config.servoj_time;
     } else {
         servoj_queue_pre_recv_timeout = config.servoj_queue_pre_recv_timeout;
     }
     while (file_string.find(SERVOJ_QUEUE_PRE_RECV_TIMEOUT_REPLACE) != std::string::npos) {
-        file_string.replace(file_string.find(SERVOJ_QUEUE_PRE_RECV_TIMEOUT_REPLACE), SERVOJ_QUEUE_PRE_RECV_TIMEOUT_REPLACE.length(), std::to_string(servoj_queue_pre_recv_timeout));
+        file_string.replace(file_string.find(SERVOJ_QUEUE_PRE_RECV_TIMEOUT_REPLACE), SERVOJ_QUEUE_PRE_RECV_TIMEOUT_REPLACE.length(),
+                            std::to_string(servoj_queue_pre_recv_timeout));
     }
-    
 }
 
 void EliteDriver::init(const EliteDriverConfig& config) {
@@ -208,7 +214,8 @@ void EliteDriver::init(const EliteDriverConfig& config) {
         }
     } else {
         impl_->robot_script_ = control_script;
-        impl_->script_sender_ = std::make_unique<ScriptSender>(config.script_sender_port, impl_->robot_script_, impl_->reverse_resource_);
+        impl_->script_sender_ =
+            std::make_unique<ScriptSender>(config.script_sender_port, impl_->robot_script_, impl_->reverse_resource_);
         ELITE_LOG_DEBUG("Created script sender");
     }
 
@@ -252,7 +259,6 @@ bool EliteDriver::writeServoj(const vector6d_t& pos, int timeout_ms, bool cartes
             return impl_->reverse_server_->writeJointCommand(pos, ControlMode::MODE_SERVOJ, timeout_ms);
         }
     }
-     
 }
 
 bool EliteDriver::writeSpeedl(const vector6d_t& vel, int timeout_ms) {
@@ -357,30 +363,68 @@ void EliteDriver::registerRobotExceptionCallback(std::function<void(RobotExcepti
     impl_->primary_port_->registerRobotExceptionCallback(cb);
 }
 
-SerialCommunicationSharedPtr EliteDriver::startToolRs485(const SerialConfig& config, int tcp_port) {
-    if(!impl_->script_command_server_->startToolRs485(config, tcp_port)) {
+int EliteDriver::Impl::getSocatPid(const std::string& ssh_password, int port) {
+    auto ps_result =
+        SSH_UTILS::executeCommand(robot_ip_, "root", ssh_password, "ps| grep \"[s]ocat tcp-l:"+ std::to_string(port) + "\" | awk '{print $1}'");
+    ELITE_LOG_DEBUG("Socat port %d PID:  %s", port, ps_result.c_str());
+    if (ps_result.empty()) {
+        return -1;
+    } else {
+        try {
+            return std::stoi(ps_result);
+        } catch(const std::exception& e) {
+            ELITE_LOG_ERROR("Convert socat PID fail 'ps' string: %s. exception: %s", ps_result.c_str(), e.what());
+            return -1;
+        }
+    }
+}
+
+SerialCommunicationSharedPtr EliteDriver::startToolRs485(const SerialConfig& config, const std::string& ssh_password,
+                                                         int tcp_port) {
+    if (!impl_->primary_port_) {
+        ELITE_LOG_ERROR("Not connect to robot primary port");
         return nullptr;
     }
-    return std::make_shared<SerialCommunication>(impl_->robot_ip_, tcp_port);
-}
-
-bool EliteDriver::endToolRs485(SerialCommunicationSharedPtr comm_ptr) {
-    if (comm_ptr) {
-        comm_ptr->disconnect();
+    int socat_pid = impl_->getSocatPid(ssh_password, tcp_port);
+    if (socat_pid > 0) {
+        return std::make_shared<SerialCommunicationImpl>(tcp_port, impl_->robot_ip_, socat_pid);
     }
-    return impl_->script_command_server_->endToolRs485();
-}
 
-SerialCommunicationSharedPtr EliteDriver::startBoardRs485(const SerialConfig& config, int tcp_port) {
-    if(!impl_->script_command_server_->startBoardRs485(config, tcp_port)) {
+    std::string baud_rate = std::to_string(static_cast<int>(config.baud_rate));
+    std::string parity = std::to_string(static_cast<int>(config.parity));
+    std::string stop_bits = std::to_string(static_cast<int>(config.stop_bits));
+    std::string script = "sec tool_rs485_config():\n";
+    script += "    set_tool_analog_io_work_mode(0)\n";
+    script += "    tool_serial_config(True," + baud_rate + "," + parity + "," + stop_bits + ")\n";
+    script += "end\n";
+    if (!impl_->primary_port_->sendScript(script)) {
+        ELITE_LOG_ERROR("Send tool_rs485_config script fail.");
         return nullptr;
     }
-    return std::make_shared<SerialCommunication>(impl_->robot_ip_, tcp_port);
+    std::string cmd = "bash -lc 'socat tcp-l:" + std::to_string(tcp_port) +
+                      ",reuseaddr,fork file:/dev/ttyTCI0,nonblock,raw,waitlock=/var/run/tty0 > /dev/null 2>&1 &'";
+    SSH_UTILS::executeCommand(impl_->robot_ip_, "root", ssh_password, cmd);
+
+    for (size_t i = 0; i < 10; i++) {
+        socat_pid = impl_->getSocatPid(ssh_password, tcp_port);
+        if (socat_pid > 0) {
+            break;
+        }
+        std::this_thread::sleep_for(100ms);
+    }
+    if (socat_pid < 0) {
+        return nullptr;
+    }
+    return std::make_shared<SerialCommunicationImpl>(tcp_port, impl_->robot_ip_, socat_pid);
 }
 
-bool EliteDriver::endBoardRs485(SerialCommunicationSharedPtr comm_ptr) {
-    if (comm_ptr) {
-        comm_ptr->disconnect();
+bool EliteDriver::endToolRs485(SerialCommunicationSharedPtr com, const std::string& ssh_password) {
+    if (!com) {
+        return false;
     }
-    return impl_->script_command_server_->endBoardRs485();
+    if (com->getSocatPid() < 0) {
+        return false;
+    }
+    SSH_UTILS::executeCommand(impl_->robot_ip_, "root", ssh_password, "kill " + std::to_string(com->getSocatPid()));
+    return true;
 }
