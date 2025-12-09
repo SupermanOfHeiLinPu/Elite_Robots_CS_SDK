@@ -447,11 +447,11 @@ SerialCommunicationSharedPtr EliteDriver::startBoardRs485(const SerialConfig& co
     script += "    masterboard_serial_config(True," + baud_rate + "," + parity + "," + stop_bits + ")\n";
     script += "end\n";
     if (!impl_->primary_port_->sendScript(script)) {
-        ELITE_LOG_ERROR("Send tool_rs485_config script fail.");
+        ELITE_LOG_ERROR("Send board_rs485_config script fail.");
         return nullptr;
     }
     std::string cmd = "bash -lc 'socat tcp-l:" + std::to_string(tcp_port) +
-                      ",reuseaddr,fork file:/dev/ttyBoard,nonblock,raw,waitlock=/var/run/tty0 > /dev/null 2>&1 &'";
+                      ",reuseaddr,fork file:/dev/ttyBoard,nonblock,raw,waitlock=/var/run/tty1 > /dev/null 2>&1 &'";
     SSH_UTILS::executeCommand(impl_->robot_ip_, "root", ssh_password, cmd);
 
     for (size_t i = 0; i < 10; i++) {
