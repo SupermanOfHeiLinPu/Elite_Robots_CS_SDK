@@ -343,6 +343,7 @@ SerialCommunicationSharedPtr startToolRs485(const SerialConfig& config, int tcp_
     - `tcp_port`: TCP port.
 
 - ***Return Value***: An object for operating the serial port, which essentially functions as a TCP client. See [serial communication](./SerialCommunication.en.md).
+- ***Note***: If you want to use this feature, it is recommended to install libssh. If you are using it on a non-Linux system, you must install the libssh library.
 
 ---
 
@@ -359,5 +360,41 @@ bool endToolRs485(SerialCommunicationSharedPtr com, const std::string& ssh_passw
     - `com` : The SSH login password for the robot control cabinet operating system.
 
 - ***Return Value***: Indicates whether the tool RS485 communication was successfully disabled.
+- ***Note***: If you want to use this feature, it is recommended to install libssh. If you are using it on a non-Linux system, you must install the libssh library.
+
+---
+
+### ***Enable Board RS485 Communication***
+```cpp
+SerialCommunicationSharedPtr startBoardRs485(const SerialConfig& config, int tcp_port = 54321)
+```
+
+- ***Description***  
+    Enables board RS485 communication. This interface launches a socat process on the robot controller to forward data from the tool RS485 serial port to the specified TCP/IP port.
+
+- ***Parameters***
+    - `config`: Serial port configuration.
+    - `ssh_password` : The SSH login password for the robot control cabinet operating system.
+    - `tcp_port`: TCP port.
+
+- ***Return Value***: An object for operating the serial port, which essentially functions as a TCP client. See [serial communication](./SerialCommunication.en.md).
+- ***Note***: If you want to use this feature, it is recommended to install libssh. If you are using it on a non-Linux system, you must install the libssh library.
+
+---
+
+### ***Disable Board RS485 Communication***
+```cpp
+bool endBoardRs485(SerialCommunicationSharedPtr com, const std::string& ssh_password)
+```
+
+- ***Description***  
+    Disables board RS485 communication.
+
+- ***Parameters***
+    - `comm_ptr`: The serial communication object. See [serial communication](./SerialCommunication.en.md).
+    - `com` : The SSH login password for the robot control cabinet operating system.
+
+- ***Return Value***: Indicates whether the tool RS485 communication was successfully disabled.
+- ***Note***: If you want to use this feature, it is recommended to install libssh. If you are using it on a non-Linux system, you must install the libssh library.
 
 ---
