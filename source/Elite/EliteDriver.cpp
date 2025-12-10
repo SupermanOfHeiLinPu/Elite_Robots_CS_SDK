@@ -402,7 +402,7 @@ SerialCommunicationSharedPtr EliteDriver::startToolRs485(const SerialConfig& con
         return nullptr;
     }
     std::string cmd = "bash -lc 'socat tcp-l:" + std::to_string(tcp_port) +
-                      ",reuseaddr,fork file:/dev/ttyTCI0,nonblock,raw,waitlock=/var/run/tty0 > /dev/null 2>&1 &'";
+                      ",reuseaddr,fork,nodelay file:/dev/ttyTCI0,nonblock,raw,waitlock=/var/run/tty0 > /dev/null 2>&1 &'";
     SSH_UTILS::executeCommand(impl_->robot_ip_, "root", ssh_password, cmd);
 
     for (size_t i = 0; i < 10; i++) {
@@ -451,7 +451,7 @@ SerialCommunicationSharedPtr EliteDriver::startBoardRs485(const SerialConfig& co
         return nullptr;
     }
     std::string cmd = "bash -lc 'socat tcp-l:" + std::to_string(tcp_port) +
-                      ",reuseaddr,fork file:/dev/ttyBoard,nonblock,raw,waitlock=/var/run/tty1 > /dev/null 2>&1 &'";
+                      ",reuseaddr,fork,nodelay file:/dev/ttyBoard,nonblock,raw,waitlock=/var/run/tty1 > /dev/null 2>&1 &'";
     SSH_UTILS::executeCommand(impl_->robot_ip_, "root", ssh_password, cmd);
 
     for (size_t i = 0; i < 10; i++) {
