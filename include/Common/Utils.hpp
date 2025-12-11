@@ -10,5 +10,6 @@
 #include <Elite/RtUtils.hpp>
 #include <Elite/SshUtils.hpp>
 #include <Elite/StringUtils.hpp>
+#include <Elite/SharedLibrary.hpp>
 
 #endif

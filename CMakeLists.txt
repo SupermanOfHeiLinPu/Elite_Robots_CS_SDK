@@ -5,6 +5,7 @@ project(elite-cs-series-sdk VERSION 1.3.0)
 option(ELITE_COMPILE_TESTS "Compile tests" OFF)
 option(ELITE_COMPILE_DOC "Compile documentation" OFF)
 option(ELITE_COMPILE_EXAMPLES "Compile examples" OFF)
+option(ELITE_COMPILE_KIN_PLUGIN "Compile kinematics plugin" OFF)
 
 include(cmake/utils.cmake)
 
@@ -100,6 +101,7 @@ set(
     Common/Utils.hpp
     Common/EndianUtils.hpp
     Common/StringUtils.hpp
+    Common/SharedLibrary.hpp
 )
 
 set(SDK_STATIC_LIB_OUTPUT_NAME "${PROJECT_NAME}")
@@ -150,17 +152,25 @@ target_include_directories(${PROJECT_NAME}_SHARED PUBLIC $<BUILD_INTERFACE:${PRO
 add_library(${PROJECT_NAME}::static ALIAS ${PROJECT_NAME}_STATIC)
 target_include_directories(${PROJECT_NAME}_STATIC PUBLIC $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include> $<INSTALL_INTERFACE:include>)
 
+# Compile examples, tests, documentation, and plugins based on options
 if(ELITE_COMPILE_EXAMPLES)
     message(STATUS "Compile the exmaples")
     add_subdirectory(example ${CMAKE_BINARY_DIR}/example/)
 endif()
+# Compile documentation
 if(ELITE_COMPILE_DOC)
     message(STATUS "Compile the documentation.")
     add_subdirectory(doc ${CMAKE_BINARY_DIR}/doc/)
 endif()
+# Compile tests
 if (ELITE_COMPILE_TESTS)
     message(STATUS "Compile the tests")
     add_subdirectory(test ${CMAKE_BINARY_DIR}/test/)
+endif()
+# Compile kinematics plugin
+if(ELITE_COMPILE_KIN_PLUGIN)
+    message(STATUS "Compile the kinematics plugin")
+    add_subdirectory(plugin/kinematics ${CMAKE_BINARY_DIR}/kin_plugin/)
 endif()
 
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" is_top_level)
