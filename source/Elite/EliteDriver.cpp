@@ -402,7 +402,7 @@ SerialCommunicationSharedPtr EliteDriver::startToolRs485(const SerialConfig& con
         return nullptr;
     }
     std::string cmd = "bash -lc 'socat tcp-l:" + std::to_string(tcp_port) +
-                      ",reuseaddr,fork file:/dev/ttyTCI0,nonblock,raw,waitlock=/var/run/tty0 > /dev/null 2>&1 &'";
+                      ",reuseaddr,fork,nodelay file:/dev/ttyTCI0,nonblock,raw,waitlock=/var/run/tty0 > /dev/null 2>&1 &'";
     SSH_UTILS::executeCommand(impl_->robot_ip_, "root", ssh_password, cmd);
 
     for (size_t i = 0; i < 10; i++) {
@@ -419,6 +419,55 @@ SerialCommunicationSharedPtr EliteDriver::startToolRs485(const SerialConfig& con
 }
 
 bool EliteDriver::endToolRs485(SerialCommunicationSharedPtr com, const std::string& ssh_password) {
+    if (!com) {
+        return false;
+    }
+    if (com->getSocatPid() < 0) {
+        return false;
+    }
+    SSH_UTILS::executeCommand(impl_->robot_ip_, "root", ssh_password, "kill " + std::to_string(com->getSocatPid()));
+    return true;
+}
+
+SerialCommunicationSharedPtr EliteDriver::startBoardRs485(const SerialConfig& config, const std::string& ssh_password,
+                                                         int tcp_port) {
+    if (!impl_->primary_port_) {
+        ELITE_LOG_ERROR("Not connect to robot primary port");
+        return nullptr;
+    }
+    int socat_pid = impl_->getSocatPid(ssh_password, tcp_port);
+    if (socat_pid > 0) {
+        return std::make_shared<SerialCommunicationImpl>(tcp_port, impl_->robot_ip_, socat_pid);
+    }
+
+    std::string baud_rate = std::to_string(static_cast<int>(config.baud_rate));
+    std::string parity = std::to_string(static_cast<int>(config.parity));
+    std::string stop_bits = std::to_string(static_cast<int>(config.stop_bits));
+    std::string script = "sec board_rs485_config():\n";
+    script += "    masterboard_serial_config(True," + baud_rate + "," + parity + "," + stop_bits + ")\n";
+    script += "end\n";
+    if (!impl_->primary_port_->sendScript(script)) {
+        ELITE_LOG_ERROR("Send board_rs485_config script fail.");
+        return nullptr;
+    }
+    std::string cmd = "bash -lc 'socat tcp-l:" + std::to_string(tcp_port) +
+                      ",reuseaddr,fork,nodelay file:/dev/ttyBoard,nonblock,raw,waitlock=/var/run/tty1 > /dev/null 2>&1 &'";
+    SSH_UTILS::executeCommand(impl_->robot_ip_, "root", ssh_password, cmd);
+
+    for (size_t i = 0; i < 10; i++) {
+        socat_pid = impl_->getSocatPid(ssh_password, tcp_port);
+        if (socat_pid > 0) {
+            break;
+        }
+        std::this_thread::sleep_for(100ms);
+    }
+    if (socat_pid < 0) {
+        return nullptr;
+    }
+    return std::make_shared<SerialCommunicationImpl>(tcp_port, impl_->robot_ip_, socat_pid);
+}
+
+bool EliteDriver::endBoardRs485(SerialCommunicationSharedPtr com, const std::string& ssh_password) {
     if (!com) {
         return false;
     }

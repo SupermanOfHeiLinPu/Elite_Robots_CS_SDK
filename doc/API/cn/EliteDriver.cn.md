@@ -394,7 +394,7 @@ SerialCommunicationSharedPtr startToolRs485(const SerialConfig& config,  const s
     - tcp_port：TCP 端口。
 
 - ***返回值***：一个可以操作串口的对象。详情可查看：[串口通讯](./SerialCommunication.cn.md)
-
+- ***注意***：如果要使用此功能，建议安装 libssh ，如果在非Linux系统下使用，则必须安装 libssh 库。
 ---
 
 ### ***停止工具RS485通讯***
@@ -410,7 +410,43 @@ bool endToolRs485(SerialCommunicationSharedPtr com, const std::string& ssh_passw
     - ssh_password：机器人控制柜操作系统ssh登录密码。
 
 - ***返回值***：成功停止工具RS485通讯。
+- ***注意***：如果要使用此功能，建议安装 libssh ，如果在非Linux系统下使用，则必须安装 libssh 库。
 
 ---
+
+### ***启用主板RS485通讯***
+```cpp
+SerialCommunicationSharedPtr startBoardRs485(const SerialConfig& config,  const std::string& ssh_password, int tcp_port = 54321)
+```
+
+- ***功能***
+    启用主板RS485通讯。此接口会通过ssh登录机器人控制柜操作系统，并在机器人控制器上启动一个 socat 进程，将工具RS485串口的数据转发到指定的 TCP/IP 端口。
+
+- ***参数***
+    - config：串口配置。详情可查看：[串口通讯](./SerialCommunication.cn.md)
+    - ssh_password：机器人控制柜操作系统ssh登录密码。
+    - tcp_port：TCP 端口。
+
+- ***返回值***：一个可以操作串口的对象。详情可查看：[串口通讯](./SerialCommunication.cn.md)
+- ***注意***：如果要使用此功能，建议安装 libssh ，如果在非Linux系统下使用，则必须安装 libssh 库。
+---
+
+### ***停止工具RS485通讯***
+```cpp
+bool endBoardRs485(SerialCommunicationSharedPtr com, const std::string& ssh_password)
+```
+
+- ***功能***
+    停止主板RS485通讯。
+
+- ***参数***
+    - com：操作串口的对象。
+    - ssh_password：机器人控制柜操作系统ssh登录密码。
+
+- ***返回值***：成功停止工具RS485通讯。
+- ***注意***：如果要使用此功能，建议安装 libssh ，如果在非Linux系统下使用，则必须安装 libssh 库。
+
+---
+
 
 
