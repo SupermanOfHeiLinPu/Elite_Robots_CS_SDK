@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
+//
+// SharedLibrary.hpp
+// Provided a tool for loading dynamic libraries.
 #ifndef __ELITE__DLL_UTILS_HPP__
 #define __ELITE__DLL_UTILS_HPP__
 

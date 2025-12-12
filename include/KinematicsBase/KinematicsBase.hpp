@@ -1,0 +1,125 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
+//
+// KinematicsBase.hpp
+// Provides an interface for kinematics solvers.
+#ifndef __ELITE__KINEMATICS_BASE_HPP__
+#define __ELITE__KINEMATICS_BASE_HPP__
+
+#include <Elite/DataType.hpp>
+#include <Elite/EliteOptions.hpp>
+#include <vector>
+
+namespace ELITE {
+
+/*
+ * @brief Kinematic error codes that occur in a ik query
+ */
+enum KinematicError {
+    OK = 1,                               // No errors
+    UNSUPORTED_DISCRETIZATION_REQUESTED,  // Discretization method isn't supported by this implementation
+    DISCRETIZATION_NOT_INITIALIZED,       // Discretization values for the redundancy has not been set. S
+                                          // setSearchDiscretization(...) method
+    MULTIPLE_TIPS_NOT_SUPPORTED,          // Only single tip link support is allowed
+    EMPTY_TIP_POSES,                      // Empty ik_poses array passed
+    IK_SEED_OUTSIDE_LIMITS,               // Ik seed is out of bounds
+    SOLVER_NOT_ACTIVE,                    // Solver isn't active
+    NO_SOLUTION                           // A valid joint solution that can reach this pose(s) could not be found
+
+};
+
+/*
+ * @brief Reports result details of an ik query
+ *
+ * This struct is used as an output argument of the getPositionIK(...) method that returns multiple joint solutions.
+ * It contains the type of error that led to a failure or KinematicErrors::OK when a set of joint solutions is found.
+ * The solution percentage shall provide a ratio of solutions found over solutions searched.
+ *
+ */
+struct KinematicsResult {
+    KinematicError kinematic_error;  // Error code that indicates the type of failure
+    double solution_percentage;      // The percentage of solutions achieved over the total number of solutions explored.
+};
+
+
+/**
+ * @brief Provides an interface for kinematics solvers.
+ */
+class KinematicsBase {
+   public:
+    const double DEFAULT_TIMEOUT = 1.0; // seconds
+
+    ELITE_EXPORT KinematicsBase() = default;
+
+    virtual ~KinematicsBase() = default;
+
+    /**
+     * @brief Set robot MDH parameter
+     * 
+     * @param alpha MDH alpha parameter
+     * @param a MDH a parameter
+     * @param d MDH d parameter
+     */
+    virtual void setMDH(const vector6d_t& alpha, const vector6d_t& a, const vector6d_t& d) = 0;
+
+    /**
+     * @brief Given a set of joint angles and a set of links, compute their pose
+     * 
+     * @param joint_angles The state for which FK is being computed
+     * @param poses The resultant set of poses.
+     * @return True if a valid solution was found, false otherwise
+     */
+    virtual bool getPositionFK(const vector6d_t& joint_angles, vector6d_t& poses) const = 0;
+
+    /**
+     * @brief Given a desired pose of the end-effector, compute the joint angles to reach it
+     * 
+     * In contrast to the searchPositionIK methods, this one is expected to return the solution
+     * closest to the seed state. Randomly re-seeding is explicitly not allowed.
+     * @param pose the desired pose of the link
+     * @param near an initial guess solution for the inverse kinematics
+     * @param solution the solution vector
+     * @param result A struct that reports the results of the query
+     * @return True if a valid set of solutions was found, false otherwise.
+     */
+    virtual bool getPositionIK(const vector6d_t& pose, const vector6d_t& near, vector6d_t& solution, KinematicsResult& result) const = 0;
+
+    /**
+     * @brief Get the Position I K object
+     * 
+     * @param pose The desired pose of each tip link
+     * @param near an initial guess solution for the inverse kinematics
+     * @param solutions A vector of valid joint vectors. This return has two variant behaviors:
+     *                  1) Return a joint solution for every input |pose|, e.g. multi-arm support
+   *                    2) Return multiple joint solutions for a single |pose| input, e.g. underconstrained IK
+   *                    TODO(dave): This dual behavior is confusing and should be changed in a future refactor of this API
+     * @param result A struct that reports the results of the query
+     * @return True if a valid set of solutions was found, false otherwise.
+     */
+    virtual bool getPositionIK(const vector6d_t& pose, const vector6d_t& near, std::vector<vector6d_t>& solutions,
+                               KinematicsResult& result) const = 0;
+
+    /**
+     * @brief For functions that require a timeout specified but one is not specified using arguments,
+     * a default timeout is used, as set by this function (and initialized to KinematicsBase::DEFAULT_TIMEOUT)
+     * 
+     * @param timeout seconds 
+     */
+    void setDefaultTimeout(double timeout) { default_timeout_ = timeout; }
+
+    /**
+     * @brief For functions that require a timeout specified but one is not specified using arguments,
+     * this default timeout is used
+     * 
+     * @return double seconds
+     */
+    double getDefaultTimeout() const { return default_timeout_; }
+
+
+   protected:
+    double default_timeout_;
+};
+
+}  // namespace ELITE
+
+#endif  // __ELITE__KINEMATICS_BASE_HPP__
