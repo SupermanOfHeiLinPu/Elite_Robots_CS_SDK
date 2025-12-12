@@ -60,7 +60,7 @@ class KinematicsBase {
      * @param a MDH a parameter
      * @param d MDH d parameter
      */
-    virtual void setMDH(const vector6d_t& alpha, const vector6d_t& a, const vector6d_t& d) = 0;
+    ELITE_EXPORT virtual void setMDH(const vector6d_t& alpha, const vector6d_t& a, const vector6d_t& d) = 0;
 
     /**
      * @brief Given a set of joint angles and a set of links, compute their pose
@@ -69,7 +69,7 @@ class KinematicsBase {
      * @param poses The resultant set of poses.
      * @return True if a valid solution was found, false otherwise
      */
-    virtual bool getPositionFK(const vector6d_t& joint_angles, vector6d_t& poses) const = 0;
+    ELITE_EXPORT virtual bool getPositionFK(const vector6d_t& joint_angles, vector6d_t& poses) const = 0;
 
     /**
      * @brief Given a desired pose of the end-effector, compute the joint angles to reach it
@@ -82,7 +82,7 @@ class KinematicsBase {
      * @param result A struct that reports the results of the query
      * @return True if a valid set of solutions was found, false otherwise.
      */
-    virtual bool getPositionIK(const vector6d_t& pose, const vector6d_t& near, vector6d_t& solution, KinematicsResult& result) const = 0;
+    ELITE_EXPORT virtual bool getPositionIK(const vector6d_t& pose, const vector6d_t& near, vector6d_t& solution, KinematicsResult& result) const = 0;
 
     /**
      * @brief Get the Position I K object
@@ -91,12 +91,12 @@ class KinematicsBase {
      * @param near an initial guess solution for the inverse kinematics
      * @param solutions A vector of valid joint vectors. This return has two variant behaviors:
      *                  1) Return a joint solution for every input |pose|, e.g. multi-arm support
-   *                    2) Return multiple joint solutions for a single |pose| input, e.g. underconstrained IK
-   *                    TODO(dave): This dual behavior is confusing and should be changed in a future refactor of this API
+     *                  2) Return multiple joint solutions for a single |pose| input, e.g. underconstrained IK
+     *                  TODO(dave): This dual behavior is confusing and should be changed in a future refactor of this API
      * @param result A struct that reports the results of the query
      * @return True if a valid set of solutions was found, false otherwise.
      */
-    virtual bool getPositionIK(const vector6d_t& pose, const vector6d_t& near, std::vector<vector6d_t>& solutions,
+    ELITE_EXPORT virtual bool getPositionIK(const vector6d_t& pose, const vector6d_t& near, std::vector<vector6d_t>& solutions,
                                KinematicsResult& result) const = 0;
 
     /**
@@ -105,7 +105,7 @@ class KinematicsBase {
      * 
      * @param timeout seconds 
      */
-    void setDefaultTimeout(double timeout) { default_timeout_ = timeout; }
+    ELITE_EXPORT void setDefaultTimeout(double timeout) { default_timeout_ = timeout; }
 
     /**
      * @brief For functions that require a timeout specified but one is not specified using arguments,
@@ -113,7 +113,7 @@ class KinematicsBase {
      * 
      * @return double seconds
      */
-    double getDefaultTimeout() const { return default_timeout_; }
+    ELITE_EXPORT double getDefaultTimeout() const { return default_timeout_; }
 
 
    protected:
