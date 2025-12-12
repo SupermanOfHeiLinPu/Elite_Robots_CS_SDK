@@ -9,6 +9,7 @@
 #include <Elite/DataType.hpp>
 #include <Elite/EliteOptions.hpp>
 #include <vector>
+#include <memory>
 
 namespace ELITE {
 
@@ -119,6 +120,8 @@ class KinematicsBase {
    protected:
     double default_timeout_;
 };
+
+using KinematicsBaseSharedPtr = std::shared_ptr<KinematicsBase>;
 
 }  // namespace ELITE
 

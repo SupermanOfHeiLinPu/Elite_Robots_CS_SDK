@@ -101,7 +101,7 @@ set(
     Common/Utils.hpp
     Common/EndianUtils.hpp
     Common/StringUtils.hpp
-    Common/SharedLibrary.hpp
+    KinematicsBase/KinematicsBase.hpp
 )
 
 set(SDK_STATIC_LIB_OUTPUT_NAME "${PROJECT_NAME}")
