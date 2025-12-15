@@ -55,8 +55,8 @@ public:
 
 
 TEST(TCP_SERVER, TCP_SERVER_TEST) {
-    TcpServer::start();
-    std::shared_ptr<TcpServer> server = std::make_shared<TcpServer>(SERVER_TEST_PORT, 4);
+    auto tcp_resource = std::make_shared<TcpServer::StaticResource>();
+    std::shared_ptr<TcpServer> server = std::make_shared<TcpServer>(SERVER_TEST_PORT, 4, tcp_resource);
     server->startListen();
     // Wait listen
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -82,14 +82,13 @@ TEST(TCP_SERVER, TCP_SERVER_TEST) {
     EXPECT_TRUE(receive_flag);
     // Clear flag
     receive_flag = false;
-
-    TcpServer::stop();
+    tcp_resource->shutdown();
 }
 
 TEST(TCP_SERVER, TCP_SERVER_MULIT_CONNECT) {
+    auto tcp_resource = std::make_shared<TcpServer::StaticResource>();
     const std::string client_send_string = "client_send_string\n";
-    TcpServer::start();
-    std::shared_ptr<TcpServer> server = std::make_shared<TcpServer>(SERVER_TEST_PORT, client_send_string.length());
+    std::shared_ptr<TcpServer> server = std::make_shared<TcpServer>(SERVER_TEST_PORT, client_send_string.length(), tcp_resource);
     server->startListen();
     // Wait listen
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -153,18 +152,17 @@ TEST(TCP_SERVER, TCP_SERVER_MULIT_CONNECT) {
     ASSERT_EQ(client1.socket_ptr->write_some(boost::asio::buffer(client_send_string)), client_send_string.length());
     // Wait for recv
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    // Stop TCP context
-    TcpServer::stop();
+
+    tcp_resource->shutdown();
 }
 
 TEST(TCP_SERVER, TCP_MULIT_SERVERS) {
+    auto tcp_resource = std::make_shared<TcpServer::StaticResource>();
     const std::string client_send_string = "client_send_string\n";   
-
-    TcpServer::start();
 
     std::vector<std::shared_ptr<TcpServer>> servers;
     for (size_t i = 0; i < 5; i++) {
-        servers.push_back(std::make_shared<TcpServer>(SERVER_TEST_PORT + i, client_send_string.length()));
+        servers.push_back(std::make_shared<TcpServer>(SERVER_TEST_PORT + i, client_send_string.length(), tcp_resource));
         servers[i]->startListen();
     }
     // Wait listen
@@ -196,8 +194,7 @@ TEST(TCP_SERVER, TCP_MULIT_SERVERS) {
     for (size_t i = 0; i < 5; i++) {
         clients[i]->socket_ptr->close();
     }
-
-    TcpServer::stop();
+    tcp_resource->shutdown();
 }
 
 

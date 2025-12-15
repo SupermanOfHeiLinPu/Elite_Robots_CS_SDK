@@ -50,6 +50,7 @@ class EliteDriver::Impl {
         script_command_server_.reset();
         script_sender_.reset();
         // Must release resource after all servers are destroyed.
+        reverse_resource_->shutdown();
         reverse_resource_.reset();
     }
 
