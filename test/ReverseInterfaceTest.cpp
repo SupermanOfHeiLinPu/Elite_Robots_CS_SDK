@@ -55,8 +55,8 @@ public:
 };
 
 TEST(REVERSE_INTERFACE, trajectory_control_action) {
-    TcpServer::start();
-    std::unique_ptr<ReverseInterface> reverse_ins = std::make_unique<ReverseInterface>(REVERSE_INTERFACE_TEST_PORT);
+    auto tcp_resource = std::make_shared<TcpServer::StaticResource>();
+    std::unique_ptr<ReverseInterface> reverse_ins = std::make_unique<ReverseInterface>(REVERSE_INTERFACE_TEST_PORT, tcp_resource);
     std::unique_ptr<TcpClient> client = std::make_unique<TcpClient>();
 
     EXPECT_NO_THROW(client->connect("127.0.0.1", REVERSE_INTERFACE_TEST_PORT));
@@ -79,13 +79,13 @@ TEST(REVERSE_INTERFACE, trajectory_control_action) {
     // control mode
     EXPECT_EQ(::htonl(buffer[7]), (int)ControlMode::MODE_TRAJECTORY);
 
-    client->socket_ptr->close();
-    TcpServer::stop();
+    client->socket_ptr->close();    
+    tcp_resource->shutdown();
 }
 
 TEST(REVERSE_INTERFACE, joint_idle_command) {
-    TcpServer::start();
-    std::unique_ptr<ReverseInterface> reverse_ins = std::make_unique<ReverseInterface>(REVERSE_INTERFACE_TEST_PORT);
+    auto tcp_resource = std::make_shared<TcpServer::StaticResource>();
+    std::unique_ptr<ReverseInterface> reverse_ins = std::make_unique<ReverseInterface>(REVERSE_INTERFACE_TEST_PORT, tcp_resource);
     std::unique_ptr<TcpClient> client = std::make_unique<TcpClient>();
 
     EXPECT_NO_THROW(client->connect("127.0.0.1", REVERSE_INTERFACE_TEST_PORT));
@@ -117,13 +117,12 @@ TEST(REVERSE_INTERFACE, joint_idle_command) {
     EXPECT_EQ(::htonl(buffer[6]), 6 * CONTROL::POS_ZOOM_RATIO);
     // control mode
     EXPECT_EQ(::htonl(buffer[7]), (int)ControlMode::MODE_IDLE);
-    TcpServer::stop();
-
+    tcp_resource->shutdown();
 }
 
 TEST(REVERSE_INTERFACE, joint_command_send_nullptr) {
-    TcpServer::start();
-    std::unique_ptr<ReverseInterface> reverse_ins = std::make_unique<ReverseInterface>(REVERSE_INTERFACE_TEST_PORT);
+    auto tcp_resource = std::make_shared<TcpServer::StaticResource>();
+    std::unique_ptr<ReverseInterface> reverse_ins = std::make_unique<ReverseInterface>(REVERSE_INTERFACE_TEST_PORT, tcp_resource);
     std::unique_ptr<TcpClient> client = std::make_unique<TcpClient>();
 
     EXPECT_NO_THROW(client->connect("127.0.0.1", REVERSE_INTERFACE_TEST_PORT));
@@ -131,15 +130,15 @@ TEST(REVERSE_INTERFACE, joint_command_send_nullptr) {
     std::this_thread::sleep_for(100ms);
 
     EXPECT_TRUE(reverse_ins->writeJointCommand(nullptr, ControlMode::MODE_IDLE, 100));
-    TcpServer::stop();
+    tcp_resource->shutdown();
 }
 
 
 TEST(REVERSE_INTERFACE, disconnect) { 
-    TcpServer::start();
+    auto tcp_resource = std::make_shared<TcpServer::StaticResource>();
     std::unique_ptr<ReverseInterface> reverse_ins;
 
-    reverse_ins.reset(new ReverseInterface(REVERSE_INTERFACE_TEST_PORT));
+    reverse_ins.reset(new ReverseInterface(REVERSE_INTERFACE_TEST_PORT, tcp_resource));
 
     std::unique_ptr<TcpClient> client;
     client.reset(new TcpClient());
@@ -154,8 +153,7 @@ TEST(REVERSE_INTERFACE, disconnect) {
     std::this_thread::sleep_for(50ms);
 
     EXPECT_FALSE(reverse_ins->isRobotConnect());
-
-    TcpServer::stop();
+    tcp_resource->shutdown();
 }
 
 int main(int argc, char** argv) {

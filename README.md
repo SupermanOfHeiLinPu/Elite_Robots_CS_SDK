@@ -5,8 +5,7 @@ This SDK is a C++ library for Elibot Robots' CS series robotic arms. With this l
 
 ## Requirements
 - ***CS Controller*** (robot control software)  
-    - For version **2.13.x**, require **≥ 2.13.4** (CS-Series).  
-    - For version **2.14.x**, require **≥ 2.14.2**.  
+    - Require **≥ 2.14.5**.  
     - If your robot's control software version is lower than these, an upgrade is recommended.
 - boost version >= (recommend)1.74
 - cmake version >= 3.22.1

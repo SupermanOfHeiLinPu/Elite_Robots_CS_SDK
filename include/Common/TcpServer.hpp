@@ -27,9 +27,13 @@ class TcpServer : public std::enable_shared_from_this<TcpServer> {
         std::shared_ptr<boost::asio::io_context> io_context_ptr_;
         StaticResource();
         ~StaticResource();
+        void shutdown();
 
         StaticResource(const StaticResource&) = delete;
         StaticResource& operator=(const StaticResource&) = delete;
+
+       private:
+        std::atomic<bool> shutting_down_{false};
     };
 
     // Read callback
