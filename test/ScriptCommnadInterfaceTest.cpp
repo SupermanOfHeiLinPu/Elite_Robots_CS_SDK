@@ -68,9 +68,9 @@ public:
 };
 
 TEST(ScriptCommandInterfaceTest, SendAndReceive) {
-    TcpServer::start();
+    auto tcp_resource = std::make_shared<TcpServer::StaticResource>();
     std::unique_ptr<ScriptCommandInterface> script_cmd;
-    script_cmd.reset(new ScriptCommandInterface(SCRIPT_COMMAND_INTERFACE_TEST_PORT));
+    script_cmd.reset(new ScriptCommandInterface(SCRIPT_COMMAND_INTERFACE_TEST_PORT, tcp_resource));
     
     std::unique_ptr<TcpClient> client;
     client.reset(new TcpClient());
@@ -172,8 +172,7 @@ TEST(ScriptCommandInterfaceTest, SendAndReceive) {
     int32_t end_force_mode_buffer[ScriptCommandInterface::SCRIPT_COMMAND_DATA_SIZE] = {0};
     end_force_mode_buffer[0] = htonl(Cmd::END_FORCE_MODE);
     ARRAY_EQUAL_ASSERT(buffer, end_force_mode_buffer);
-
-    TcpServer::stop();
+    tcp_resource->shutdown();
 }
 
 int main(int argc, char** argv) {

@@ -156,6 +156,13 @@ int main(int argc, char* argv[]) {
         ELITE_LOG_INFO("Task saved");
     }
 
+    if (!my_dashboard->popup("-s", "Hello Robot")) {
+        ELITE_LOG_FATAL("Could not popup message box");
+        return 1;
+    } else {
+        ELITE_LOG_INFO("Popup message box");
+    }
+
     my_dashboard->disconnect();
 
     return 0;

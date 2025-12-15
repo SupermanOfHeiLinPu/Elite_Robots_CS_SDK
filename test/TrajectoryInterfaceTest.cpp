@@ -56,8 +56,8 @@ public:
 };
 
 TEST(TRAJECTORY_INTERFACE, write_point) {
-    TcpServer::start();
-    std::unique_ptr<TrajectoryInterface> trajectory_ins = std::make_unique<TrajectoryInterface>(TRAJECTORY_INTERFACE_TEST_PORT);
+    auto tcp_resource = std::make_shared<TcpServer::StaticResource>();
+    std::unique_ptr<TrajectoryInterface> trajectory_ins = std::make_unique<TrajectoryInterface>(TRAJECTORY_INTERFACE_TEST_PORT, tcp_resource);
     std::unique_ptr<TcpClient> client = std::make_unique<TcpClient>();
 
     EXPECT_NO_THROW(client->connect("127.0.0.1", TRAJECTORY_INTERFACE_TEST_PORT));
@@ -96,14 +96,13 @@ TEST(TRAJECTORY_INTERFACE, write_point) {
     std::this_thread::sleep_for(50ms);
 
     EXPECT_EQ(motion_result, (TrajectoryMotionResult)send_result);
-    TcpServer::stop();
 }
 
 TEST(TRAJECTORY_INTERFACE, disconnect) { 
-    TcpServer::start();
+    auto tcp_resource = std::make_shared<TcpServer::StaticResource>();
     std::unique_ptr<TrajectoryInterface> trajectory_ins;
 
-    trajectory_ins.reset(new TrajectoryInterface(TRAJECTORY_INTERFACE_TEST_PORT));
+    trajectory_ins.reset(new TrajectoryInterface(TRAJECTORY_INTERFACE_TEST_PORT, tcp_resource));
 
     std::unique_ptr<TcpClient> client;
     client.reset(new TcpClient());
@@ -118,7 +117,6 @@ TEST(TRAJECTORY_INTERFACE, disconnect) {
     std::this_thread::sleep_for(50ms);
 
     EXPECT_FALSE(trajectory_ins->isRobotConnect());
-    TcpServer::stop();
 }
 
 int main(int argc, char** argv) {

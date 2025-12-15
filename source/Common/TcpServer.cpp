@@ -189,12 +189,13 @@ TcpServer::StaticResource::StaticResource() {
     }
     work_guard_ptr_.reset(new boost::asio::executor_work_guard<boost::asio::io_context::executor_type>(
         boost::asio::make_work_guard(*io_context_ptr_)));
-    server_thread_.reset(new std::thread([&]() {
+    auto io_ctx = io_context_ptr_;
+    server_thread_.reset(new std::thread([io_ctx]() {
         try {
-            if (io_context_ptr_->stopped()) {
-                io_context_ptr_->restart();
+            if (io_ctx->stopped()) {
+                io_ctx->restart();
             }
-            io_context_ptr_->run();
+            io_ctx->run();
             ELITE_LOG_INFO("TCP server exit thread");
         } catch (const boost::system::system_error& e) {
             ELITE_LOG_FATAL("TCP server thread error: %s", e.what());
@@ -205,15 +206,27 @@ TcpServer::StaticResource::StaticResource() {
     RT_UTILS::setThreadFiFoScheduling(thread_headle, RT_UTILS::getThreadFiFoMaxPriority());
 }
 
-TcpServer::StaticResource::~StaticResource() {
+void TcpServer::StaticResource::shutdown() {
+    if (shutting_down_.exchange(true)) {
+        return;
+    }
     work_guard_ptr_->reset();
     io_context_ptr_->stop();
     if (server_thread_ && server_thread_->joinable()) {
-        server_thread_->join();
+        if (std::this_thread::get_id() != server_thread_->get_id()) {
+            server_thread_->join();
+        } else {
+            server_thread_->detach();
+            ELITE_LOG_WARN("TcpServer::StaticResource's thread is waiting for itself; setting it to detach.");
+        }
     }
     work_guard_ptr_.reset();
     server_thread_.reset();
     io_context_ptr_.reset();
+}
+
+TcpServer::StaticResource::~StaticResource() {
+    shutdown();
 }
 
 }  // namespace ELITE
