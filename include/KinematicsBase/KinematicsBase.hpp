@@ -13,6 +13,7 @@
 
 namespace ELITE {
 
+
 /*
  * @brief Kinematic error codes that occur in a ik query
  */
