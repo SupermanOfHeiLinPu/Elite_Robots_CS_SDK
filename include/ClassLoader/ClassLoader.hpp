@@ -49,7 +49,7 @@ class ClassLoader {
      */
     template <typename Base>
     std::unique_ptr<Base> createUniqueInstance(const std::string& derived_class_name) {
-        auto factory = PluginRegistry::instance().get_factory(derived, typeid(Base).name());
+        auto factory = INTERNAL::ClassRegistry::instance().getFactory(derived_class_name, typeid(Base).name());
         if (!hasLoadedLib() || !factory) {
             return nullptr;
         }

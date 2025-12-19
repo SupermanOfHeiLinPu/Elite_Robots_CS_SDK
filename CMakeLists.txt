@@ -76,6 +76,7 @@ set(
     ${PROJECT_SOURCE_DIR}/include/Dashboard
     ${PROJECT_SOURCE_DIR}/include/Elite
     ${PROJECT_SOURCE_DIR}/include/Control
+    ${PROJECT_SOURCE_DIR}/include/ClassLoader
     ${PROJECT_SOURCE_DIR}/include/
     ${PROJECT_BINARY_DIR}/include/
 )
