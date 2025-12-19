@@ -64,6 +64,7 @@ set(
     source/Elite/RemoteUpgrade.cpp
     source/Elite/ControllerLog.cpp
     source/Elite/SerialCommunicationImpl.cpp
+    source/ClassLoader/ClassLoader.cpp
 )
 
 set(
@@ -103,6 +104,9 @@ set(
     Common/EndianUtils.hpp
     Common/StringUtils.hpp
     KinematicsBase/KinematicsBase.hpp
+    ClassLoader/ClassRegistry.hpp
+    ClassLoader/ClassLoader.hpp
+    ClassLoader/ClassRegisterMacro.hpp
 )
 
 set(SDK_STATIC_LIB_OUTPUT_NAME "${PROJECT_NAME}")
