@@ -29,6 +29,7 @@
 - 修复`TcpServer`中静态资源析构顺序提前的问题。
 - 修复`EliteDriver::registerRobotExceptionCallback()`接口没有实现的问题。
 - 修复析构时会崩溃的问题。
+- 修复`EliteDriver::startForceMode()`不生效的问题。
 
 ### Deprecated
 - 弃用 `DashboardClient::robot()` 未来版本将移除，请改用 `DashboardClient::robotType()`

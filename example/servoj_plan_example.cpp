@@ -204,6 +204,8 @@ int main(int argc, char** argv) {
     }
     ELITE_LOG_INFO("External control script is running");
 
+    s_driver->startForceMode({ 1.1, 1.2, 1.3, 1.4, 1.5, 1.6}, { 1, 2, 3, 4, 5, 6}, { 1.1, 1.2, 1.3, 1.4, 1.5, 1.6}, ForceMode::MOTION, { 1.1, 1.2, 1.3, 1.4, 1.5, 1.6});
+
     bool positive_rotation = false;
     bool negative_rotation = false;
     vector6d_t actual_joint = s_rtsi_client->getActualJointPositions();

@@ -2,9 +2,9 @@
 // Copyright (c) 2025, Elite Robots.
 #include <future>
 
-#include "ScriptCommandInterface.hpp"
 #include "ControlCommon.hpp"
 #include "Log.hpp"
+#include "ScriptCommandInterface.hpp"
 
 namespace ELITE {
 
@@ -48,7 +48,7 @@ bool ScriptCommandInterface::startForceMode(const vector6d_t& task_frame, const 
         bp++;
     }
     for (auto& sv : selection_vector) {
-        *bp = htonl(sv);
+        *bp = htonl(sv * CONTROL::COMMON_ZOOM_RATIO);
         bp++;
     }
     for (auto& wr : wrench) {

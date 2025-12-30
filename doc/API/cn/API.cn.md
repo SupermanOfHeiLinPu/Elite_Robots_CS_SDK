@@ -2,7 +2,7 @@
 
 本文档旨在说明SDK中的API功能。
 
-适用SDK版本：***v1.2.0***
+适用SDK版本：***v1.3.0***
 
 - [EliteDriver](./EliteDriver.cn.md)
 
