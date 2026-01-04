@@ -1,6 +1,14 @@
 #ifndef __ELITE__KDL_KINEMATICS_PLUGIN_HPP__
 #define __ELITE__KDL_KINEMATICS_PLUGIN_HPP__
 
+#include <mutex>
+
+// KDL
+#include <kdl/chain.hpp>
+#include <kdl/chainfksolverpos_recursive.hpp>
+#include <kdl/chainiksolverpos_lma.hpp>
+
+// Elite
 #include <Elite/KinematicsBase.hpp>
 #include <Elite/ClassLoader.hpp>
 #include <Elite/DataType.hpp>
@@ -14,6 +22,14 @@ private:
     vector6d_t dh_alpha_;
     vector6d_t dh_a_;
     vector6d_t dh_d_;
+
+    std::mutex mutex_;
+
+    std::unique_ptr<KDL::ChainIkSolverPos_LMA> ik_solver_;
+    std::unique_ptr<KDL::ChainFkSolverPos_recursive> fk_solver_;
+    std::unique_ptr<KDL::Chain> robot_chain_;
+
+    KDL::JntArray convertToKDLJoints(const ELITE::vector6d_t &joints);
 public:
     /**
      * @brief Set robot MDH parameter

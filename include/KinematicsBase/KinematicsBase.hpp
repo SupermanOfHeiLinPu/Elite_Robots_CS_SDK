@@ -19,15 +19,8 @@ namespace ELITE {
  */
 enum KinematicError {
     OK = 1,                               // No errors
-    UNSUPORTED_DISCRETIZATION_REQUESTED,  // Discretization method isn't supported by this implementation
-    DISCRETIZATION_NOT_INITIALIZED,       // Discretization values for the redundancy has not been set. S
-                                          // setSearchDiscretization(...) method
-    MULTIPLE_TIPS_NOT_SUPPORTED,          // Only single tip link support is allowed
-    EMPTY_TIP_POSES,                      // Empty ik_poses array passed
-    IK_SEED_OUTSIDE_LIMITS,               // Ik seed is out of bounds
     SOLVER_NOT_ACTIVE,                    // Solver isn't active
     NO_SOLUTION                           // A valid joint solution that can reach this pose(s) could not be found
-
 };
 
 /*
@@ -40,7 +33,6 @@ enum KinematicError {
  */
 struct KinematicsResult {
     KinematicError kinematic_error;  // Error code that indicates the type of failure
-    double solution_percentage;      // The percentage of solutions achieved over the total number of solutions explored.
 };
 
 

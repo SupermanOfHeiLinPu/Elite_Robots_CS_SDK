@@ -14,8 +14,12 @@ public:
 };    
     
 ClassLoader::ClassLoader(const std::string& lib_path) {
-    impl_ = std::unique_ptr<Impl>();
+    impl_ = std::make_unique<Impl>();
     impl_->lib_path_ = lib_path;
+}
+
+ClassLoader::~ClassLoader() {
+    impl_->shared_library_->unloadLibrary();
 }
 
 bool ClassLoader::loadLib() {
