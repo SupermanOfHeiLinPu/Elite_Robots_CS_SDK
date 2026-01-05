@@ -8,15 +8,17 @@
 
 #include <Elite/ClassRegistry.hpp>
 
-#define ELITE_CLASS_LOADER_REGISTER_CLASS_INTERNAL(Derived, Base, RegisterID)                                                      \
-    namespace {                                                                                                                    \
-    struct ProxyExec##RegisterID {                                                                                                 \
-        ProxyExec##RegisterID() {                                                                                                  \
-            ELITE::INTERNAL::ClassRegistry::instance().registerClass(#Derived, #Base,                                              \
-                                                                     []() -> void* { return static_cast<Base*>(new Derived()); }); \
-        }                                                                                                                          \
-    };                                                                                                                             \
-    static ProxyExec##RegisterID g_register_plugin_##RegisterID;                                                                   \
+#define ELITE_CLASS_LOADER_REGISTER_CLASS_INTERNAL(Derived, Base, RegisterID)                    \
+    namespace {                                                                                  \
+    struct ProxyExec##RegisterID {                                                               \
+        typedef Derived _Derived;                                                                \
+        typedef Base _Base;                                                                      \
+        ProxyExec##RegisterID() {                                                                \
+            ELITE::INTERNAL::ClassRegistry::instance().registerClass(                            \
+                #Derived, #Base, []() -> void* { return static_cast<_Base*>(new _Derived()); }); \
+        }                                                                                        \
+    };                                                                                           \
+    ProxyExec##RegisterID g_register_plugin_##RegisterID;                                 \
     }
 
 #define ELITE_CLASS_LOADER_REGISTER_CLASS(Derived, Base) ELITE_CLASS_LOADER_REGISTER_CLASS_INTERNAL(Derived, Base, __COUNTER__)

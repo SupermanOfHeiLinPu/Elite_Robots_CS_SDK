@@ -19,7 +19,7 @@ foreach(SOURCE ${SOURCES})
     add_executable(${ELITE_SDK_EXAMPLE_NAME} ${SOURCE})
     target_link_libraries(
         ${ELITE_SDK_EXAMPLE_NAME} 
-        elite-cs-series-sdk::static
+        elite-cs-series-sdk::shared
         ${SYSTEM_LIB}
         Boost::program_options
     )

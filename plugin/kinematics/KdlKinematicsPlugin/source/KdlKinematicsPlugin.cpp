@@ -1,5 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
+
 #include "KdlKinematicsPlugin.hpp"
-#include <Elite/ClassRegisterMacro.hpp>
 #include <Elite/Log.hpp>
 
 // The robot dimension
@@ -24,23 +26,21 @@ void KdlKinematicsPlugin::setMDH(const vector6d_t& alpha, const vector6d_t& a, c
 
     robot_chain_ = std::make_unique<KDL::Chain>();
 
-    for (size_t i = 0; i < AXIS_COUNT; ++i) {
-        // MDH constant transform: Rx(alpha) * Tx(a) * Tz(d)
-        KDL::Frame frame = KDL::Frame(KDL::Rotation::RotX(dh_alpha_[i])) * KDL::Frame(KDL::Vector(dh_a_[i], 0.0, 0.0)) *
-                           KDL::Frame(KDL::Vector(0.0, 0.0, dh_d_[i]));
-
-        // Joint: RotZ(theta_i)
-        KDL::Joint joint("Joint" + std::to_string(i), KDL::Joint::RotZ);
-
-        robot_chain_->addSegment(KDL::Segment("Link" + std::to_string(i), joint, frame));
+    for (int i = 0; i < AXIS_COUNT; i++) {
+        KDL::Frame rot =
+            KDL::Frame(KDL::Rotation(KDL::Vector(1, 0, 0), KDL::Vector(0, std::cos(dh_alpha_[i]), std::sin(dh_alpha_[i])),
+                                     KDL::Vector(0, -std::sin(dh_alpha_[i]), std::cos(dh_alpha_[i]))));
+        KDL::Frame trans = KDL::Frame(KDL::Vector(dh_a_[i], 0, dh_d_[i]));
+        robot_chain_->addSegment(KDL::Segment("Link" + std::to_string(i), KDL::Joint(KDL::Joint::None), rot * trans));
+        robot_chain_->addSegment(KDL::Segment("Link" + std::to_string(i), KDL::Joint(KDL::Joint::RotZ)));
     }
 
-    ik_solver_ = std::make_unique<KDL::ChainIkSolverPos_LMA>(*robot_chain_, 1e-10, 500);
+    ik_solver_ = std::make_unique<KDL::ChainIkSolverPos_LMA>(*robot_chain_, 1e-10, 10000);
 
     fk_solver_ = std::make_unique<KDL::ChainFkSolverPos_recursive>(*robot_chain_);
 }
 
-bool KdlKinematicsPlugin::getPositionFK(const vector6d_t& joint_angles, vector6d_t& poses) {
+bool KdlKinematicsPlugin::getPositionFK(const vector6d_t& joint_angles, vector6d_t& poses) const {
     if (!fk_solver_) {
         ELITE_LOG_ERROR("Please set Kinematics config first by setMDH()\n");
         return false;
@@ -63,7 +63,7 @@ bool KdlKinematicsPlugin::getPositionFK(const vector6d_t& joint_angles, vector6d
 }
 
 bool KdlKinematicsPlugin::getPositionIK(const vector6d_t& pose, const vector6d_t& near, vector6d_t& solution,
-                                        KinematicsResult& result) {
+                                        KinematicsResult& result) const {
     if (!ik_solver_) {
         ELITE_LOG_ERROR("Please set Kinematics config first by setMDH()\n");
         result.kinematic_error = KinematicError::SOLVER_NOT_ACTIVE;
@@ -103,12 +103,12 @@ bool KdlKinematicsPlugin::getPositionIK(const vector6d_t& pose, const vector6d_t
 }
 
 bool KdlKinematicsPlugin::getPositionIK(const vector6d_t& pose, const vector6d_t& near, std::vector<vector6d_t>& solutions,
-                                        KinematicsResult& result) {
+                                        KinematicsResult& result) const {
     solutions.resize(1);
     return getPositionIK(pose, near, solutions[0], result);
 }
 
-KDL::JntArray KdlKinematicsPlugin::convertToKDLJoints(const ELITE::vector6d_t& joints) {
+KDL::JntArray KdlKinematicsPlugin::convertToKDLJoints(const ELITE::vector6d_t& joints) const {
     KDL::JntArray kdl_joints(AXIS_COUNT);
     for (int i = 0; i < AXIS_COUNT; i++) {
         kdl_joints(i) = (i < static_cast<int>(joints.size())) ? joints[i] : 0.0;
@@ -117,4 +117,5 @@ KDL::JntArray KdlKinematicsPlugin::convertToKDLJoints(const ELITE::vector6d_t& j
 }
 }  // namespace ELITE
 
-
+#include <Elite/ClassRegisterMacro.hpp>
+ELITE_CLASS_LOADER_REGISTER_CLASS(ELITE::KdlKinematicsPlugin, ELITE::KinematicsBase);

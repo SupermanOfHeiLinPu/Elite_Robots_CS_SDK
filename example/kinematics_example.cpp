@@ -80,10 +80,29 @@ int main(int argc, const char** argv) {
         return 1;
     }
 
-    std::unique_ptr<KinematicsBase> kin_slover = loader.createUniqueInstance<KinematicsBase>("KdlKinematicsPlugin");
+    auto kin_slover = loader.createUniqueInstance<KinematicsBase>("ELITE::KdlKinematicsPlugin");
     if (kin_slover == nullptr) {
         ELITE_LOG_FATAL("Create KinematicsBase fail");
         return 1;
     }
+    
+    kin_slover->setMDH(kin_info->dh_alpha_, kin_info->dh_a_, kin_info->dh_d_);
+
+    vector6d_t fk_pose;
+    kin_slover->getPositionFK(current_joint, fk_pose);
+
+    vector6d_t ik_joints;
+    KinematicsResult ik_result;
+    kin_slover->getPositionIK(current_tcp, current_joint, ik_joints, ik_result);
+
+    for (auto i : fk_pose) {
+        std::cout << i << ", ";
+    }
+    std::cout << std::endl;
+
+    for (auto i : ik_joints) {
+        std::cout << i << ", ";
+    }
+    std::cout << std::endl;
     return 0;
 }

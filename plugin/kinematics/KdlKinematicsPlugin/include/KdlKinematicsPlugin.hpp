@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2025, Elite Robots.
+//
+// KdlKinematicsPlugin.hpp
+// KDL kinematics plugin
 #ifndef __ELITE__KDL_KINEMATICS_PLUGIN_HPP__
 #define __ELITE__KDL_KINEMATICS_PLUGIN_HPP__
 
@@ -29,7 +34,7 @@ private:
     std::unique_ptr<KDL::ChainFkSolverPos_recursive> fk_solver_;
     std::unique_ptr<KDL::Chain> robot_chain_;
 
-    KDL::JntArray convertToKDLJoints(const ELITE::vector6d_t &joints);
+    KDL::JntArray convertToKDLJoints(const ELITE::vector6d_t &joints) const;
 public:
     /**
      * @brief Set robot MDH parameter
@@ -47,7 +52,7 @@ public:
      * @param poses The resultant set of poses.
      * @return True if a valid solution was found, false otherwise
      */
-    ELITE_EXPORT virtual bool getPositionFK(const vector6d_t& joint_angles, vector6d_t& poses);
+    ELITE_EXPORT virtual bool getPositionFK(const vector6d_t& joint_angles, vector6d_t& poses) const;
 
     /**
      * @brief Given a desired pose of the end-effector, compute the joint angles to reach it
@@ -60,7 +65,7 @@ public:
      * @param result A struct that reports the results of the query
      * @return True if a valid set of solutions was found, false otherwise.
      */
-    ELITE_EXPORT virtual bool getPositionIK(const vector6d_t& pose, const vector6d_t& near, vector6d_t& solution, KinematicsResult& result);
+    ELITE_EXPORT virtual bool getPositionIK(const vector6d_t& pose, const vector6d_t& near, vector6d_t& solution, KinematicsResult& result) const;
 
     /**
      * @brief Get the Position I K object
@@ -75,7 +80,7 @@ public:
      * @return True if a valid set of solutions was found, false otherwise.
      */
     ELITE_EXPORT virtual bool getPositionIK(const vector6d_t& pose, const vector6d_t& near, std::vector<vector6d_t>& solutions,
-                               KinematicsResult& result);
+                               KinematicsResult& result) const;
     KdlKinematicsPlugin();
     ~KdlKinematicsPlugin();
 };

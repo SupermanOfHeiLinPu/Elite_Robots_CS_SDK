@@ -65,6 +65,7 @@ set(
     source/Elite/ControllerLog.cpp
     source/Elite/SerialCommunicationImpl.cpp
     source/ClassLoader/ClassLoader.cpp
+    source/ClassLoader/ClassRegistry.cpp
 )
 
 set(
