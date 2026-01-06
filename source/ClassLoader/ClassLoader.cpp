@@ -18,9 +18,7 @@ ClassLoader::ClassLoader(const std::string& lib_path) {
     impl_->lib_path_ = lib_path;
 }
 
-ClassLoader::~ClassLoader() {
-    impl_->shared_library_->unloadLibrary();
-}
+ClassLoader::~ClassLoader() {}
 
 bool ClassLoader::loadLib() {
     impl_->shared_library_ = std::make_unique<SharedLibrary>();

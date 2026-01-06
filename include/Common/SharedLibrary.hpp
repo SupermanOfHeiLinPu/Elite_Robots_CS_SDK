@@ -15,7 +15,7 @@ class SharedLibrary {
     explicit SharedLibrary();
 
     /**
-     * @brief Library is unloaded in the deconstructor
+     * @brief Deconstructor
      * 
      * @return ELITE_EXPORT 
      */

@@ -13,9 +13,7 @@
 namespace ELITE {
 SharedLibrary::SharedLibrary() : lib_handle_(nullptr) {}
 
-SharedLibrary::~SharedLibrary() {
-    unloadLibrary();
-}
+SharedLibrary::~SharedLibrary() {}
 
 bool SharedLibrary::loadLibrary(const std::string& library_path) {
     if (library_path.empty()) {
