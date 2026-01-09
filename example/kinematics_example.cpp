@@ -19,6 +19,15 @@ using namespace std::chrono;
 using namespace ELITE;
 namespace po = boost::program_options;
 
+void logVector6d(const std::string& prefix, const vector6d_t& vec) {
+    std::string vec_str;
+    vec_str += "[";
+    for (const auto& val : vec) {
+        vec_str += std::to_string(val) + ", ";
+    }
+    vec_str += "]";
+    ELITE_LOG_INFO("%s %s", prefix.c_str(), vec_str.c_str());
+}
 
 int main(int argc, const char** argv) {
     // Parse the ip arguments if given
@@ -66,6 +75,10 @@ int main(int argc, const char** argv) {
     ELITE_LOG_INFO("Getted robot kinematics info.");
 
     std::unique_ptr<RtsiIOInterface> io_interface = std::make_unique<RtsiIOInterface>("output_recipe.txt", "input_recipe.txt", 250);
+    if (!io_interface->connect(robot_ip)) {
+        ELITE_LOG_FATAL("Connect robot RTSI port fail.");
+        return 1;
+    }
 
     auto current_joint = io_interface->getActualJointPositions();
     ELITE_LOG_INFO("Getted robot actual joint positions.");
@@ -85,24 +98,22 @@ int main(int argc, const char** argv) {
         ELITE_LOG_FATAL("Create KinematicsBase fail");
         return 1;
     }
-    
+    // Set MDH params
     kin_slover->setMDH(kin_info->dh_alpha_, kin_info->dh_a_, kin_info->dh_d_);
 
+    // Get FK and IK
     vector6d_t fk_pose;
     kin_slover->getPositionFK(current_joint, fk_pose);
 
     vector6d_t ik_joints;
     KinematicsResult ik_result;
     kin_slover->getPositionIK(current_tcp, current_joint, ik_joints, ik_result);
+    
+    logVector6d("Current TCP Pose:", current_tcp);
+    logVector6d("FK Pose:", fk_pose);
 
-    for (auto i : fk_pose) {
-        std::cout << i << ", ";
-    }
-    std::cout << std::endl;
-
-    for (auto i : ik_joints) {
-        std::cout << i << ", ";
-    }
-    std::cout << std::endl;
+    logVector6d("IK Result Joints:", ik_joints);
+    logVector6d("Current Joints:", current_joint);
+    
     return 0;
 }
