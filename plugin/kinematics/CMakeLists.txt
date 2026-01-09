@@ -1,21 +1,20 @@
-# TODO: Modularization.
-find_package(orocos_kdl REQUIRED)
-find_package(Eigen3 REQUIRED)
+cmake_minimum_required(VERSION 3.16)
 
-add_library(
-    elite_kdl_kin_plugin
-    SHARED
-    KdlKinematicsPlugin/source/KdlKinematicsPlugin.cpp
+message(STATUS "Configuring kinematics plugins")
+
+set(ELITE_KINEMATICS_PLUGIN_INSTALL_PATH "${CMAKE_INSTALL_LIBDIR}/elite-cs-series-sdk-plugins/kinematics")
+message(STATUS "Kinematics plugins will be installed to: ${ELITE_KINEMATICS_PLUGIN_INSTALL_PATH}")
+
+file(GLOB KIN_PLUGIN_DIRS
+    RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+    *
 )
-target_include_directories(
-    elite_kdl_kin_plugin
-    PRIVATE
-    KdlKinematicsPlugin/include
-)
-target_link_libraries(
-    elite_kdl_kin_plugin
-    PRIVATE
-    elite-cs-series-sdk::shared
-    Eigen3::Eigen
-    orocos-kdl
-)
+
+foreach(dir ${KIN_PLUGIN_DIRS})
+    if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
+        if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/CMakeLists.txt)
+            message(STATUS "Found kinematics plugin: ${dir}")
+            add_subdirectory(${dir})
+        endif()
+    endif()
+endforeach()

@@ -103,11 +103,17 @@ int main(int argc, const char** argv) {
 
     // Get FK and IK
     vector6d_t fk_pose;
-    kin_slover->getPositionFK(current_joint, fk_pose);
+    if (!kin_slover->getPositionFK(current_joint, fk_pose)) {
+        ELITE_LOG_FATAL("Get FK fail.");
+        return 1;
+    }
 
     vector6d_t ik_joints;
     KinematicsResult ik_result;
-    kin_slover->getPositionIK(current_tcp, current_joint, ik_joints, ik_result);
+    if (!kin_slover->getPositionIK(current_tcp, current_joint, ik_joints, ik_result)) {
+        ELITE_LOG_FATAL("Get IK fail.");
+        return 1;
+    }
     
     logVector6d("Current TCP Pose:", current_tcp);
     logVector6d("FK Pose:", fk_pose);
