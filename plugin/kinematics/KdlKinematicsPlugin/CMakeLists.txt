@@ -30,7 +30,7 @@ target_link_libraries(
 set_target_properties(
     ${PLUGIN_TARGET} 
     PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plugin/kinematics
+    LIBRARY_OUTPUT_DIRECTORY ${ELITE_KINEMATICS_PLUGIN_BUILD_PATH}
 )
 
 if(ELITE_INSTALL)

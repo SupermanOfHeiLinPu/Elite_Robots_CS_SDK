@@ -5,6 +5,9 @@ message(STATUS "Configuring kinematics plugins")
 set(ELITE_KINEMATICS_PLUGIN_INSTALL_PATH "${CMAKE_INSTALL_LIBDIR}/elite-cs-series-sdk-plugins/kinematics")
 message(STATUS "Kinematics plugins will be installed to: ${ELITE_KINEMATICS_PLUGIN_INSTALL_PATH}")
 
+set(ELITE_KINEMATICS_PLUGIN_BUILD_PATH "${CMAKE_BINARY_DIR}/plugin/kinematics")
+message(STATUS "Kinematics plugins will be build to: ${ELITE_KINEMATICS_PLUGIN_BUILD_PATH}")
+
 file(GLOB KIN_PLUGIN_DIRS
     RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     *
