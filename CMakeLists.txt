@@ -153,6 +153,10 @@ target_include_directories(${PROJECT_NAME}_SHARED PUBLIC $<BUILD_INTERFACE:${PRO
 add_library(${PROJECT_NAME}::static ALIAS ${PROJECT_NAME}_STATIC)
 target_include_directories(${PROJECT_NAME}_STATIC PUBLIC $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include> $<INSTALL_INTERFACE:include>)
 
+# Backward-compatible target names used by existing examples / consumers
+add_library(elite-cs-series-sdk::shared ALIAS ${PROJECT_NAME}_SHARED)
+add_library(elite-cs-series-sdk::static ALIAS ${PROJECT_NAME}_STATIC)
+
 if(ELITE_COMPILE_EXAMPLES)
     message(STATUS "Compile the exmaples")
     add_subdirectory(example ${CMAKE_BINARY_DIR}/example/)
