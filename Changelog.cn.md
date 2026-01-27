@@ -2,6 +2,8 @@
 
 ## [Unrelease]
 
+## [v1.3.0] - 2025-01-27
+  
 ### Added
 - 新增一个带速度规划的“servoj”示例。
 - `RtsiIOInterface` 
