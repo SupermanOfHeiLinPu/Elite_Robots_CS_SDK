@@ -2,6 +2,8 @@
 
 ## [Unrelease]
 
+## [v1.3.0] - 2025-01-27
+
 ### Added
 - Add a "servoj" example with speed planning.
 - The `RtsiIOInterface`:
