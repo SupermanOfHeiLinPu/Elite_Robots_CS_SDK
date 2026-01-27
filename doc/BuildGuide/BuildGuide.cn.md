@@ -83,6 +83,9 @@ cmake -DCMAKE_CXX_STANDARD=14 ..
     - 值：BOOL
     - 说明：如果为TRUE，则会使用doxygen生成文档。
     - 注：Windows中此选项暂不可用。
+- ELITE_ROS2_BUILD
+    - 值：BOOL
+    - 说明：如果系统存在ROS环境则默认为TRUE，使用ros环境编译并导入ros环境变量。若为FALSE，则只编译纯c++相关库
 
 ### Ubuntu 编译安装
 ```shell

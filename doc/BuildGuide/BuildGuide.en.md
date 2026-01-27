@@ -83,6 +83,9 @@ In addition to the common CMake configuration options, this project also has the
     - Value: BOOL
     - Description: If set to TRUE, documentation will be generated using doxygen.
     - Note: This option is currently unavailable on Windows.
+- ELITE_ROS2_BUILD
+    - Value: BOOL
+    - Description: If a ROS environment is detected on the system, this option defaults to TRUE, and the project will be built using the ROS environment with ROS environment variables imported.If set to FALSE, only the pure C++ libraries will be built.
 
 ### Ubuntu Compilation and Installation
 ```shell
