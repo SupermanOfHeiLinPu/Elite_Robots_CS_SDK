@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(elite-cs-series-sdk VERSION 1.3.0)
+project(elite_cs_series_sdk VERSION 1.3.0)
 
 option(ELITE_COMPILE_TESTS "Compile tests" OFF)
 option(ELITE_COMPILE_DOC "Compile documentation" OFF)
@@ -117,6 +117,9 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" OR APPLE)
         message(STATUS "SYSTEM: Linux")
     endif()
     set(SYSTEM_LIB pthread)
+    # Keep the historical library names (with '-') stable across builds
+    set(SDK_STATIC_LIB_OUTPUT_NAME "elite-cs-series-sdk")
+    set(SDK_SHARED_LIB_OUTPUT_NAME "elite-cs-series-sdk")
 else()
     message(FATAL_ERROR "Unsupport operating system")
 endif()
@@ -134,8 +137,18 @@ endif()
 
 define_rel_file_macro(${PROJECT_NAME}_SHARED)
 define_rel_file_macro(${PROJECT_NAME}_STATIC)
-set_target_properties(${PROJECT_NAME}_SHARED PROPERTIES OUTPUT_NAME ${SDK_SHARED_LIB_OUTPUT_NAME})
-set_target_properties(${PROJECT_NAME}_STATIC PROPERTIES OUTPUT_NAME ${SDK_STATIC_LIB_OUTPUT_NAME})
+set_target_properties(
+    ${PROJECT_NAME}_SHARED
+    PROPERTIES
+        OUTPUT_NAME ${SDK_SHARED_LIB_OUTPUT_NAME}
+        EXPORT_NAME shared
+)
+set_target_properties(
+    ${PROJECT_NAME}_STATIC
+    PROPERTIES
+        OUTPUT_NAME ${SDK_STATIC_LIB_OUTPUT_NAME}
+        EXPORT_NAME static
+)
 target_include_directories(${PROJECT_NAME}_SHARED PRIVATE ${ELITE_LIB_INCLUDE_DIR})
 target_include_directories(${PROJECT_NAME}_STATIC PRIVATE ${ELITE_LIB_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME}_SHARED PRIVATE ${THIRDPARTY_LIB})
@@ -149,6 +162,10 @@ add_library(${PROJECT_NAME}::shared ALIAS ${PROJECT_NAME}_SHARED)
 target_include_directories(${PROJECT_NAME}_SHARED PUBLIC $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include> $<INSTALL_INTERFACE:include>)
 add_library(${PROJECT_NAME}::static ALIAS ${PROJECT_NAME}_STATIC)
 target_include_directories(${PROJECT_NAME}_STATIC PUBLIC $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include> $<INSTALL_INTERFACE:include>)
+
+# Backward-compatible target names used by existing examples / consumers
+add_library(elite-cs-series-sdk::shared ALIAS ${PROJECT_NAME}_SHARED)
+add_library(elite-cs-series-sdk::static ALIAS ${PROJECT_NAME}_STATIC)
 
 if(ELITE_COMPILE_EXAMPLES)
     message(STATUS "Compile the exmaples")
@@ -172,10 +189,34 @@ if((CMAKE_SYSTEM_NAME STREQUAL "Linux" OR APPLE) AND ELITE_INSTALL)
     install(DIRECTORY ${PROJECT_BINARY_DIR}/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
     install(DIRECTORY ${PROJECT_SOURCE_DIR}/source/resources/ DESTINATION share/Elite)
     include(CMakePackageConfigHelpers)
-    configure_package_config_file("${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}Config.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" INSTALL_DESTINATION lib/cmake/${PROJECT_NAME})
-    write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion)
-    install(EXPORT ${PROJECT_NAME}Targets FILE ${PROJECT_NAME}Targets.cmake DESTINATION lib/cmake/${PROJECT_NAME})
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake" DESTINATION lib/cmake/${PROJECT_NAME})
+
+    # Legacy CMake package name (historical project / library name)
+    set(ELITE_LEGACY_CMAKE_PACKAGE_NAME elite-cs-series-sdk)
+    configure_package_config_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/${ELITE_LEGACY_CMAKE_PACKAGE_NAME}Config.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/${ELITE_LEGACY_CMAKE_PACKAGE_NAME}Config.cmake"
+        INSTALL_DESTINATION lib/cmake/${ELITE_LEGACY_CMAKE_PACKAGE_NAME}
+    )
+    write_basic_package_version_file(
+        "${CMAKE_CURRENT_BINARY_DIR}/${ELITE_LEGACY_CMAKE_PACKAGE_NAME}ConfigVersion.cmake"
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY SameMajorVersion
+    )
+    install(
+        EXPORT ${PROJECT_NAME}Targets
+        FILE ${ELITE_LEGACY_CMAKE_PACKAGE_NAME}Targets.cmake
+        NAMESPACE ${ELITE_LEGACY_CMAKE_PACKAGE_NAME}::
+        DESTINATION lib/cmake/${ELITE_LEGACY_CMAKE_PACKAGE_NAME}
+    )
+    install(
+        FILES
+            "${CMAKE_CURRENT_BINARY_DIR}/${ELITE_LEGACY_CMAKE_PACKAGE_NAME}Config.cmake"
+            "${CMAKE_CURRENT_BINARY_DIR}/${ELITE_LEGACY_CMAKE_PACKAGE_NAME}ConfigVersion.cmake"
+        DESTINATION lib/cmake/${ELITE_LEGACY_CMAKE_PACKAGE_NAME}
+    )
+
+    # ROS / ament metadata
+    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/package.xml" DESTINATION share/${PROJECT_NAME})
 endif()
 
 message(STATUS "CMAKE_BUILD_TYPE:                   ${CMAKE_BUILD_TYPE}")
@@ -186,3 +227,10 @@ message(STATUS "CMAKE_CXX_FLAGS:                    ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_INSTALL_INCLUDEDIR:           ${CMAKE_INSTALL_INCLUDEDIR}")
 message(STATUS "CMAKE_INSTALL_LIBDIR:               ${CMAKE_INSTALL_LIBDIR}")
 message(STATUS "THIRDPARTY_LIB                      ${THIRDPARTY_LIB}")
+
+find_package(ament_cmake QUIET)
+option(ELITE_ROS2_BUILD "Build as a ROS 2 (ament_cmake) package" ${ament_cmake_FOUND})
+if(ELITE_ROS2_BUILD)
+    find_package(ament_cmake REQUIRED)
+    ament_package()
+endif()
