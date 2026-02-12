@@ -19,11 +19,13 @@ bool ReverseInterface::writeJointCommand(const vector6d_t& pos, ControlMode mode
 
 bool ReverseInterface::writeJointCommand(const vector6d_t* pos, ControlMode mode, int timeout) {
     int32_t data[REVERSE_DATA_SIZE] = {0};
+    const vector6d_t& position = *pos;
     data[0] = htonl(timeout);
     data[REVERSE_DATA_SIZE - 1] = htonl((int)mode);
     if (pos) {
         for (size_t i = 0; i < 6; i++) {
-            data[i + 1] = htonl(static_cast<int>(round((*pos)[i] * CONTROL::POS_ZOOM_RATIO)));
+            int32_t rounded_value = static_cast<int32_t>(::round(position[i] * CONTROL::POS_ZOOM_RATIO));
+            data[i + 1] = ::htonl(rounded_value);
         }
     }
 
