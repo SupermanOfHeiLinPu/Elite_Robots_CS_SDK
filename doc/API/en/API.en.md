@@ -23,3 +23,5 @@ Applicable SDK version: ***v1.3.0***
 - [Real time utils](./RTUtils.en.md)
 
 - [Serial communication](./SerialCommunication.en.md)
+
+- [Plugin](./ClassLoader.en.md)
