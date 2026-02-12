@@ -5,7 +5,7 @@ project(elite_kdl_kinematics_plugin LANGUAGES CXX)
 find_package(orocos_kdl REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-set(PLUGIN_TARGET elite-kdl-kinematics)
+set(PLUGIN_TARGET elite_kdl_kinematics)
 
 add_library(
     ${PLUGIN_TARGET} 
@@ -22,7 +22,7 @@ target_include_directories(
 target_link_libraries(
     ${PLUGIN_TARGET}
     PRIVATE
-    elite-cs-series-sdk::shared
+    elite_cs_series_sdk::shared
     Eigen3::Eigen
     orocos-kdl
 )

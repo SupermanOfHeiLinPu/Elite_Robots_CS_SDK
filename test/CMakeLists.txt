@@ -21,7 +21,7 @@ foreach(SOURCE ${SOURCES})
     )
     target_link_libraries(
         ${ELITE_SDK_TEST_NAME}
-        elite-cs-series-sdk::static
+        elite_cs_series_sdk::static
         GTest::gtest
         ${SYSTEM_LIB}
     )
