@@ -2,7 +2,7 @@
 
 This document is intended to explain the API features in the SDK.
 
-Applicable SDK version: ***v1.2.0***
+Applicable SDK version: ***v1.3.0***
 
 - [EliteDriver](./EliteDriver.en.md)
 

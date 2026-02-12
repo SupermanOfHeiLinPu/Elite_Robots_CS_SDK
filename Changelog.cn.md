@@ -2,6 +2,11 @@
 
 ## [Unrelease]
 
+### Fixed
+- 修复了部分编译器下，`EliteDriver::writeTrajectoryPoint()` 和 `EliteDriver::writeJointServoj()` 关节角为负数时变为0的问题。
+
+## [v1.3.0] - 2025-01-27
+  
 ### Added
 - 新增一个带速度规划的“servoj”示例。
 - `RtsiIOInterface` 
@@ -16,6 +21,7 @@
 - 默认的日志句柄增加时间戳信息。
 - 新增串口通讯相关接口。
 - 添加了一个启动docker仿真的脚本。
+- 添加此项目为一个ROS2的包
 
 ### Changed
 - 调整 `external_control.script` 中 “trajectory_socket” 的“timeout”值。
@@ -29,6 +35,7 @@
 - 修复`TcpServer`中静态资源析构顺序提前的问题。
 - 修复`EliteDriver::registerRobotExceptionCallback()`接口没有实现的问题。
 - 修复析构时会崩溃的问题。
+- 修复`EliteDriver::startForceMode()`不生效的问题。
 
 ### Deprecated
 - 弃用 `DashboardClient::robot()` 未来版本将移除，请改用 `DashboardClient::robotType()`
@@ -36,6 +43,9 @@
   - `RtsiIOInterface::getAcutalTCPPose()` -> `RtsiIOInterface::getActualTCPPose()`
   - `RtsiIOInterface::getAcutalTCPVelocity()` -> `RtsiIOInterface::getActualTCPVelocity()`
   - `RtsiIOInterface::getAcutalTCPForce()` -> `RtsiIOInterface::getActualTCPForce()`
+
+### Removed
+- 移除`EliteDriver::writeServoj()`的`queue_mode`参数
 
 ## [v1.2.0] - 2025-08-14
 

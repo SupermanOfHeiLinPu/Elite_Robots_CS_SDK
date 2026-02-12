@@ -2,6 +2,12 @@
 
 ## [Unrelease]
 
+### Fixed
+- Fixed the issue where, on some compilers, joint angles in `EliteDriver::writeTrajectoryPoint()` and `EliteDriver::writeJointServoj()` would become 0 when they were negative.
+
+
+## [v1.3.0] - 2025-01-27
+
 ### Added
 - Add a "servoj" example with speed planning.
 - The `RtsiIOInterface`:
@@ -16,6 +22,7 @@
 - Add timestamp information to the default log handler.
 - Add serial communication interface.
 - Added a script to launch the Docker simulation.
+- Add this project as a ROS2 package.
 
 ### Changed
 - Adjust the "timeout" value of "trajectory_socket" in `external_control.script`.
@@ -29,6 +36,7 @@
 - Fix the issue where static resources in `TcpServer` are destructed prematurely.
 - Fixed the issue where the `EliteDriver::registerRobotExceptionCallback()` interface was not implemented.
 - Fix the crash issue during destruction.
+- Fix `EliteDriver::startForceMode()` not work.
 
 ### Deprecated
 - Deprecated `DashboardClient::robot()` it will be removed in future versions. Please use `DashboardClient::robotType()` instead.
@@ -36,6 +44,9 @@
   - `RtsiIOInterface::getAcutalTCPPose()` -> `RtsiIOInterface::getActualTCPPose()`
   - `RtsiIOInterface::getAcutalTCPVelocity()` -> `RtsiIOInterface::getActualTCPVelocity()`
   - `RtsiIOInterface::getAcutalTCPForce()` -> `RtsiIOInterface::getActualTCPForce()`
+
+### Removed
+- Remove the `queue_mode` parameter from `EliteDriver::writeServoj()`.
 
 ## [v1.2.0] - 2025-08-14
 
