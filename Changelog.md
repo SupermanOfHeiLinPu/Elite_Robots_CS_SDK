@@ -2,6 +2,10 @@
 
 ## [Unrelease]
 
+### Fixed
+- Fixed the issue where, on some compilers, joint angles in `EliteDriver::writeTrajectoryPoint()` and `EliteDriver::writeJointServoj()` would become 0 when they were negative.
+
+
 ## [v1.3.0] - 2025-01-27
 
 ### Added

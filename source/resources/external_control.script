@@ -82,6 +82,8 @@ global violation_popup_counter
 global cmd_servo_state
 global extrapolate_count
 global extrapolate_max_count
+global cmd_trajectory_blend_radius
+global cmd_trajectory_point
 
 """
 @brief Function to verify whether the specified target can be reached within the defined time frame while staying within the robot's speed limits
@@ -117,6 +119,8 @@ def targetWithinLimits(step_start, step_end, time):
 
 def trajectoryThread():
     global trajectory_point_num
+    global cmd_trajectory_blend_radius
+    global cmd_trajectory_point
     blend_radius = int()
     while trajectory_point_num > 0:
         raw_point = socket_read_binary_integer(TRAJECTORY_DATA_SIZE, "trajectory_socket", 0.5)
@@ -126,9 +130,12 @@ def trajectoryThread():
             blend_radius = 0
         else:
             blend_radius = raw_point[20] / POS_ZOOM_RATIO
+        cmd_trajectory_blend_radius = blend_radius
         
         if raw_point[0] > 0:
             point = [raw_point[1] / POS_ZOOM_RATIO, raw_point[2] / POS_ZOOM_RATIO, raw_point[3] / POS_ZOOM_RATIO, raw_point[4] / POS_ZOOM_RATIO, raw_point[5] / POS_ZOOM_RATIO, raw_point[6] / POS_ZOOM_RATIO]
+            cmd_trajectory_point = point
+
             time = raw_point[19] / TIME_ZOOM_RATIO
             
             motion_type = raw_point[21]
