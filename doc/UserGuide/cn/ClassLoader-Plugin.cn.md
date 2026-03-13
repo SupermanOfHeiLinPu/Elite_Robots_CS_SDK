@@ -23,6 +23,15 @@ SDK内置的[运动学插件](./Kinematics-Plugin.cn.md)本身就是这套系统
 
 完整的API参考请见 [ClassLoader API](../../API/cn/ClassLoader.cn.md)。
 
+> ### ⚠️ 必须使用 SDK 共享库
+>
+> SDK 会同时构建**静态库**和**共享（动态）库**。  
+> **只有当进程中的每个二进制文件都链接 SDK 共享库时，ClassLoader 才能正常工作。**
+>
+> `ClassRegistry` 是存在于 SDK 共享库中的进程级单例。若链接**静态库**，每个二进制文件各自拥有独立的 `ClassRegistry` 副本，插件在其副本中完成注册，而应用程序在另一个副本中查找类——导致每次 `createUniqueInstance` 调用都返回 `nullptr`。
+>
+> **规则：** 插件共享库和加载程序可执行文件**都必须**链接 `elite_cs_series_sdk::shared`，不能使用 `elite_cs_series_sdk::static`。
+
 ---
 
 ## 任务
@@ -112,17 +121,21 @@ add_library(square_plugin SHARED square_plugin.cpp)
 # AlgorithmBase.hpp 需对插件可见
 target_include_directories(square_plugin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-# 链接 SDK 动态库（ClassRegistry 依赖此库）
+# ✅ 链接 SDK 共享库——ClassRegistry 依赖此库
 find_package(elite-cs-series-sdk REQUIRED)
 target_link_libraries(square_plugin PRIVATE elite_cs_series_sdk::shared)
 
 # ---- 加载程序可执行文件 ----
 add_executable(plugin_loader plugin_loader.cpp)
 target_include_directories(plugin_loader PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+# ✅ 应用程序同样必须链接 SDK 共享库
 target_link_libraries(plugin_loader PRIVATE elite_cs_series_sdk::shared)
 ```
 
-> **重要**：插件**必须**链接SDK的**动态**（共享）库（`elite_cs_series_sdk::shared`）。链接静态库将无法正常工作，因为 `ClassRegistry` 是单例，必须存在于共享库中，不能被重复实例化。
+> **⚠️ 两个目标均须链接 `elite_cs_series_sdk::shared`。**  
+> SDK 会同时构建静态库和共享库。  
+> `ClassRegistry` 是共享库中的进程级单例。若插件或应用程序任何一方链接**静态库**，各自会拥有独立的 `ClassRegistry` 副本，插件的注册信息对应用程序不可见——`createUniqueInstance` 将始终返回 `nullptr`。  
+> 参与 ClassLoader 系统的所有二进制文件，均不得使用 `elite_cs_series_sdk::static`。
 
 ---
 

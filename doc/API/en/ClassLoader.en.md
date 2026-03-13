@@ -22,6 +22,30 @@ This module is suitable for scenarios requiring dynamic extensibility, such as a
 
 ---
 
+## ⚠️ SDK Library Requirement
+
+> **The SDK builds both a static library and a shared (dynamic) library.**  
+> **ClassLoader can only be used when the application (and every plugin) links against the SDK's shared library.**  
+> **Linking the static library instead will silently break ClassLoader — `createUniqueInstance` will always return `nullptr`.**
+
+**Why?**  
+`ClassRegistry` is a process-wide singleton that lives inside the SDK library.  
+When the **static** library is linked, each binary (e.g. the main application and a plugin) gets its own **separate copy** of `ClassRegistry`. A class registered in the plugin's copy is invisible to the application's copy, so lookups always fail.  
+When the **shared** library is used, all binaries share the same single `ClassRegistry` instance, so registrations are visible across the whole process.
+
+**CMake — always use `elite_cs_series_sdk::shared`:**
+
+```cmake
+# ✅ Correct — both the plugin and the application must link the shared target
+target_link_libraries(my_plugin    PRIVATE elite_cs_series_sdk::shared)
+target_link_libraries(my_app       PRIVATE elite_cs_series_sdk::shared)
+
+# ❌ Wrong — static library breaks ClassLoader
+# target_link_libraries(my_app    PRIVATE elite_cs_series_sdk::static)
+```
+
+---
+
 # 1. Class Registration Macro
 
 ## ELITE_CLASS_LOADER_REGISTER_CLASS

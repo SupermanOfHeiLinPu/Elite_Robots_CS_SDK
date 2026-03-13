@@ -23,6 +23,15 @@ The built-in [Kinematics Plugin](./Kinematics-Plugin.en.md) is itself an example
 
 For the complete API reference, see [ClassLoader API](../../API/en/ClassLoader.en.md).
 
+> ### ⚠️ You must use the SDK shared library
+>
+> The SDK produces **both** a static library and a shared (dynamic) library.  
+> **ClassLoader only works correctly when every binary in your process links the SDK's shared library.**
+>
+> `ClassRegistry` is a process-wide singleton inside the SDK. If you link the **static** library, each binary gets its own private copy of `ClassRegistry`. The plugin registers into one copy; the application looks up classes in a different copy — so every `createUniqueInstance` call returns `nullptr`.
+>
+> **Rule:** link `elite_cs_series_sdk::shared` for **both** the plugin shared library and the loader application. Never use `elite_cs_series_sdk::static` when ClassLoader is involved.
+
 ---
 
 ## Task
@@ -112,17 +121,21 @@ add_library(square_plugin SHARED square_plugin.cpp)
 # AlgorithmBase.hpp must be visible to the plugin
 target_include_directories(square_plugin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-# Link against the SDK dynamic library (required for ClassRegistry)
+# ✅ Link the SDK shared library — required for ClassRegistry
 find_package(elite-cs-series-sdk REQUIRED)
 target_link_libraries(square_plugin PRIVATE elite_cs_series_sdk::shared)
 
 # ---- Loader executable ----
 add_executable(plugin_loader plugin_loader.cpp)
 target_include_directories(plugin_loader PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+# ✅ The application must also link the SDK shared library
 target_link_libraries(plugin_loader PRIVATE elite_cs_series_sdk::shared)
 ```
 
-> **Important**: The plugin **must** link against the SDK's **dynamic** (shared) library (`elite_cs_series_sdk::shared`). Linking against the static library will not work because `ClassRegistry` is a singleton that must live in the shared library, not be duplicated.
+> **⚠️ Both targets must link `elite_cs_series_sdk::shared`.**  
+> The SDK builds a static library **and** a shared library.  
+> `ClassRegistry` is a process-wide singleton inside the shared library. If either the plugin or the application links the **static** library instead, they each get a separate copy of `ClassRegistry`, and the plugin's registrations become invisible to the application — `createUniqueInstance` will always return `nullptr`.  
+> Never substitute `elite_cs_series_sdk::static` for any binary that participates in the ClassLoader system.
 
 ---
 
