@@ -25,3 +25,5 @@ Applicable SDK version: ***v1.3.0***
 - [Serial communication](./SerialCommunication.en.md)
 
 - [Plugin](./ClassLoader.en.md)
+
+- [Kinematics](./KinematicsBase.en.md)

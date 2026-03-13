@@ -22,6 +22,30 @@ ClassLoader 模块提供了一套轻量级的插件加载与类注册机制。
 
 ---
 
+## ⚠️ SDK 库类型要求
+
+> **SDK 会同时构建静态库和共享（动态）库。**  
+> **使用 ClassLoader 时，应用程序（以及每个插件）必须链接 SDK 的共享库。**  
+> **若链接静态库，ClassLoader 将静默失效——`createUniqueInstance` 始终返回 `nullptr`。**
+
+**原因说明：**  
+`ClassRegistry` 是存在于 SDK 库中的进程级单例。  
+链接**静态库**时，每个二进制文件（例如主程序和插件）各自拥有独立的 `ClassRegistry` 副本，插件中注册的类对主程序不可见，查找始终失败。  
+链接**共享库**时，所有二进制文件共享同一个 `ClassRegistry` 实例，注册信息在整个进程中可见。
+
+**CMake——始终使用 `elite_cs_series_sdk::shared`：**
+
+```cmake
+# ✅ 正确——插件和应用程序均须链接共享目标
+target_link_libraries(my_plugin    PRIVATE elite_cs_series_sdk::shared)
+target_link_libraries(my_app       PRIVATE elite_cs_series_sdk::shared)
+
+# ❌ 错误——静态库将导致 ClassLoader 失效
+# target_link_libraries(my_app    PRIVATE elite_cs_series_sdk::static)
+```
+
+---
+
 # 一、类注册宏
 
 ## ELITE_CLASS_LOADER_REGISTER_CLASS
