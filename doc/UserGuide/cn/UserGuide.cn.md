@@ -22,4 +22,6 @@
 
 8. [RS485 串口通讯](./Serial-Communication.cn.md)
 
-9. [运动学插件](./Kinematics-Plugin.cn.md)
+9. [插件系统：ClassLoader](./ClassLoader-Plugin.cn.md)
+
+10. [运动学插件](./Kinematics-Plugin.cn.md)
