@@ -47,6 +47,9 @@ load_fail:
     return false;
 #else
     // TODO: Support windows
+    ELITE_LOG_ERROR("SharedLibrary::loadLibrary is not supported on Windows yet (library path: '%s')",
+                    library_path.c_str());
+    return false;
 #endif
 }
 
@@ -73,8 +76,9 @@ void* SharedLibrary::getSymbol(const std::string& symbol_name) {
         return NULL;
     }
 
+    void* lib_symbol = NULL;
 #ifndef _WIN32
-    void* lib_symbol = dlsym(lib_handle_, symbol_name.c_str());
+    lib_symbol = dlsym(lib_handle_, symbol_name.c_str());
     char* error = dlerror();
     if (error != NULL) {
         ELITE_LOG_ERROR("Error getting the symbol '%s'. Error '%s'", symbol_name, error);
@@ -82,6 +86,9 @@ void* SharedLibrary::getSymbol(const std::string& symbol_name) {
     }
 #else
     // TODO: Support windows
+    ELITE_LOG_ERROR("SharedLibrary::getSymbol is not supported on Windows yet (symbol: '%s')",
+                    symbol_name.c_str());
+    return NULL;
 #endif
     if (!lib_symbol) {
         ELITE_LOG_ERROR("Symbol '%s' does not exist in the library '%s'", symbol_name.c_str(), lib_path_.c_str());
@@ -93,7 +100,7 @@ void* SharedLibrary::getSymbol(const std::string& symbol_name) {
 bool SharedLibrary::hasSymbol(const std::string& symbol_name) {
     if (!lib_handle_ || symbol_name.empty()) {
         ELITE_LOG_ERROR("Shared library Querying for symbol existence returns an invalid parameter error.");
-        return NULL;
+        return false;
     }
 #ifndef _WIN32
     // The proper error-checking procedure is: first call dlerror() to clear any previous error state,
@@ -104,6 +111,9 @@ bool SharedLibrary::hasSymbol(const std::string& symbol_name) {
     return dlerror() == NULL && lib_symbol != 0;
 #else
     // TODO: Support windows
+    ELITE_LOG_ERROR("SharedLibrary::hasSymbol is not supported on Windows yet (symbol: '%s')",
+                    symbol_name.c_str());
+    return false;
 #endif
 }
 
