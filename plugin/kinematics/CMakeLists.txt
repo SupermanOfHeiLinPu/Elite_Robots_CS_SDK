@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
+include(GNUInstallDirs)
+
 message(STATUS "Configuring kinematics plugins")
 
 set(ELITE_KINEMATICS_PLUGIN_INSTALL_PATH "${CMAKE_INSTALL_LIBDIR}/elite-cs-series-sdk-plugins/kinematics")

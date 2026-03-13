@@ -48,7 +48,7 @@ class SharedLibrary {
      * @brief Return shared library symbol pointer.
      * 
      * @param symbol_name name of the symbol inside the shared library
-     * @return void* shared library symbol pointer, if the symbol doesn't exist then throws a runtime_error exception
+     * @return void* shared library symbol pointer, or nullptr if the symbol doesn't exist.
      */
     void* getSymbol(const std::string& symbol_name);
     

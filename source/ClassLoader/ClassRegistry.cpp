@@ -19,15 +19,22 @@ ClassRegistry& ClassRegistry::instance() {
 ClassRegistry::ClassRegistry() {}
 
 bool ClassRegistry::registerClass(const std::string& derived, const std::string& base, Factory factory) {
-    return factories_.emplace(derived, std::move(factory)).second;
+    return factories_.emplace(makeClassKey(derived, base), std::move(factory)).second;
 }
 
 ClassRegistry::Factory ClassRegistry::getFactory(const std::string& derived, const std::string& base) const {
-    auto it = factories_.find(derived);
+    auto it = factories_.find(makeClassKey(derived, base));
     if (it == factories_.end()) {
         return nullptr;
     }
     return it->second;
+}
+
+// Compose a unique key from derived and base class names.
+// Uses a control character as a separator to minimize collision risk.
+std::string ClassRegistry::makeClassKey(const std::string& derived, const std::string& base) const {
+    static const char separator = '\x1F';  // Unit Separator
+    return derived + separator + base;
 }
 
 }  // namespace INTERNAL

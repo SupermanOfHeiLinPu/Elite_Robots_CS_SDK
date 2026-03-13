@@ -31,8 +31,12 @@ class ClassRegistry {
     ELITE_EXPORT Factory getFactory(const std::string& derived, const std::string& base) const;
 
    private:
-
     std::unordered_map<std::string, Factory> factories_;
+
+   private:
+    // Compose a unique key from derived and base class names.
+    // Uses a control character as a separator to minimize collision risk.
+    std::string makeClassKey(const std::string& derived, const std::string& base) const;
 };
 
 }  // namespace INTERNAL

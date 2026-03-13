@@ -41,9 +41,9 @@ struct KinematicsResult {
  */
 class KinematicsBase {
    public:
-    const double DEFAULT_TIMEOUT = 1.0; // seconds
+    static constexpr double DEFAULT_TIMEOUT = 1.0; // seconds
 
-    ELITE_EXPORT KinematicsBase() = default;
+    ELITE_EXPORT KinematicsBase() : default_timeout_(DEFAULT_TIMEOUT) {}
 
     virtual ~KinematicsBase() = default;
 

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025, Elite Robots.
+#include <Elite/ClassLoader.hpp>
+#include <Elite/KinematicsBase.hpp>
 #include <Elite/Log.hpp>
 #include <Elite/PrimaryPortInterface.hpp>
 #include <Elite/RobotConfPackage.hpp>
 #include <Elite/RobotException.hpp>
-#include <Elite/ClassLoader.hpp>
 #include <Elite/RtsiIOInterface.hpp>
-#include <Elite/KinematicsBase.hpp>
 
 #include <boost/program_options.hpp>
 #include <chrono>
@@ -36,12 +36,10 @@ int main(int argc, const char** argv) {
     // Parser param
     po::options_description desc(
         "Usage:\n"
-        "\t./primary_example <--robot-ip=ip>\n"
+        "\t./kinematics_example <--robot-ip=ip>\n"
         "Parameters:");
-    desc.add_options()
-        ("help,h", "Print help message")
-        ("robot-ip", po::value<std::string>(&robot_ip)->required(),
-            "\tRequired. IP address of the robot.");
+    desc.add_options()("help,h", "Print help message")("robot-ip", po::value<std::string>(&robot_ip)->required(),
+                                                       "\tRequired. IP address of the robot.");
 
     po::variables_map vm;
     try {
@@ -86,9 +84,9 @@ int main(int argc, const char** argv) {
     auto current_tcp = io_interface->getActualTCPPose();
     ELITE_LOG_INFO("Getted robot actual TCP positions.");
 
-    ClassLoader loader("./libelite_kdl_kin_plugin.so");
+    ClassLoader loader("./libelite_kdl_kinematics.so");
 
-    if(!loader.loadLib()) {
+    if (!loader.loadLib()) {
         ELITE_LOG_FATAL("Load plugin fail.");
         return 1;
     }
@@ -114,12 +112,12 @@ int main(int argc, const char** argv) {
         ELITE_LOG_FATAL("Get IK fail.");
         return 1;
     }
-    
+
     logVector6d("Current TCP Pose:", current_tcp);
     logVector6d("FK Pose:", fk_pose);
 
     logVector6d("IK Result Joints:", ik_joints);
     logVector6d("Current Joints:", current_joint);
-    
+
     return 0;
 }

@@ -105,6 +105,7 @@ set(
     Common/Utils.hpp
     Common/EndianUtils.hpp
     Common/StringUtils.hpp
+    Common/SharedLibrary.hpp
     KinematicsBase/KinematicsBase.hpp
     ClassLoader/ClassRegistry.hpp
     ClassLoader/ClassLoader.hpp
