@@ -19,9 +19,15 @@ foreach(SOURCE ${SOURCES})
         ${PROJECT_SOURCE_DIR}/include/Elite
         ${PROJECT_SOURCE_DIR}/include/Control
     )
+    if(ELITE_SDK_TEST_NAME STREQUAL "ClassLoaderPluginLifecycleTest")
+        set(ELITE_SDK_TEST_LIB elite_cs_series_sdk::shared)
+    else()
+        set(ELITE_SDK_TEST_LIB elite_cs_series_sdk::static)
+    endif()
+
     target_link_libraries(
         ${ELITE_SDK_TEST_NAME}
-        elite_cs_series_sdk::static
+        ${ELITE_SDK_TEST_LIB}
         GTest::gtest
         ${SYSTEM_LIB}
     )
