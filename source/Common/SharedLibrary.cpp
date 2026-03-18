@@ -3,14 +3,12 @@
 #include <iostream>
 #include <string>
 
-#ifndef _WIN32
+#if defined(__linux__)
 #include <dlfcn.h>
-#ifdef __linux__
 #include <link.h>
-#endif  // __linux__
-#else
-// TODO: Support windows
-#endif  // _WIN32
+#elif !defined(_WIN32)
+#include <dlfcn.h>
+#endif  // platform
 
 namespace ELITE {
 SharedLibrary::SharedLibrary() : lib_handle_(nullptr) {}
@@ -21,14 +19,13 @@ bool SharedLibrary::loadLibrary(const std::string& library_path) {
     if (library_path.empty()) {
         return false;
     }
-#ifndef _WIN32
+#if defined(__linux__)
     lib_handle_ = dlopen(library_path.c_str(), RTLD_NOW | RTLD_LOCAL);
     if (lib_handle_ == nullptr) {
         ELITE_LOG_ERROR("dlopen error: %s", dlerror());
         return false;
     }
 
-#ifdef __linux__
     struct link_map* map = NULL;
     if (dlinfo(lib_handle_, RTLD_DI_LINKMAP, &map) != 0) {
         ELITE_LOG_ERROR("dlinfo error: %s", dlerror());
@@ -48,12 +45,15 @@ load_fail:
     }
     lib_handle_ = nullptr;
     return false;
-#else
-    // On non-Linux Unix-like systems (e.g., macOS), skip dlinfo/link_map
-    // and fall back to using the provided library path.
+#elif !defined(_WIN32)
+    // Non-Linux Unix-like systems (e.g., macOS): use dlopen but skip dlinfo/link_map.
+    lib_handle_ = dlopen(library_path.c_str(), RTLD_NOW | RTLD_LOCAL);
+    if (lib_handle_ == nullptr) {
+        ELITE_LOG_ERROR("dlopen error: %s", dlerror());
+        return false;
+    }
     lib_path_ = library_path;
     return true;
-#endif  // __linux__
 #else
     // TODO: Support windows
     ELITE_LOG_ERROR("SharedLibrary::loadLibrary is not supported on Windows yet (library path: '%s')",
@@ -66,7 +66,7 @@ bool SharedLibrary::unloadLibrary() {
     if (!lib_handle_) {
         return false;
     }
-#ifndef _WIN32
+#if !defined(_WIN32)
     // The function dlclose() returns 0 on success, and nonzero on error.
     int error_code = dlclose(lib_handle_);
     if (error_code) {
@@ -86,7 +86,7 @@ void* SharedLibrary::getSymbol(const std::string& symbol_name) {
     }
 
     void* lib_symbol = nullptr;
-#ifndef _WIN32
+#if !defined(_WIN32)
     lib_symbol = dlsym(lib_handle_, symbol_name.c_str());
     char* error = dlerror();
     if (error != NULL) {
@@ -111,7 +111,7 @@ bool SharedLibrary::hasSymbol(const std::string& symbol_name) {
         ELITE_LOG_ERROR("Shared library Querying for symbol existence returns an invalid parameter error.");
         return false;
     }
-#ifndef _WIN32
+#if !defined(_WIN32)
     // The proper error-checking procedure is: first call dlerror() to clear any previous error state,
     // then call dlsym(), followed immediately by another dlerror() call, saving its return value
     // to a variable, and finally checking whether this stored value is not NULL.
