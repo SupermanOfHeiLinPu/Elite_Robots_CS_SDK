@@ -41,6 +41,7 @@ void KdlKinematicsPlugin::setMDH(const vector6d_t& alpha, const vector6d_t& a, c
 }
 
 bool KdlKinematicsPlugin::getPositionFK(const vector6d_t& joint_angles, vector6d_t& poses) const {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (!fk_solver_) {
         ELITE_LOG_ERROR("Please set Kinematics config first by setMDH()\n");
         return false;
@@ -64,6 +65,7 @@ bool KdlKinematicsPlugin::getPositionFK(const vector6d_t& joint_angles, vector6d
 
 bool KdlKinematicsPlugin::getPositionIK(const vector6d_t& pose, const vector6d_t& near, vector6d_t& solution,
                                         KinematicsResult& result) const {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (!ik_solver_) {
         ELITE_LOG_ERROR("Please set Kinematics config first by setMDH()\n");
         result.kinematic_error = KinematicError::SOLVER_NOT_ACTIVE;
