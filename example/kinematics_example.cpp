@@ -70,7 +70,7 @@ int main(int argc, const char** argv) {
         return 1;
     }
     primary->disconnect();
-    ELITE_LOG_INFO("Getted robot kinematics info.");
+    ELITE_LOG_INFO("Got robot kinematics info.");
 
     std::unique_ptr<RtsiIOInterface> io_interface = std::make_unique<RtsiIOInterface>("output_recipe.txt", "input_recipe.txt", 250);
     if (!io_interface->connect(robot_ip)) {
@@ -79,10 +79,10 @@ int main(int argc, const char** argv) {
     }
 
     auto current_joint = io_interface->getActualJointPositions();
-    ELITE_LOG_INFO("Getted robot actual joint positions.");
+    ELITE_LOG_INFO("Got robot actual joint positions.");
 
     auto current_tcp = io_interface->getActualTCPPose();
-    ELITE_LOG_INFO("Getted robot actual TCP positions.");
+    ELITE_LOG_INFO("Got robot actual TCP positions.");
 
     ClassLoader loader("../plugin/kinematics/libelite_kdl_kinematics.so");
 
@@ -91,24 +91,24 @@ int main(int argc, const char** argv) {
         return 1;
     }
 
-    auto kin_slover = loader.createUniqueInstance<KinematicsBase>("ELITE::KdlKinematicsPlugin");
-    if (kin_slover == nullptr) {
+    auto kin_solver = loader.createUniqueInstance<KinematicsBase>("ELITE::KdlKinematicsPlugin");
+    if (kin_solver == nullptr) {
         ELITE_LOG_FATAL("Create KinematicsBase fail");
         return 1;
     }
     // Set MDH params
-    kin_slover->setMDH(kin_info->dh_alpha_, kin_info->dh_a_, kin_info->dh_d_);
+    kin_solver->setMDH(kin_info->dh_alpha_, kin_info->dh_a_, kin_info->dh_d_);
 
     // Get FK and IK
     vector6d_t fk_pose;
-    if (!kin_slover->getPositionFK(current_joint, fk_pose)) {
+    if (!kin_solver->getPositionFK(current_joint, fk_pose)) {
         ELITE_LOG_FATAL("Get FK fail.");
         return 1;
     }
 
     vector6d_t ik_joints;
     KinematicsResult ik_result;
-    if (!kin_slover->getPositionIK(current_tcp, current_joint, ik_joints, ik_result)) {
+    if (!kin_solver->getPositionIK(current_tcp, current_joint, ik_joints, ik_result)) {
         ELITE_LOG_FATAL("Get IK fail.");
         return 1;
     }

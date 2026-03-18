@@ -28,7 +28,7 @@ private:
     vector6d_t dh_a_;
     vector6d_t dh_d_;
 
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
 
     std::unique_ptr<KDL::ChainIkSolverPos_LMA> ik_solver_;
     std::unique_ptr<KDL::ChainFkSolverPos_recursive> fk_solver_;

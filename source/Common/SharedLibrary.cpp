@@ -4,8 +4,10 @@
 #include <string>
 
 #ifndef _WIN32
-#include <link.h>
 #include <dlfcn.h>
+#ifdef __linux__
+#include <link.h>
+#endif  // __linux__
 #else
 // TODO: Support windows
 #endif  // _WIN32
@@ -26,6 +28,7 @@ bool SharedLibrary::loadLibrary(const std::string& library_path) {
         return false;
     }
 
+#ifdef __linux__
     struct link_map* map = NULL;
     if (dlinfo(lib_handle_, RTLD_DI_LINKMAP, &map) != 0) {
         ELITE_LOG_ERROR("dlinfo error: %s", dlerror());
@@ -45,6 +48,12 @@ load_fail:
     }
     lib_handle_ = nullptr;
     return false;
+#else
+    // On non-Linux Unix-like systems (e.g., macOS), skip dlinfo/link_map
+    // and fall back to using the provided library path.
+    lib_path_ = library_path;
+    return true;
+#endif  // __linux__
 #else
     // TODO: Support windows
     ELITE_LOG_ERROR("SharedLibrary::loadLibrary is not supported on Windows yet (library path: '%s')",
@@ -73,26 +82,26 @@ bool SharedLibrary::unloadLibrary() {
 void* SharedLibrary::getSymbol(const std::string& symbol_name) {
     if (!lib_handle_ || symbol_name.empty()) {
         ELITE_LOG_ERROR("Shared library get symbol has invalid inputs arguments");
-        return NULL;
+        return nullptr;
     }
 
-    void* lib_symbol = NULL;
+    void* lib_symbol = nullptr;
 #ifndef _WIN32
     lib_symbol = dlsym(lib_handle_, symbol_name.c_str());
     char* error = dlerror();
     if (error != NULL) {
-        ELITE_LOG_ERROR("Error getting the symbol '%s'. Error '%s'", symbol_name, error);
-        return NULL;
+        ELITE_LOG_ERROR("Error getting the symbol '%s'. Error '%s'", symbol_name.c_str(), error);
+        return nullptr;
     }
 #else
     // TODO: Support windows
     ELITE_LOG_ERROR("SharedLibrary::getSymbol is not supported on Windows yet (symbol: '%s')",
                     symbol_name.c_str());
-    return NULL;
+    return nullptr;
 #endif
     if (!lib_symbol) {
         ELITE_LOG_ERROR("Symbol '%s' does not exist in the library '%s'", symbol_name.c_str(), lib_path_.c_str());
-        return NULL;
+        return nullptr;
     }
     return lib_symbol;
 }

@@ -15,9 +15,7 @@ class SharedLibrary {
     explicit SharedLibrary();
 
     /**
-     * @brief Deconstructor
-     * 
-     * @return ELITE_EXPORT 
+     * @brief Destructor.
      */
     virtual ~SharedLibrary();
 

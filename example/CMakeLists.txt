@@ -6,11 +6,9 @@ file(GLOB SOURCES *.cpp)
 
 find_package(Boost REQUIRED COMPONENTS program_options)
 
-# On Windows systems, when using CMake in the main directory, 
-# the ELITE_EXPORT_LIBRARY macro definition must be removed to avoid compilation errors.
-if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    add_definitions(-DELITE_STATIC_LIBRARY)
-endif()
+# Examples link the SDK shared library; ELITE_STATIC_LIBRARY must NOT be defined
+# for shared builds. If static linking is introduced in the future, gate
+# ELITE_STATIC_LIBRARY on that configuration.
 
 foreach(SOURCE ${SOURCES})
     get_filename_component(ELITE_SDK_EXAMPLE_NAME ${SOURCE} NAME_WE)

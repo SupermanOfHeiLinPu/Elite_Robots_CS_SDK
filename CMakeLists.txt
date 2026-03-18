@@ -169,8 +169,10 @@ foreach(header ${ELITE_HEADER_FILES})
 endforeach()
 
 add_library(${PROJECT_NAME}::shared ALIAS ${PROJECT_NAME}_SHARED)
+add_library(elite-cs-series-sdk::shared ALIAS ${PROJECT_NAME}_SHARED)
 target_include_directories(${PROJECT_NAME}_SHARED PUBLIC $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include> $<INSTALL_INTERFACE:include>)
 add_library(${PROJECT_NAME}::static ALIAS ${PROJECT_NAME}_STATIC)
+add_library(elite-cs-series-sdk::static ALIAS ${PROJECT_NAME}_STATIC)
 target_include_directories(${PROJECT_NAME}_STATIC PUBLIC $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include> $<INSTALL_INTERFACE:include>)
 
 # Compile examples, tests, documentation, and plugins based on options
