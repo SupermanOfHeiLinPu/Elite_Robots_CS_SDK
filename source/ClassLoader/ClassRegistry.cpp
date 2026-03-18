@@ -2,8 +2,6 @@
 // Copyright (c) 2025, Elite Robots.
 
 #include "ClassRegistry.hpp"
-#include <functional>
-#include <memory>
 #include <string>
 #include "Log.hpp"
 
@@ -19,7 +17,7 @@ ClassRegistry& ClassRegistry::instance() {
 ClassRegistry::ClassRegistry() {}
 
 bool ClassRegistry::registerClass(const std::string& derived, const std::string& base, Factory factory) {
-    return factories_.emplace(makeClassKey(derived, base), std::move(factory)).second;
+    return factories_.emplace(makeClassKey(derived, base), factory).second;
 }
 
 ClassRegistry::Factory ClassRegistry::getFactory(const std::string& derived, const std::string& base) const {

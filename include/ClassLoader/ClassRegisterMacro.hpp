@@ -7,6 +7,7 @@
 #define __ELITE__CLASS_REGISTER_MACRO_HPP__
 
 #include <Elite/ClassRegistry.hpp>
+#include <typeinfo>
 
 #define ELITE_CLASS_LOADER_REGISTER_CLASS_INTERNAL(Derived, Base, RegisterID)                    \
     namespace {                                                                                  \
@@ -15,7 +16,7 @@
         typedef Base _Base;                                                                      \
         ProxyExec##RegisterID() {                                                                \
             ELITE::INTERNAL::ClassRegistry::instance().registerClass(                            \
-                #Derived, #Base, []() -> void* { return static_cast<_Base*>(new _Derived()); }); \
+                #Derived, typeid(_Base).name(), []() -> void* { return static_cast<_Base*>(new _Derived()); }); \
         }                                                                                        \
     };                                                                                           \
     ProxyExec##RegisterID g_register_plugin_##RegisterID;                                 \

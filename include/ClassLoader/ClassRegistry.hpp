@@ -8,7 +8,6 @@
 
 #include <Elite/EliteOptions.hpp>
 #include <Elite/Log.hpp>
-#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -19,7 +18,7 @@ namespace INTERNAL {
 
 class ClassRegistry {
    public:
-    using Factory = std::function<void*()>;
+    using Factory = void*(*)();
 
     ELITE_EXPORT static ClassRegistry& instance();
 

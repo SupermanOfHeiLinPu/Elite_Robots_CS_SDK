@@ -84,7 +84,7 @@ int main(int argc, const char** argv) {
     auto current_tcp = io_interface->getActualTCPPose();
     ELITE_LOG_INFO("Getted robot actual TCP positions.");
 
-    ClassLoader loader("./libelite_kdl_kinematics.so");
+    ClassLoader loader("../plugin/kinematics/libelite_kdl_kinematics.so");
 
     if (!loader.loadLib()) {
         ELITE_LOG_FATAL("Load plugin fail.");
