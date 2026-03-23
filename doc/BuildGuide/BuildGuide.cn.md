@@ -21,6 +21,13 @@ sudo apt install libssh-dev # 可选，建议安装，建议版本为0.9.6
 # sudo apt install sshpass #如果没安装 libssh-dev 则需要安装此指令
 ```
 
+- 运动学插件依赖（可选，仅在 `ELITE_COMPILE_KIN_PLUGIN=TRUE` 时需要）
+```bash
+sudo apt install liborocos-kdl-dev
+
+sudo apt install libeigen3-dev
+```
+
 - 测例依赖（可选）
 ```bash
 sudo apt update
@@ -48,6 +55,15 @@ git clone https://github.com/microsoft/vcpkg.git
 .\vcpkg install boost
 
 .\vcpkg install libssh
+
+.\vcpkg integrate install
+```
+
+- 运动学插件依赖（可选，仅在 `ELITE_COMPILE_KIN_PLUGIN=TRUE` 时需要）
+```shell
+.\vcpkg install orocos-kdl
+
+.\vcpkg install eigen3
 
 .\vcpkg integrate install
 ```
@@ -83,6 +99,9 @@ cmake -DCMAKE_CXX_STANDARD=14 ..
     - 值：BOOL
     - 说明：如果为TRUE，则会使用doxygen生成文档。
     - 注：Windows中此选项暂不可用。
+- ELITE_COMPILE_KIN_PLUGIN
+    - 值：BOOL
+    - 说明：如果为TRUE，则会编译基于KDL的运动学插件。需要安装 `orocos-kdl` 和 `Eigen3`。
 - ELITE_ROS2_BUILD
     - 值：BOOL
     - 说明：如果系统存在ROS环境则默认为TRUE，使用ros环境编译并导入ros环境变量。若为FALSE，则只编译纯c++相关库

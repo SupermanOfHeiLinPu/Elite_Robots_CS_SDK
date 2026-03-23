@@ -21,6 +21,13 @@ sudo apt install libssh-dev # Optional, recommended installation, recommended ve
 # sudo apt install sshpass # Install this command if libssh-dev is not installed
 ```
 
+- Kinematics Plugin Dependencies (Optional, required only when `ELITE_COMPILE_KIN_PLUGIN=TRUE`)
+```bash
+sudo apt install liborocos-kdl-dev
+
+sudo apt install libeigen3-dev
+```
+
 - Test Case Dependencies (Optional)
 ```bash
 sudo apt update
@@ -48,6 +55,15 @@ git clone https://github.com/microsoft/vcpkg.git
 .\vcpkg install boost
 
 .\vcpkg install libssh
+
+.\vcpkg integrate install
+```
+
+- Kinematics Plugin Dependencies (Optional, required only when `ELITE_COMPILE_KIN_PLUGIN=TRUE`)
+```shell
+.\vcpkg install orocos-kdl
+
+.\vcpkg install eigen3
 
 .\vcpkg integrate install
 ```
@@ -83,6 +99,9 @@ In addition to the common CMake configuration options, this project also has the
     - Value: BOOL
     - Description: If set to TRUE, documentation will be generated using doxygen.
     - Note: This option is currently unavailable on Windows.
+- ELITE_COMPILE_KIN_PLUGIN
+    - Value: BOOL
+    - Description: If set to TRUE, the KDL-based kinematics plugin will be compiled. Requires `orocos-kdl` and `Eigen3` to be installed.
 - ELITE_ROS2_BUILD
     - Value: BOOL
     - Description: If a ROS environment is detected on the system, this option defaults to TRUE, and the project will be built using the ROS environment with ROS environment variables imported.If set to FALSE, only the pure C++ libraries will be built.

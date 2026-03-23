@@ -5,6 +5,7 @@ project(elite_cs_series_sdk VERSION 1.3.0)
 option(ELITE_COMPILE_TESTS "Compile tests" OFF)
 option(ELITE_COMPILE_DOC "Compile documentation" OFF)
 option(ELITE_COMPILE_EXAMPLES "Compile examples" OFF)
+option(ELITE_COMPILE_KIN_PLUGIN "Compile kinematics plugin" OFF)
 
 include(cmake/utils.cmake)
 
@@ -43,6 +44,7 @@ set(
     source/Common/EliteException.cpp
     source/Common/SshUtils.cpp
     source/Common/RtUtils.cpp
+    source/Common/SharedLibrary.cpp
     source/Primary/PrimaryPort.cpp
     source/Primary/PrimaryPortInterface.cpp
     source/Primary/RobotConfPackage.cpp
@@ -62,6 +64,8 @@ set(
     source/Elite/RemoteUpgrade.cpp
     source/Elite/ControllerLog.cpp
     source/Elite/SerialCommunicationImpl.cpp
+    source/ClassLoader/ClassLoader.cpp
+    source/ClassLoader/ClassRegistry.cpp
 )
 
 set(
@@ -73,6 +77,7 @@ set(
     ${PROJECT_SOURCE_DIR}/include/Dashboard
     ${PROJECT_SOURCE_DIR}/include/Elite
     ${PROJECT_SOURCE_DIR}/include/Control
+    ${PROJECT_SOURCE_DIR}/include/ClassLoader
     ${PROJECT_SOURCE_DIR}/include/
     ${PROJECT_BINARY_DIR}/include/
 )
@@ -100,6 +105,11 @@ set(
     Common/Utils.hpp
     Common/EndianUtils.hpp
     Common/StringUtils.hpp
+    Common/SharedLibrary.hpp
+    KinematicsBase/KinematicsBase.hpp
+    ClassLoader/ClassRegistry.hpp
+    ClassLoader/ClassLoader.hpp
+    ClassLoader/ClassRegisterMacro.hpp
 )
 
 set(SDK_STATIC_LIB_OUTPUT_NAME "${PROJECT_NAME}")
@@ -159,25 +169,31 @@ foreach(header ${ELITE_HEADER_FILES})
 endforeach()
 
 add_library(${PROJECT_NAME}::shared ALIAS ${PROJECT_NAME}_SHARED)
+add_library(elite-cs-series-sdk::shared ALIAS ${PROJECT_NAME}_SHARED)
 target_include_directories(${PROJECT_NAME}_SHARED PUBLIC $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include> $<INSTALL_INTERFACE:include>)
 add_library(${PROJECT_NAME}::static ALIAS ${PROJECT_NAME}_STATIC)
+add_library(elite-cs-series-sdk::static ALIAS ${PROJECT_NAME}_STATIC)
 target_include_directories(${PROJECT_NAME}_STATIC PUBLIC $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include> $<INSTALL_INTERFACE:include>)
 
-# Backward-compatible target names used by existing examples / consumers
-add_library(elite-cs-series-sdk::shared ALIAS ${PROJECT_NAME}_SHARED)
-add_library(elite-cs-series-sdk::static ALIAS ${PROJECT_NAME}_STATIC)
-
+# Compile examples, tests, documentation, and plugins based on options
 if(ELITE_COMPILE_EXAMPLES)
     message(STATUS "Compile the exmaples")
     add_subdirectory(example ${CMAKE_BINARY_DIR}/example/)
 endif()
+# Compile documentation
 if(ELITE_COMPILE_DOC)
     message(STATUS "Compile the documentation.")
     add_subdirectory(doc ${CMAKE_BINARY_DIR}/doc/)
 endif()
+# Compile tests
 if (ELITE_COMPILE_TESTS)
     message(STATUS "Compile the tests")
     add_subdirectory(test ${CMAKE_BINARY_DIR}/test/)
+endif()
+# Compile kinematics plugin
+if(ELITE_COMPILE_KIN_PLUGIN)
+    message(STATUS "Compile the kinematics plugin")
+    add_subdirectory(plugin/kinematics ${CMAKE_BINARY_DIR}/kin_plugin/)
 endif()
 
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" is_top_level)
@@ -227,6 +243,10 @@ message(STATUS "CMAKE_CXX_FLAGS:                    ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_INSTALL_INCLUDEDIR:           ${CMAKE_INSTALL_INCLUDEDIR}")
 message(STATUS "CMAKE_INSTALL_LIBDIR:               ${CMAKE_INSTALL_LIBDIR}")
 message(STATUS "THIRDPARTY_LIB                      ${THIRDPARTY_LIB}")
+message(STATUS "ELITE_COMPILE_TESTS                 ${ELITE_COMPILE_TESTS}")
+message(STATUS "ELITE_COMPILE_DOC                   ${ELITE_COMPILE_DOC}")
+message(STATUS "ELITE_COMPILE_EXAMPLES              ${ELITE_COMPILE_EXAMPLES}")
+message(STATUS "ELITE_COMPILE_KIN_PLUGIN            ${ELITE_COMPILE_KIN_PLUGIN}")
 
 find_package(ament_cmake QUIET)
 option(ELITE_ROS2_BUILD "Build as a ROS 2 (ament_cmake) package" ${ament_cmake_FOUND})
