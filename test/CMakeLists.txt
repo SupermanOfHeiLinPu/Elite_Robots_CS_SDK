@@ -36,3 +36,5 @@ foreach(SOURCE ${SOURCES})
         PRIVATE ${CMAKE_BINARY_DIR}
     )
 endforeach()
+
+add_subdirectory(integration)
