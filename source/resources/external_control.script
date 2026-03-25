@@ -70,6 +70,16 @@ SERVO_MUTEX = threading.Lock()
 # The value of the `t` parameter in the servoj command.
 SERVOJ_TIME = {{SERVOJ_TIME_REPLACE}}
 
+# Maximum duration for constant-velocity extrapolation when no new servoj point arrives.
+SERVOJ_EXTRAPOLATE_MAX_TIME = max(0.0, {{SERVOJ_EXTRAPOLATE_MAX_TIME_REPLACE}})
+
+# After the constant-velocity window, linearly ramp the extrapolation speed down to zero.
+SERVOJ_DECELERATE_TIME = max(0.0, {{SERVOJ_DECELERATE_TIME_REPLACE}})
+
+# Lock to a fixed hold point only after the actual joints stay almost still for a short time.
+SERVOJ_HOLD_VELOCITY_THRESHOLD = max(0.0, {{SERVOJ_HOLD_VELOCITY_THRESHOLD_REPLACE}})
+SERVOJ_HOLD_STABLE_TIME = max(0.0, {{SERVOJ_HOLD_STABLE_TIME_REPLACE}})
+
 #Global variables are also showed in the Teach pendants variable list
 global control_mode
 global script_command
@@ -82,8 +92,28 @@ global violation_popup_counter
 global cmd_servo_state
 global extrapolate_count
 global extrapolate_max_count
+global servo_hold_joints
+global servo_hold_reference_joints
+global servo_hold_stable_count
+global servo_hold_locked
 global cmd_trajectory_blend_radius
 global cmd_trajectory_point
+
+def jointsWithinDelta(left, right, max_delta):
+    for i in range(6):
+        if norm(left[i] - right[i]) > max_delta:
+            return False
+    return True
+
+def resetServoHoldState(reference_joints):
+    global servo_hold_joints
+    global servo_hold_reference_joints
+    global servo_hold_stable_count
+    global servo_hold_locked
+    servo_hold_joints = reference_joints
+    servo_hold_reference_joints = reference_joints
+    servo_hold_stable_count = 0
+    servo_hold_locked = False
 
 """
 @brief Function to verify whether the specified target can be reached within the defined time frame while staying within the robot's speed limits
@@ -152,6 +182,7 @@ def setServoSetpoint(joints):
     cmd_servo_state = SERVO_RUNNING
     if targetWithinLimits(cmd_servo_joints, joints, SERVOJ_TIME):
         cmd_servo_joints = joints
+        resetServoHoldState(joints)
     # If the target has been interpolating too far away from the robot, so it would trigger the limit
     # check, but the target is close to where the robot currently is, also accept the command.
     # This can, for example, happen if a command series was too fast for the robot to follow, which
@@ -159,12 +190,51 @@ def setServoSetpoint(joints):
     # command.
     elif targetWithinLimits(get_actual_joint_positions(), joints, SERVOJ_TIME):
         cmd_servo_joints = joints
+        resetServoHoldState(joints)
 
-def extrapolate():
+def getServoExtrapolateScale(extrapolate_duration):
+    if extrapolate_duration <= SERVOJ_EXTRAPOLATE_MAX_TIME:
+        return 1.0
+
+    decelerate_duration = extrapolate_duration - SERVOJ_EXTRAPOLATE_MAX_TIME
+    if SERVOJ_DECELERATE_TIME <= 0.0:
+        return 0.0
+    if decelerate_duration >= SERVOJ_DECELERATE_TIME:
+        return 0.0
+
+    return max(0.0, 1.0 - decelerate_duration / SERVOJ_DECELERATE_TIME)
+
+def extrapolate(extrapolate_duration):
     global cmd_servo_joints
+    global servo_hold_joints
+    global servo_hold_reference_joints
+    global servo_hold_stable_count
+    global servo_hold_locked
+    if extrapolate_duration >= SERVOJ_EXTRAPOLATE_MAX_TIME + SERVOJ_DECELERATE_TIME:
+        actual_joints = get_actual_joint_positions()
+
+        if servo_hold_locked:
+            cmd_servo_joints = servo_hold_joints
+            return cmd_servo_joints
+
+        cmd_servo_joints = actual_joints
+
+        if jointsWithinDelta(actual_joints, servo_hold_reference_joints, SERVOJ_HOLD_VELOCITY_THRESHOLD * SERVOJ_TIME):
+            servo_hold_stable_count += 1
+        else:
+            servo_hold_stable_count = 0
+
+        servo_hold_reference_joints = actual_joints
+        if servo_hold_stable_count * SERVOJ_TIME >= SERVOJ_HOLD_STABLE_TIME:
+            servo_hold_joints = actual_joints
+            cmd_servo_joints = servo_hold_joints
+            servo_hold_locked = True
+        return cmd_servo_joints
+
     joint_speed = get_target_joint_speeds()
+    extrapolate_scale = getServoExtrapolateScale(extrapolate_duration)
     for i in range(len(joint_speed)):
-        cmd_servo_joints[i] = cmd_servo_joints[i] + (joint_speed[i] * SERVOJ_TIME)
+        cmd_servo_joints[i] = cmd_servo_joints[i] + (joint_speed[i] * SERVOJ_TIME * extrapolate_scale)
     return cmd_servo_joints
 
 def getServoPoints():
@@ -184,8 +254,8 @@ def getServoPoints():
         if do_extrapolate:
             extrapolate_count += 1
             extrapolate_max_count = max(extrapolate_count, extrapolate_max_count)
-
-            joints = extrapolate()
+            extrapolate_duration = extrapolate_count * SERVOJ_TIME
+            joints = extrapolate(extrapolate_duration)
             return joints
         elif state == SERVO_RUNNING:
             extrapolate_count = 0
@@ -311,6 +381,7 @@ violation_popup_counter = 0
 cmd_servo_state = SERVO_UNINITIALIZED
 extrapolate_count = 0
 extrapolate_max_count = 0
+resetServoHoldState(cmd_servo_joints)
 
 while control_mode > MODE_STOPPED:
     params_mult = socket_read_binary_integer(REVERSE_DATA_SIZE, "reverse_socket", read_timeout)
@@ -352,9 +423,11 @@ while control_mode > MODE_STOPPED:
                 move_thread_handle = start_thread(speedjThread, ())
             elif control_mode == MODE_SERVOJ:
                 cmd_servo_joints = get_actual_joint_positions()
+                resetServoHoldState(cmd_servo_joints)
                 move_thread_handle = start_thread(servoThread, (MODE_SERVOJ,))
             elif control_mode == MODE_POSE:
                 cmd_servo_joints = get_actual_joint_positions()
+                resetServoHoldState(cmd_servo_joints)
                 move_thread_handle = start_thread(servoThread, (MODE_POSE,))
             
         # Update the motion commands with new parameters

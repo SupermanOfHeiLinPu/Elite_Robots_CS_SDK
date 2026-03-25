@@ -57,6 +57,18 @@ class EliteDriverConfig {
     // Acceleration [rad/s^2]. The acceleration of stopj motion.
     float stopj_acc = 8;
 
+    // Maximum duration [S] for constant-velocity extrapolation when no new servoj point arrives.
+    float servoj_extrapolate_max_time = 0.08;
+
+    // Deceleration duration [S] used to linearly ramp extrapolation speed down to zero.
+    float servoj_decelerate_time = 0.01;
+
+    // Joint velocity threshold [rad/s] used to decide whether joints are stable enough to lock hold position.
+    float servoj_hold_velocity_threshold = 0.05;
+
+    // Stable duration [S] required before locking hold position after extrapolation speed reaches zero.
+    float servoj_hold_stable_time = 0.04;
+
     EliteDriverConfig() = default;
     ~EliteDriverConfig() = default;
 };
@@ -99,6 +111,10 @@ class EliteDriver {
      * @param servoj_lookahead_time Time [S], range [0.03,0.2] smoothens the trajectory with this lookahead time
      * @param servoj_gain servo gain.
      * @param stopj_acc acceleration [rad/s^2]. The acceleration of stopj motion.
+        * @param servoj_extrapolate_max_time Maximum duration [S] for constant-velocity extrapolation.
+        * @param servoj_decelerate_time Deceleration duration [S] used to ramp extrapolation speed to zero.
+        * @param servoj_hold_velocity_threshold Joint velocity threshold [rad/s] for hold lock decision.
+        * @param servoj_hold_stable_time Stable duration [S] required before locking hold position.
      */
     [[deprecated(
         "Construct a EliteDriver object with an argument list is deprecated. Please use"
@@ -106,7 +122,9 @@ class EliteDriver {
     EliteDriver(const std::string& robot_ip, const std::string& local_ip, const std::string& script_file,
                 bool headless_mode = false, int script_sender_port = 50002, int reverse_port = 50001, int trajectory_port = 50003,
                 int script_command_port = 50004, float servoj_time = 0.008, float servoj_lookahead_time = 0.1,
-                int servoj_gain = 300, float stopj_acc = 8.0);
+                int servoj_gain = 300, float stopj_acc = 8.0, float servoj_extrapolate_max_time = 0.08,
+                float servoj_decelerate_time = 0.01, float servoj_hold_velocity_threshold = 0.05,
+                float servoj_hold_stable_time = 0.04);
 
     /**
      * @brief Destroy the Elite Driver object
