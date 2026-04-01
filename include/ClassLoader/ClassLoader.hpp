@@ -11,7 +11,7 @@
 #include <Elite/ClassRegistry.hpp>
 
 namespace ELITE {
-class ClassLoader {
+class ELITE_EXPORT ClassLoader {
    private:
     class Impl;
     std::unique_ptr<Impl> impl_;
