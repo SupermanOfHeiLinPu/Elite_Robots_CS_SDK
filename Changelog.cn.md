@@ -2,7 +2,16 @@
 
 ## [Unrelease]
 
-### Fixed
+### 新增
+- 引入运动学插件基础设施，新增 `ClassLoader` 模块、注册宏、文档，并通过 `ELITE_COMPILE_KIN_PLUGIN` CMake 选项控制插件编译。
+- 为 `EliteDriverConfig` 添加可配置的 servo 外推和保持参数（`servoj_extrapolate_max_time`、`servoj_decelerate_time`、`servoj_hold_velocity_threshold`、`servoj_hold_stable_time` 以及更正后的 `servoj_lookahead_time`），并将其通到脚本与调优文档中。
+
+### 更改
+- 在构建指南中说明插件编译选项及其依赖（如 `orocos-kdl`、`Eigen3`），并提高配置输出的可见度，方便用户启用运动学插件。
+- 更新 `external_control.script`，使用新的外推/保持逻辑参数、关节稳定性辅助函数，并保持脚本与驱动配置一致以提升鲁棒性。
+
+### 修复
+- 修正 `servoj_lookahead_time` 参数拼写错误，文档与代码均同步更新。
 - 修复了部分编译器下，`EliteDriver::writeTrajectoryPoint()` 和 `EliteDriver::writeJointServoj()` 关节角为负数时变为0的问题。
 
 ## [v1.3.0] - 2025-01-27
