@@ -6,6 +6,10 @@ file(GLOB SOURCES *.cpp)
 
 find_package(Boost REQUIRED COMPONENTS program_options)
 
+if(ELITE_COMPILE_KIN_PLUGIN)
+    add_definitions(-DELITE_COMPILE_KIN_PLUGIN)
+endif()
+
 # Examples link the SDK shared library; ELITE_STATIC_LIBRARY must NOT be defined
 # for shared builds. If static linking is introduced in the future, gate
 # ELITE_STATIC_LIBRARY on that configuration.
@@ -30,6 +34,15 @@ foreach(SOURCE ${SOURCES})
         PRIVATE 
         ${Boost_INCLUDE_DIRS}
     )
+    if(WIN32)
+        add_custom_command(
+            TARGET ${ELITE_SDK_EXAMPLE_NAME}
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    $<TARGET_FILE:elite_cs_series_sdk_SHARED>
+                    $<TARGET_FILE_DIR:${ELITE_SDK_EXAMPLE_NAME}>
+        )
+    endif()
 endforeach()
 
 

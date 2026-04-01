@@ -6,7 +6,9 @@
 #if defined(__linux__)
 #include <dlfcn.h>
 #include <link.h>
-#elif !defined(_WIN32)
+#elif defined(_WIN32)
+#include <windows.h>
+#else
 #include <dlfcn.h>
 #endif  // platform
 
@@ -45,20 +47,38 @@ load_fail:
     }
     lib_handle_ = nullptr;
     return false;
-#elif !defined(_WIN32)
-    // Non-Linux Unix-like systems (e.g., macOS): use dlopen but skip dlinfo/link_map.
-    lib_handle_ = dlopen(library_path.c_str(), RTLD_NOW | RTLD_LOCAL);
+#elif defined(_WIN32)
+    lib_handle_ = LoadLibraryA(library_path.c_str());
     if (lib_handle_ == nullptr) {
-        ELITE_LOG_ERROR("dlopen error: %s", dlerror());
+        DWORD error_code = GetLastError();
+        ELITE_LOG_ERROR("LoadLibraryA error: %lu", error_code);
         return false;
     }
-    lib_path_ = library_path;
+
+    char path[MAX_PATH];
+    if (GetModuleFileNameA(static_cast<HMODULE>(lib_handle_), path, MAX_PATH) == 0) {
+        DWORD error_code = GetLastError();
+        ELITE_LOG_ERROR("GetModuleFileNameA error: %lu", error_code);
+        goto load_fail;
+    }
+    lib_path_ = path;
+
+    if (lib_path_.empty()) {
+        ELITE_LOG_ERROR("Unable to get library path");
+        goto load_fail;
+    }
+
     return true;
-#else
-    // TODO: Support windows
-    ELITE_LOG_ERROR("SharedLibrary::loadLibrary is not supported on Windows yet (library path: '%s')",
-                    library_path.c_str());
+load_fail:
+    if (!FreeLibrary(static_cast<HMODULE>(lib_handle_))) {
+        DWORD error_code = GetLastError();
+        ELITE_LOG_ERROR("FreeLibrary error: %lu", error_code);
+    }
+    lib_handle_ = nullptr;
     return false;
+
+#else
+#error "Unsupported platform"
 #endif
 }
 
@@ -66,7 +86,7 @@ bool SharedLibrary::unloadLibrary() {
     if (!lib_handle_) {
         return false;
     }
-#if !defined(_WIN32)
+#if defined(__linux__)
     // The function dlclose() returns 0 on success, and nonzero on error.
     int error_code = dlclose(lib_handle_);
     if (error_code) {
@@ -75,6 +95,16 @@ bool SharedLibrary::unloadLibrary() {
     }
     lib_handle_ = nullptr;
     lib_path_.clear();
+#elif defined(_WIN32)
+    if (!FreeLibrary(static_cast<HMODULE>(lib_handle_))) {
+        DWORD error_code = GetLastError();
+        ELITE_LOG_ERROR("FreeLibrary error: %lu", error_code);
+        return false;
+    }
+    lib_handle_ = nullptr;
+    lib_path_.clear();
+#else
+#error "Unsupported platform"
 #endif
     return true;
 }
@@ -86,18 +116,22 @@ void* SharedLibrary::getSymbol(const std::string& symbol_name) {
     }
 
     void* lib_symbol = nullptr;
-#if !defined(_WIN32)
+#if defined(__linux__)
     lib_symbol = dlsym(lib_handle_, symbol_name.c_str());
     char* error = dlerror();
     if (error != NULL) {
         ELITE_LOG_ERROR("Error getting the symbol '%s'. Error '%s'", symbol_name.c_str(), error);
         return nullptr;
     }
+#elif defined(_WIN32)
+    lib_symbol = GetProcAddress(static_cast<HMODULE>(lib_handle_), symbol_name.c_str());
+    if (lib_symbol == nullptr) {
+        DWORD error_code = GetLastError();
+        ELITE_LOG_ERROR("Error getting the symbol '%s'. Error '%lu'", symbol_name.c_str(), error_code);
+        return nullptr;
+    }
 #else
-    // TODO: Support windows
-    ELITE_LOG_ERROR("SharedLibrary::getSymbol is not supported on Windows yet (symbol: '%s')",
-                    symbol_name.c_str());
-    return nullptr;
+#error "Unsupported platform"
 #endif
     if (!lib_symbol) {
         ELITE_LOG_ERROR("Symbol '%s' does not exist in the library '%s'", symbol_name.c_str(), lib_path_.c_str());
@@ -111,18 +145,18 @@ bool SharedLibrary::hasSymbol(const std::string& symbol_name) {
         ELITE_LOG_ERROR("Shared library Querying for symbol existence returns an invalid parameter error.");
         return false;
     }
-#if !defined(_WIN32)
+#if defined(__linux__)
     // The proper error-checking procedure is: first call dlerror() to clear any previous error state,
     // then call dlsym(), followed immediately by another dlerror() call, saving its return value
     // to a variable, and finally checking whether this stored value is not NULL.
     dlerror();
     void* lib_symbol = dlsym(lib_handle_, symbol_name.c_str());
     return dlerror() == NULL && lib_symbol != 0;
+#elif defined(_WIN32)
+    void* lib_symbol = GetProcAddress(static_cast<HMODULE>(lib_handle_), symbol_name.c_str());
+    return lib_symbol != nullptr;
 #else
-    // TODO: Support windows
-    ELITE_LOG_ERROR("SharedLibrary::hasSymbol is not supported on Windows yet (symbol: '%s')",
-                    symbol_name.c_str());
-    return false;
+#error "Unsupported platform"
 #endif
 }
 

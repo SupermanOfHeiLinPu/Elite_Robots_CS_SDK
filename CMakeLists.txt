@@ -165,7 +165,12 @@ target_link_libraries(${PROJECT_NAME}_SHARED PRIVATE ${THIRDPARTY_LIB})
 target_link_libraries(${PROJECT_NAME}_STATIC PRIVATE ${THIRDPARTY_LIB})
 
 foreach(header ${ELITE_HEADER_FILES})
-    file(COPY ${PROJECT_SOURCE_DIR}/include/${header} DESTINATION ${PROJECT_BINARY_DIR}/include/Elite)
+    get_filename_component(header_name ${header} NAME)
+    configure_file(
+        ${PROJECT_SOURCE_DIR}/include/${header}
+        ${PROJECT_BINARY_DIR}/include/Elite/${header_name}
+        COPYONLY
+    )
 endforeach()
 
 add_library(${PROJECT_NAME}::shared ALIAS ${PROJECT_NAME}_SHARED)
