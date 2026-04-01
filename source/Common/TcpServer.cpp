@@ -35,7 +35,7 @@ TcpServer::TcpServer(int port, int recv_buf_size, std::shared_ptr<StaticResource
 
             if (!logged_address_in_use) {
                 ELITE_LOG_WARN("TCP port %d is in use, retry bind for up to %lld ms", port,
-                               static_cast<long long>(BIND_RETRY_INTERVAL.count() * BIND_RETRY_TIMES));
+                               static_cast<long long>(BIND_RETRY_INTERVAL.count() * (BIND_RETRY_TIMES - 1)));
                 logged_address_in_use = true;
             }
             std::this_thread::sleep_for(BIND_RETRY_INTERVAL);

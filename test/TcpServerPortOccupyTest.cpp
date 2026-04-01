@@ -5,6 +5,8 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <functional>
+#include <chrono>
 
 #include "Common/TcpServer.hpp"
 #include "EliteException.hpp"

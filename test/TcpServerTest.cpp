@@ -175,7 +175,8 @@ TEST(TCP_SERVER, TCP_SERVER_MULIT_CONNECT) {
 
     ASSERT_EQ(client1.socket_ptr->write_some(boost::asio::buffer(client_send_string)), client_send_string.length());
     // Wait for recv
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    EXPECT_TRUE(waitUntil([&]() { return recv_count.load(std::memory_order_acquire) >= 3; }, std::chrono::milliseconds(200)));
+    EXPECT_TRUE(recv_ok.load(std::memory_order_acquire));
 
     server->unsetReceiveCallback();
     tcp_resource->shutdown();
