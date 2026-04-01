@@ -2,6 +2,7 @@
 #include <Elite/Log.hpp>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #if defined(__linux__)
 #include <dlfcn.h>
@@ -54,13 +55,31 @@ load_fail:
         ELITE_LOG_ERROR("LoadLibraryA error: %lu", error_code);
         return false;
     }
+    std::string path;
+    std::vector<wchar_t> wpath(MAX_PATH, 0);
+    DWORD chars_copied = 0;
+    while (true) {
+        chars_copied = GetModuleFileNameW(static_cast<HMODULE>(lib_handle_), wpath.data(), static_cast<DWORD>(wpath.size()));
+        if (chars_copied == 0) {
+            DWORD error_code = GetLastError();
+            ELITE_LOG_ERROR("GetModuleFileNameW error: %lu", error_code);
+            goto load_fail;
+        }
+        if (chars_copied < wpath.size()) {
+            break;
+        }
+        wpath.resize(wpath.size() * 2);
+    }
 
-    char path[MAX_PATH];
-    if (GetModuleFileNameA(static_cast<HMODULE>(lib_handle_), path, MAX_PATH) == 0) {
+    int utf8_size = WideCharToMultiByte(CP_UTF8, 0, wpath.data(), static_cast<int>(chars_copied), nullptr, 0, nullptr, nullptr);
+    if (utf8_size == 0) {
         DWORD error_code = GetLastError();
-        ELITE_LOG_ERROR("GetModuleFileNameA error: %lu", error_code);
+        ELITE_LOG_ERROR("WideCharToMultiByte error: %lu", error_code);
         goto load_fail;
     }
+
+    path.resize(utf8_size, '\0');
+    WideCharToMultiByte(CP_UTF8, 0, wpath.data(), static_cast<int>(chars_copied), path.data(), utf8_size, nullptr, nullptr);
     lib_path_ = path;
 
     if (lib_path_.empty()) {
