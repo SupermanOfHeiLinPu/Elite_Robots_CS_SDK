@@ -2,6 +2,14 @@
 
 ## [Unrelease]
 
+### Added
+- Introduce the new kinematics plugin infrastructure, including the `ClassLoader` module, registration helpers, documentation, and the `ELITE_COMPILE_KIN_PLUGIN` CMake option to drive optional builds.
+- Add configurable servo extrapolation and hold-lock parameters (`servoj_extrapolate_max_time`, `servoj_decelerate_time`, `servoj_hold_velocity_threshold`, `servoj_hold_stable_time`, and the corrected `servoj_lookahead_time`) to `EliteDriverConfig` along with the updated script integration and tuning guidance.
+
+### Changed
+- Document the plugin build option, its dependency requirements (`orocos-kdl`, `Eigen3`, etc.), and the updated build status messages so users know how to enable the kinematics plugin.
+- Update `external_control.script` to consume the new extrapolation/hold-lock parameters, add helper functions for joint stability checks, and keep the script synchronized with the driver configuration for improved robustness.
+
 ### Fixed
 - Fixed the issue where, on some compilers, joint angles in `EliteDriver::writeTrajectoryPoint()` and `EliteDriver::writeJointServoj()` would become 0 when they were negative.
 
