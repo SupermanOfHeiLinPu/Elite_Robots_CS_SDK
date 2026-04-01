@@ -35,6 +35,10 @@ static const std::string TRAJECTORY_DATA_SIZE_REPLACE = "{{TRAJECTORY_DATA_SIZE_
 static const std::string SCRIPT_COMMAND_DATA_SIZE_REPLACE = "{{SCRIPT_COMMAND_DATA_SIZE_REPLACE}}";
 static const std::string STOP_J_REPLACE = "{{STOP_J_REPLACE}}";
 static const std::string SERVOJ_TIME_REPLACE = "{{SERVOJ_TIME_REPLACE}}";
+static const std::string SERVOJ_EXTRAPOLATE_MAX_TIME_REPLACE = "{{SERVOJ_EXTRAPOLATE_MAX_TIME_REPLACE}}";
+static const std::string SERVOJ_DECELERATE_TIME_REPLACE = "{{SERVOJ_DECELERATE_TIME_REPLACE}}";
+static const std::string SERVOJ_HOLD_VELOCITY_THRESHOLD_REPLACE = "{{SERVOJ_HOLD_VELOCITY_THRESHOLD_REPLACE}}";
+static const std::string SERVOJ_HOLD_STABLE_TIME_REPLACE = "{{SERVOJ_HOLD_STABLE_TIME_REPLACE}}";
 
 class EliteDriver::Impl {
    public:
@@ -111,6 +115,28 @@ void EliteDriver::Impl::scriptParamWrite(std::string& file_string, const EliteDr
     while (file_string.find(SERVOJ_TIME_REPLACE) != std::string::npos) {
         file_string.replace(file_string.find(SERVOJ_TIME_REPLACE), SERVOJ_TIME_REPLACE.length(),
                             std::to_string(config.servoj_time));
+    }
+
+    while (file_string.find(SERVOJ_EXTRAPOLATE_MAX_TIME_REPLACE) != std::string::npos) {
+        file_string.replace(file_string.find(SERVOJ_EXTRAPOLATE_MAX_TIME_REPLACE),
+                            SERVOJ_EXTRAPOLATE_MAX_TIME_REPLACE.length(),
+                            std::to_string(config.servoj_extrapolate_max_time));
+    }
+
+    while (file_string.find(SERVOJ_DECELERATE_TIME_REPLACE) != std::string::npos) {
+        file_string.replace(file_string.find(SERVOJ_DECELERATE_TIME_REPLACE), SERVOJ_DECELERATE_TIME_REPLACE.length(),
+                            std::to_string(config.servoj_decelerate_time));
+    }
+
+    while (file_string.find(SERVOJ_HOLD_VELOCITY_THRESHOLD_REPLACE) != std::string::npos) {
+        file_string.replace(file_string.find(SERVOJ_HOLD_VELOCITY_THRESHOLD_REPLACE),
+                            SERVOJ_HOLD_VELOCITY_THRESHOLD_REPLACE.length(),
+                            std::to_string(config.servoj_hold_velocity_threshold));
+    }
+
+    while (file_string.find(SERVOJ_HOLD_STABLE_TIME_REPLACE) != std::string::npos) {
+        file_string.replace(file_string.find(SERVOJ_HOLD_STABLE_TIME_REPLACE), SERVOJ_HOLD_STABLE_TIME_REPLACE.length(),
+                            std::to_string(config.servoj_hold_stable_time));
     }
 
     while (file_string.find(POS_ZOOM_RATIO_REPLACE) != std::string::npos) {
@@ -209,7 +235,9 @@ EliteDriver::EliteDriver(const EliteDriverConfig& config) { init(config); }
 
 EliteDriver::EliteDriver(const std::string& robot_ip, const std::string& local_ip, const std::string& script_file,
                          bool headless_mode, int script_sender_port, int reverse_port, int trajectory_port, int script_command_port,
-                         float servoj_time, float servoj_lookahead_time, int servoj_gain, float stopj_acc) {
+                         float servoj_time, float servoj_lookahead_time, int servoj_gain, float stopj_acc,
+                         float servoj_extrapolate_max_time, float servoj_decelerate_time,
+                         float servoj_hold_velocity_threshold, float servoj_hold_stable_time) {
     EliteDriverConfig config;
     config.robot_ip = robot_ip;
     config.local_ip = local_ip;
@@ -223,6 +251,10 @@ EliteDriver::EliteDriver(const std::string& robot_ip, const std::string& local_i
     config.servoj_lookahead_time = servoj_lookahead_time;
     config.servoj_gain = servoj_gain;
     config.stopj_acc = stopj_acc;
+    config.servoj_extrapolate_max_time = servoj_extrapolate_max_time;
+    config.servoj_decelerate_time = servoj_decelerate_time;
+    config.servoj_hold_velocity_threshold = servoj_hold_velocity_threshold;
+    config.servoj_hold_stable_time = servoj_hold_stable_time;
     init(config);
 }
 

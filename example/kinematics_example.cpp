@@ -30,6 +30,7 @@ void logVector6d(const std::string& prefix, const vector6d_t& vec) {
 }
 
 int main(int argc, const char** argv) {
+#if defined(ELITE_COMPILE_KIN_PLUGIN)
     // Parse the ip arguments if given
     std::string robot_ip;
 
@@ -83,9 +84,13 @@ int main(int argc, const char** argv) {
 
     auto current_tcp = io_interface->getActualTCPPose();
     ELITE_LOG_INFO("Got robot actual TCP positions.");
-
+#if defined(__linux__)
     ClassLoader loader("../plugin/kinematics/libelite_kdl_kinematics.so");
-
+#elif defined(_WIN32)
+    ClassLoader loader("../kin_plugin/KdlKinematicsPlugin/elite_kdl_kinematics.dll");
+#else
+#error "Unsupported platform"
+#endif
     if (!loader.loadLib()) {
         ELITE_LOG_FATAL("Load plugin fail.");
         return 1;
@@ -118,6 +123,6 @@ int main(int argc, const char** argv) {
 
     logVector6d("IK Result Joints:", ik_joints);
     logVector6d("Current Joints:", current_joint);
-
+#endif
     return 0;
 }

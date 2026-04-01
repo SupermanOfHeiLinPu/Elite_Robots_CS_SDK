@@ -43,7 +43,7 @@ class KinematicsBase {
    public:
     static constexpr double DEFAULT_TIMEOUT = 1.0; // seconds
 
-    ELITE_EXPORT KinematicsBase() : default_timeout_(DEFAULT_TIMEOUT) {}
+    KinematicsBase() : default_timeout_(DEFAULT_TIMEOUT) {}
 
     virtual ~KinematicsBase() = default;
 
