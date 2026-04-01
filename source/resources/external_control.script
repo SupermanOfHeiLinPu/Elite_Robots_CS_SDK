@@ -225,7 +225,7 @@ def extrapolate(extrapolate_duration):
             servo_hold_stable_count = 0
 
         servo_hold_reference_joints = actual_joints
-        if servo_hold_stable_count * SERVOJ_TIME >= SERVOJ_HOLD_STABLE_TIME:
+        if SERVOJ_HOLD_STABLE_TIME > 0 and servo_hold_stable_count > 0 and servo_hold_stable_count * SERVOJ_TIME >= SERVOJ_HOLD_STABLE_TIME:
             servo_hold_joints = actual_joints
             cmd_servo_joints = servo_hold_joints
             servo_hold_locked = True

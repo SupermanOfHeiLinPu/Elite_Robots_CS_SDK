@@ -111,10 +111,10 @@ class EliteDriver {
      * @param servoj_lookahead_time Time [S], range [0.03,0.2] smoothens the trajectory with this lookahead time
      * @param servoj_gain servo gain.
      * @param stopj_acc acceleration [rad/s^2]. The acceleration of stopj motion.
-        * @param servoj_extrapolate_max_time Maximum duration [S] for constant-velocity extrapolation.
-        * @param servoj_decelerate_time Deceleration duration [S] used to ramp extrapolation speed to zero.
-        * @param servoj_hold_velocity_threshold Joint velocity threshold [rad/s] for hold lock decision.
-        * @param servoj_hold_stable_time Stable duration [S] required before locking hold position.
+     * @param servoj_extrapolate_max_time Maximum duration [S] for constant-velocity extrapolation.
+     * @param servoj_decelerate_time Deceleration duration [S] used to ramp extrapolation speed to zero.
+     * @param servoj_hold_velocity_threshold Joint velocity threshold [rad/s] for hold lock decision.
+     * @param servoj_hold_stable_time Stable duration [S] required before locking hold position.
      */
     [[deprecated(
         "Construct a EliteDriver object with an argument list is deprecated. Please use"
