@@ -302,7 +302,8 @@ bool EliteDriver::stopControl(int wait_ms) {
 
     auto start_time = std::chrono::steady_clock::now();
     auto timeout = std::chrono::milliseconds(wait_ms);
-    while (impl_->script_command_server_->isRobotConnect() || impl_->reverse_server_->isRobotConnect()) {
+    while (impl_->script_command_server_->isRobotConnect() || impl_->reverse_server_->isRobotConnect() ||
+           impl_->trajectory_server_->isRobotConnect()) {
         auto elapsed = std::chrono::steady_clock::now() - start_time;
         if (elapsed >= timeout) {
             return false;

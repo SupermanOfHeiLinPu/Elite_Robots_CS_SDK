@@ -1,6 +1,10 @@
 #include <gtest/gtest.h>
 #include <string>
 #include <thread>
+#include <chrono>
+#include <cstring>
+#include <atomic>
+#include <functional>
 #include "Common/TcpServer.hpp"
 #include "boost/asio.hpp"
 #include <iostream>
@@ -9,6 +13,18 @@ using namespace std::chrono;
 using namespace ELITE;
 
 #define SERVER_TEST_PORT (50001)
+
+static bool waitUntil(const std::function<bool()>& predicate, std::chrono::milliseconds timeout,
+                      std::chrono::milliseconds poll = std::chrono::milliseconds(5)) {
+    auto start = std::chrono::steady_clock::now();
+    while (!predicate()) {
+        if (std::chrono::steady_clock::now() - start >= timeout) {
+            return false;
+        }
+        std::this_thread::sleep_for(poll);
+    }
+    return true;
+}
 
 class TcpClient
 {
@@ -68,20 +84,28 @@ TEST(TCP_SERVER, TCP_SERVER_TEST) {
     EXPECT_TRUE(server->isClientConnected());
 
     int send_data = 12345;
-    bool receive_flag = false;
+    std::atomic<bool> receive_flag{false};
+    std::atomic<bool> recv_ok{false};
+    std::atomic<int> recv_value{0};
     server->setReceiveCallback([&](const uint8_t data[], int nb) {
-        receive_flag = true;
-        EXPECT_EQ(nb, 4);
-        EXPECT_EQ(*(int*)data, send_data);
+        if (nb != 4) {
+            recv_ok.store(false, std::memory_order_release);
+            receive_flag.store(true, std::memory_order_release);
+            return;
+        }
+        int parsed_value = 0;
+        std::memcpy(&parsed_value, data, sizeof(parsed_value));
+        recv_ok.store(parsed_value == send_data, std::memory_order_release);
+        recv_value.store(parsed_value, std::memory_order_release);
+        receive_flag.store(true, std::memory_order_release);
     });
 
     client.socket_ptr->send(boost::asio::buffer(&send_data, sizeof(send_data)));
     // Wait send
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    
-    EXPECT_TRUE(receive_flag);
-    // Clear flag
-    receive_flag = false;
+    EXPECT_TRUE(waitUntil([&]() { return receive_flag.load(std::memory_order_acquire); }, std::chrono::milliseconds(200)));
+    EXPECT_TRUE(recv_ok.load(std::memory_order_acquire));
+    EXPECT_EQ(recv_value.load(std::memory_order_acquire), send_data);
+    server->unsetReceiveCallback();
     tcp_resource->shutdown();
 }
 
@@ -101,22 +125,25 @@ TEST(TCP_SERVER, TCP_SERVER_MULIT_CONNECT) {
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
     EXPECT_TRUE(server->isClientConnected());
-    bool receive_flag = false;
+    std::atomic<int> recv_count{0};
+    std::atomic<bool> recv_ok{true};
     server->setReceiveCallback([&](const uint8_t data[], int nb) {
-        receive_flag = true;
-        EXPECT_EQ(nb, client_send_string.length());
-
-        std::string str((const char *)data);
-        EXPECT_EQ(str, client_send_string);
+        if (nb != static_cast<int>(client_send_string.length())) {
+            recv_ok.store(false, std::memory_order_release);
+            return;
+        }
+        std::string str(reinterpret_cast<const char*>(data), static_cast<size_t>(nb));
+        if (str != client_send_string) {
+            recv_ok.store(false, std::memory_order_release);
+            return;
+        }
+        recv_count.fetch_add(1, std::memory_order_release);
     });
 
     EXPECT_EQ(client1.socket_ptr->write_some(boost::asio::buffer(client_send_string)), client_send_string.length());
     // Wait for recv
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    
-    EXPECT_TRUE(receive_flag);
-    // Clear flag
-    receive_flag = false;
+    EXPECT_TRUE(waitUntil([&]() { return recv_count.load(std::memory_order_acquire) >= 1; }, std::chrono::milliseconds(200)));
+    EXPECT_TRUE(recv_ok.load(std::memory_order_acquire));
     
     // New connection
     client2.connect("127.0.0.1", SERVER_TEST_PORT);
@@ -127,11 +154,8 @@ TEST(TCP_SERVER, TCP_SERVER_MULIT_CONNECT) {
 
     EXPECT_EQ(client2.socket_ptr->write_some(boost::asio::buffer(client_send_string)), client_send_string.length());
     // Wait for recv
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
-    EXPECT_TRUE(receive_flag);
-    // Clear flag
-    receive_flag = false;
+    EXPECT_TRUE(waitUntil([&]() { return recv_count.load(std::memory_order_acquire) >= 2; }, std::chrono::milliseconds(200)));
+    EXPECT_TRUE(recv_ok.load(std::memory_order_acquire));
 
     client1.socket_ptr->close();
     client2.socket_ptr->close();
@@ -151,8 +175,10 @@ TEST(TCP_SERVER, TCP_SERVER_MULIT_CONNECT) {
 
     ASSERT_EQ(client1.socket_ptr->write_some(boost::asio::buffer(client_send_string)), client_send_string.length());
     // Wait for recv
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    EXPECT_TRUE(waitUntil([&]() { return recv_count.load(std::memory_order_acquire) >= 3; }, std::chrono::milliseconds(200)));
+    EXPECT_TRUE(recv_ok.load(std::memory_order_acquire));
 
+    server->unsetReceiveCallback();
     tcp_resource->shutdown();
 }
 
@@ -176,27 +202,38 @@ TEST(TCP_SERVER, TCP_MULIT_SERVERS) {
     // Wait connected
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
+    std::atomic<int> recv_count{0};
+    std::atomic<bool> recv_ok{true};
     for (size_t i = 0; i < 5; i++) {
         ASSERT_TRUE(servers[i]->isClientConnected());
-
         servers[i]->setReceiveCallback([&](const uint8_t data[], int nb) {
-            EXPECT_EQ(nb, client_send_string.length());
-    
-            std::string str((const char *)data);
-            EXPECT_EQ(str, client_send_string);
-        });
+            if (nb != static_cast<int>(client_send_string.length())) {
+                recv_ok.store(false, std::memory_order_release);
+                return;
+            }
 
+            std::string str(reinterpret_cast<const char*>(data), static_cast<size_t>(nb));
+            if (str != client_send_string) {
+                recv_ok.store(false, std::memory_order_release);
+                return;
+            }
+            recv_count.fetch_add(1, std::memory_order_release);
+        });
+    }
+
+    for (size_t i = 0; i < 5; i++) {
         ASSERT_EQ(clients[i]->socket_ptr->write_some(boost::asio::buffer(client_send_string)), client_send_string.length());
     }
     // Wait for recv
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    EXPECT_TRUE(waitUntil([&]() { return recv_count.load(std::memory_order_acquire) >= 5; }, std::chrono::milliseconds(500)));
+    EXPECT_TRUE(recv_ok.load(std::memory_order_acquire));
     
     for (size_t i = 0; i < 5; i++) {
         clients[i]->socket_ptr->close();
+        servers[i]->unsetReceiveCallback();
     }
     tcp_resource->shutdown();
 }
-
 
 int main(int argc, char** argv) {
     testing::InitGoogleTest(&argc, argv);
