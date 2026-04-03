@@ -18,7 +18,8 @@ RtsiIOInterface::RtsiIOInterface(const std::string& output_recipe_file, const st
     : output_recipe_string_(readRecipe(output_recipe_file)),
       input_recipe_string_(readRecipe(input_recipe_file)),
       target_frequency_(frequency),
-      input_new_cmd_(false) {}
+      input_new_cmd_(false),
+      timestamp_offset_(0.0) {}
 
 RtsiIOInterface::RtsiIOInterface(const std::vector<std::string>& output_recipe, const std::vector<std::string>& input_recipe,
                                  double frequency)
@@ -244,7 +245,7 @@ bool RtsiIOInterface::setToolDigitalOutput(int index, bool level) {
 double RtsiIOInterface::getTimestamp() {
     double result = 0;
     getRecipeValue("timestamp", result);
-    return result;
+    return result + timestamp_offset_;
 }
 
 double RtsiIOInterface::getPayloadMass() {
@@ -603,6 +604,17 @@ double RtsiIOInterface::getOutDoubleRegister(int index) {
     double result = 0;
     getRecipeValue("output_double_register" + std::to_string(index), result);
     return result;
+}
+
+void RtsiIOInterface::syncTimestamp() {
+    auto now_duration = std::chrono::high_resolution_clock::now().time_since_epoch();
+    double now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now_duration).count();
+    now_ms /= 1000.0;
+    timestamp_offset_ = now_ms - getTimestamp();
+}
+
+void RtsiIOInterface::resetTimestampOffset() {
+    timestamp_offset_ = 0.0;
 }
 
 std::vector<std::string> RtsiIOInterface::readRecipe(const std::string& recipe_file) {

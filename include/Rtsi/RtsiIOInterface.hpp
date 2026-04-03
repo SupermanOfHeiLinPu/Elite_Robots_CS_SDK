@@ -459,6 +459,18 @@ class RtsiIOInterface : protected RtsiClientInterface {
     ELITE_EXPORT double getOutDoubleRegister(int index);
 
     /**
+     * @brief Synchronize local and robot timestamps
+     * 
+     */
+    ELITE_EXPORT void syncTimestamp();
+
+    /**
+     * @brief Clear the offset value of the timestamp
+     * 
+     */
+    ELITE_EXPORT void resetTimestampOffset();
+
+    /**
      * @brief Get data from output recipe
      *
      * @tparam T data type
@@ -496,6 +508,7 @@ class RtsiIOInterface : protected RtsiClientInterface {
     std::vector<std::string> input_recipe_string_;
     std::vector<std::string> output_recipe_string_;
     double target_frequency_;
+    double timestamp_offset_;
 
     std::shared_ptr<RtsiRecipe> input_recipe_;
     std::shared_ptr<RtsiRecipe> output_recipe_;
