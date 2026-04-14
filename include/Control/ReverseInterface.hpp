@@ -8,10 +8,8 @@
 
 #include "ControlMode.hpp"
 #include "DataType.hpp"
-#include "ReversePort.hpp"
 #include "TcpServer.hpp"
 
-#include <boost/asio.hpp>
 #include <mutex>
 
 namespace ELITE {
@@ -22,7 +20,7 @@ namespace ELITE {
  *
  *
  */
-class ReverseInterface : public ReversePort {
+class ReverseInterface : public TcpServer {
    public:
     static const int REVERSE_DATA_SIZE = 8;
 
@@ -34,7 +32,7 @@ class ReverseInterface : public ReversePort {
      * @param port Port the Server is started
      * @param resource TCP resource shared pointer
      */
-    ReverseInterface(int port, std::shared_ptr<TcpServer::StaticResource> resource);
+    ReverseInterface(int port);
 
     /**
      * @brief Destroy the Reverse Interface object. Will disconnect robot connection.

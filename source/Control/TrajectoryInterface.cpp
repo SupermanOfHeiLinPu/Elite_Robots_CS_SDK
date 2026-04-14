@@ -1,16 +1,23 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025, Elite Robots.
 #include "TrajectoryInterface.hpp"
-#include <boost/asio.hpp>
 #include "ControlCommon.hpp"
 #include "EliteException.hpp"
 #include "Log.hpp"
+#include <cmath>
+#if defined(_WIN32)
+#include <WinSock2.h>
+#include <Ws2tcpip.h>
+#pragma comment(lib, "Ws2_32.lib")
+#else
+#include <netinet/in.h>
+#endif
 
 using namespace ELITE;
 
-TrajectoryInterface::TrajectoryInterface(int port, std::shared_ptr<TcpServer::StaticResource> resource_)
-    : ReversePort(port, sizeof(TrajectoryMotionResult), resource_) {
-    server_->setReceiveCallback([&](const uint8_t data[], int nb) {
+TrajectoryInterface::TrajectoryInterface(int port)
+    : TcpServer(port, TRAJECTORY_RECEIVE_MESSAGE_LEN) {
+    setReceiveCallback([&](const uint8_t data[], int nb) {
         if (nb != sizeof(TrajectoryMotionResult)) {
             return;
         }
@@ -21,7 +28,6 @@ TrajectoryInterface::TrajectoryInterface(int port, std::shared_ptr<TcpServer::St
             motion_result_func_(motion_result);
         }
     });
-    server_->startListen();
 }
 
 TrajectoryInterface::~TrajectoryInterface() {}
@@ -40,5 +46,5 @@ bool TrajectoryInterface::writeTrajectoryPoint(const vector6d_t& positions, floa
         buffer[20] = htonl((int)TrajectoryMotionType::JOINT);
     }
 
-    return write(buffer, sizeof(buffer)) > 0;
+    return writeClient(buffer, sizeof(buffer)) > 0;
 }

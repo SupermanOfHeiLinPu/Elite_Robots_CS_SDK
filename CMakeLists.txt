@@ -41,6 +41,8 @@ set(
     ELITE_LIB_SOURCE_FILE
     source/Common/StringUtils.cpp
     source/Common/TcpServer.cpp
+    source/Common/TcpServerSharedPoller.cpp
+    source/Common/TcpCommon.cpp
     source/Common/EliteException.cpp
     source/Common/SshUtils.cpp
     source/Common/RtUtils.cpp

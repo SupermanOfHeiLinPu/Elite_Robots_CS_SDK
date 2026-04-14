@@ -1,139 +1,70 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025, Elite Robots.
-//
-// TcpServer.hpp
-// Provides utility functions for string manipulation.
 #ifndef __TCP_SERVER_HPP__
 #define __TCP_SERVER_HPP__
 
 #include <atomic>
-#include <boost/asio.hpp>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <mutex>
-#include <thread>
+#include <string>
 #include <vector>
+#include "TcpCommon.hpp"
+#include "TcpServerSharedPoller.hpp"
 
 namespace ELITE {
 
-class TcpServer : public std::enable_shared_from_this<TcpServer> {
+class TcpServer : public TcpServerBase {
    public:
-    // Boost io_context and backend thread.
-    // All servers use the same io_comtext and thread.
-    class StaticResource {
-       public:
-        std::unique_ptr<std::thread> server_thread_;
-        std::shared_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> work_guard_ptr_;
-        std::shared_ptr<boost::asio::io_context> io_context_ptr_;
-        StaticResource();
-        ~StaticResource();
-        void shutdown();
-
-        StaticResource(const StaticResource&) = delete;
-        StaticResource& operator=(const StaticResource&) = delete;
-
-       private:
-        std::atomic<bool> shutting_down_{false};
-    };
-
-    // Read callback
     using ReceiveCallback = std::function<void(const uint8_t[], int)>;
 
-    /**
-     * @brief Construct a new Tcp Server object
-     *
-     * @param port Listen port
-     * @param recv_buf_size
-     * @note Ensure that the start() method has been called before instantiation
-     */
-    TcpServer(int port, int recv_buf_size, std::shared_ptr<StaticResource> resource);
-
-    /**
-     * @brief Destroy the Tcp Server object
-     *
-     */
+    TcpServer(int port, int rev_msg_size);
     ~TcpServer();
 
-    /**
-     * @brief Set the Receive Callback
-     *
-     * @param cb receive callback
-     */
+    std::string lastError() const;
+
     void setReceiveCallback(ReceiveCallback cb);
-
-    /**
-     * @brief Unset the Receive Callback
-     *
-     */
     void unsetReceiveCallback();
-
-    /**
-     * @brief Write data to client
-     *
-     * @param data data
-     * @param size The number of bytes in the data
-     * @return int Success send bytes
-     */
     int writeClient(void* data, int size);
-
-    /**
-     * @brief Start listen port
-     *
-     */
-    void startListen();
-
-    /**
-     * @brief Determine if there is a client connected
-     *
-     * @return true Connected
-     * @return false Disconnected
-     */
+    bool startListen();
     bool isClientConnected();
 
    protected:
-    std::unique_ptr<boost::asio::ip::tcp::acceptor> acceptor_;
-    std::shared_ptr<StaticResource> resource_;
+    // Event handlers called by TcpServerSharedPoller thread.
+    virtual void onClientReadEvent();
+    virtual void onAcceptEvent();
+    virtual void stopListen();
 
    private:
-    // Save connected client. In this project, each server is only connected to one client.
-    std::shared_ptr<boost::asio::ip::tcp::socket> socket_;
-    boost::asio::ip::tcp::endpoint remote_endpoint_;
-    boost::asio::ip::tcp::endpoint local_endpoint_;
-
-    std::vector<uint8_t> read_buffer_;
+    static constexpr int BIND_RETRY_TIMES = 30;
+    static constexpr auto BIND_RETRY_INTERVAL = std::chrono::milliseconds(100);
+    
+    int rev_msg_size_;
     ReceiveCallback receive_cb_;
     std::mutex receive_cb_mutex_;
-    std::mutex socket_mutex_;
+    std::atomic<bool> initialized_{false};
+    std::string last_error_;
 
-    /**
-     * @brief Async accept client connection and add async read task
-     *
-     */
-    virtual void doAccept();
+    private:
+    bool initialize();
+    void closeSocket(SocketHandle& sock);
+    int createBindListen();
+    bool createAndBindListenSocketWithRetry();
 
-    /**
-     * @brief Async receive
-     *
-     * @param sock Client socket
-     */
-    void doRead(std::shared_ptr<boost::asio::ip::tcp::socket> sock);
-
-    /**
-     * @brief Cancle client asnyc task and close client connection
-     *
-     * @param sock client socket
-     * @param ec boost error code (Only close() function ec is available).
-     */
-    void closeSocket(std::shared_ptr<boost::asio::ip::tcp::socket> sock, boost::system::error_code& ec);
-
-    /**
-     * @brief Call receive callback
-     *
-     * @param data received data
-     * @param size received data size
-     */
+    bool setNonBlocking(SocketHandle sock, bool non_blocking);
+    bool setSocketOptions(SocketHandle sock, bool is_server_socket);
+    bool updateEndpointInfo(SocketHandle sock, bool is_local);
     void callReceiveCallback(const uint8_t data[], int size);
+    int readSocket(uint8_t data[]);
+
+    bool wouldBlockError(int error_code) const;
+
+    
+
+    friend class TcpServerSharedPoller;
 };
 
 }  // namespace ELITE
+
 #endif

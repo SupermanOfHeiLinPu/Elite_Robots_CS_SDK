@@ -29,6 +29,8 @@ class EliteException : virtual public std::runtime_error {
         SOCKET_CONNECT_FAIL,
         /// socket communicate error
         SOCKET_FAIL,
+        /// socket listen port fail
+        SOCKET_SERVER_LISTEN_FAIL,
         /// RTSI receive unknown data type,
         /// maybe "NOT_FOUND" or "IN_USE"
         RTSI_UNKNOW_VARIABLE_TYPE,

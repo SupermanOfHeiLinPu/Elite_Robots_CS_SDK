@@ -13,6 +13,8 @@ const char* EliteException::exceptionCodeToString(const Code& ec) {
         return "socket connect fail";
     case Code::SOCKET_FAIL:
         return "socket disconnected";
+    case Code::SOCKET_SERVER_LISTEN_FAIL:
+        return "socket listen fail";
     case Code::RTSI_UNKNOW_VARIABLE_TYPE:
         return "rtsi unknow variable type";
     case Code::RTSI_RECIPE_PARSER_FAIL:

@@ -7,16 +7,14 @@
 #define __SCRIPT_COMMAND_INTERFACE_HPP__
 
 #include "DataType.hpp"
-#include "ReversePort.hpp"
 #include "SerialCommunication.hpp"
 #include "TcpServer.hpp"
 
-#include <boost/asio.hpp>
 #include <memory>
 
 namespace ELITE {
 
-class ScriptCommandInterface : public ReversePort {
+class ScriptCommandInterface : public TcpServer {
    private:
     enum class Cmd {
         ZERO_FTSENSOR = 0,
@@ -42,7 +40,7 @@ class ScriptCommandInterface : public ReversePort {
      * @param port Server port
      * @param resource TCP resource shared pointer
      */
-    ScriptCommandInterface(int port, std::shared_ptr<TcpServer::StaticResource> resource);
+    ScriptCommandInterface(int port);
 
     ~ScriptCommandInterface();
 

@@ -9,7 +9,6 @@
 #include <functional>
 #include <memory>
 #include "DataType.hpp"
-#include "ReversePort.hpp"
 #include "TcpServer.hpp"
 
 namespace ELITE {
@@ -20,9 +19,10 @@ enum class TrajectoryMotionType : int {
     SPLINE = 2      // spline
 };
 
-class TrajectoryInterface : public ReversePort {
+class TrajectoryInterface : public TcpServer {
    public:
     static const int TRAJECTORY_MESSAGE_LEN = 21;
+    static constexpr int TRAJECTORY_RECEIVE_MESSAGE_LEN = sizeof(TrajectoryMotionResult);
 
     TrajectoryInterface() = delete;
 
@@ -32,7 +32,7 @@ class TrajectoryInterface : public ReversePort {
      * @param port Port the Server is started on
      * @param resource TCP resource shared pointer
      */
-    TrajectoryInterface(int port, std::shared_ptr<TcpServer::StaticResource> resource);
+    TrajectoryInterface(int port);
 
     ~TrajectoryInterface();
 

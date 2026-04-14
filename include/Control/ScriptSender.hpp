@@ -8,24 +8,21 @@
 
 #include "TcpServer.hpp"
 
-#include <boost/asio.hpp>
 #include <memory>
 #include <string>
 
 namespace ELITE {
 
-class ScriptSender : protected TcpServer {
+class ScriptSender : public TcpServer {
    private:
     const std::string PROGRAM_REQUEST_ = std::string("request_program");
+    std::string recv_request_buffer_;
     const std::string& program_;
-    boost::asio::streambuf recv_request_buffer_;
 
-    void responseRequest(std::shared_ptr<boost::asio::ip::tcp::socket> sock);
-
-    virtual void doAccept() override;
+    void onReceive(const uint8_t data[], int size);
 
    public:
-    ScriptSender(int port, const std::string& program, std::shared_ptr<TcpServer::StaticResource> resource);
+    ScriptSender(int port, const std::string& program);
     ~ScriptSender();
 };
 

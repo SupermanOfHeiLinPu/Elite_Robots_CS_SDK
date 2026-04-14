@@ -13,6 +13,7 @@ namespace CONTROL {
 static const int POS_ZOOM_RATIO = 1000000;
 static const int COMMON_ZOOM_RATIO = 1000000;
 static const int TIME_ZOOM_RATIO = 1000;
+static const int DEFAULT_RECEIVE_SIZE = 4;
 
 }  // namespace CONTROL
 

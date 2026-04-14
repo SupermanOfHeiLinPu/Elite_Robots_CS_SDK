@@ -1,210 +1,314 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025, Elite Robots.
 #include "TcpServer.hpp"
-#include <chrono>
-#include <iostream>
-#include <thread>
-#include "Common/RtUtils.hpp"
-#include "EliteException.hpp"
 #include "Log.hpp"
+
+#include <chrono>
+#include <cstring>
+#include <thread>
+
+#if defined(_WIN32)
+#include <WinSock2.h>
+#include <Ws2tcpip.h>
+#pragma comment(lib, "Ws2_32.lib")
+#else
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <cerrno>
+#endif
 
 namespace ELITE {
 
-namespace {
-constexpr int BIND_RETRY_TIMES = 30;
-constexpr auto BIND_RETRY_INTERVAL = std::chrono::milliseconds(10);
+TcpServer::TcpServer(int port, int recv_buf_size) : TcpServerBase(port, recv_buf_size) {}
+
+int TcpServer::createBindListen() {
+    listen_fd_ = static_cast<SocketHandle>(::socket(AF_INET, SOCK_STREAM, 0));
+    if (listen_fd_ == SOCKET_INVALID_HANDLE) {
+        return socketLastErrorCode();
+    }
+    setSocketOptions(listen_fd_, true);
+    setNonBlocking(listen_fd_, true);
+    sockaddr_in addr;
+    std::memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(static_cast<uint16_t>(local_port_));
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    if (::bind(listen_fd_, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) == 0) {
+        return 0;
+    } else {
+        return socketLastErrorCode();
+    }
 }
 
-TcpServer::TcpServer(int port, int recv_buf_size, std::shared_ptr<StaticResource> resource) : read_buffer_(recv_buf_size) {
-    resource_ = resource;
-    boost::system::error_code ec;
-    bool logged_address_in_use = false;
-    for (int i = 0; i < BIND_RETRY_TIMES; ++i) {
-        try {
-            acceptor_ = std::make_unique<boost::asio::ip::tcp::acceptor>(
-                *(resource_->io_context_ptr_), boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port), true);
-            ec = boost::system::error_code();
+bool TcpServer::createAndBindListenSocketWithRetry() {
+    int last_error = 0;
+    for (int i = 0; i < BIND_RETRY_TIMES; i++) {
+        int error_code = createBindListen();
+        if (error_code == 0) {
+            last_error = 0;
             break;
-        } catch (const boost::system::system_error& error) {
-            ec = error.code();
-            acceptor_.reset();
-
-            if (ec != boost::asio::error::address_in_use || i == BIND_RETRY_TIMES - 1) {
-                break;
-            }
-
-            if (!logged_address_in_use) {
-                ELITE_LOG_WARN("TCP port %d is in use, retry bind for up to %lld ms", port,
-                               static_cast<long long>(BIND_RETRY_INTERVAL.count() * (BIND_RETRY_TIMES - 1)));
-                logged_address_in_use = true;
-            }
-            std::this_thread::sleep_for(BIND_RETRY_INTERVAL);
         }
+        closeSocket(listen_fd_);
+
+        if (last_error != error_code) {
+            last_error = error_code;
+            ELITE_LOG_WARN("TCP port %d bind fail %s, retry bind %d/%d", local_port_, socketErrorString(last_error), i,
+                           BIND_RETRY_TIMES);
+        }
+
+        std::this_thread::sleep_for(BIND_RETRY_INTERVAL);
     }
 
-    if (ec) {
-        ELITE_LOG_FATAL("Create TCP server on port %d fail: %s", port, ec.message().c_str());
-        throw EliteException(EliteException::Code::SOCKET_FAIL, ec.message());
+    if (last_error != 0 || listen_fd_ == SOCKET_INVALID_HANDLE) {
+        last_error_ = "Create TCP server on port " + std::to_string(local_port_) + " fail: " + socketErrorString(last_error);
+        ELITE_LOG_FATAL("%s", last_error_.c_str());
+        return false;
     }
 
-    acceptor_->listen(1, ec);
-    if (ec) {
-        ELITE_LOG_FATAL("TCP port %d listen fail: %s", port, ec.message().c_str());
-        throw EliteException(EliteException::Code::SOCKET_FAIL, ec.message());
-    }
+    return true;
 }
 
-TcpServer::~TcpServer() {
+bool TcpServer::initialize() {
+    if (initialized_.load()) {
+        return true;
+    }
+
     std::lock_guard<std::mutex> lock(socket_mutex_);
-    if (acceptor_ && acceptor_->is_open()) {
-        boost::system::error_code ec;
-        acceptor_->cancel(ec);
-        acceptor_->close(ec);
-        acceptor_.reset();
+    if (!createAndBindListenSocketWithRetry()) {
+        return false;
     }
-    if (socket_) {
-        boost::system::error_code ec;
-        closeSocket(socket_, ec);
-        socket_.reset();
+
+    if (::listen(listen_fd_, 1) != 0) {
+        const int ec = socketLastErrorCode();
+        last_error_ = "TCP port " + std::to_string(local_port_) + " listen fail: " + socketErrorString(ec);
+        closeSocket(listen_fd_);
+        ELITE_LOG_FATAL("%s", last_error_.c_str());
+        return false;
     }
+
+    updateEndpointInfo(listen_fd_, true);
+    last_error_.clear();
+    initialized_.store(true);
+    return true;
 }
 
-void TcpServer::setReceiveCallback(ReceiveCallback cb) { 
+TcpServer::~TcpServer() { stopListen(); }
+
+void TcpServer::setReceiveCallback(ReceiveCallback cb) {
     std::lock_guard<std::mutex> lock(receive_cb_mutex_);
-    receive_cb_ = std::move(cb); 
+    receive_cb_ = std::move(cb);
 }
 
-void TcpServer::unsetReceiveCallback() {  
+void TcpServer::unsetReceiveCallback() {
     std::lock_guard<std::mutex> lock(receive_cb_mutex_);
-    receive_cb_ = nullptr; 
+    receive_cb_ = nullptr;
 }
 
-void TcpServer::startListen() { doAccept(); }
+bool TcpServer::startListen() {
+    if (listening_.exchange(true)) {
+        return false;
+    }
 
-void TcpServer::doAccept() {
+    if (!initialize()) {
+        listening_.store(false);
+        ELITE_LOG_ERROR("TCP port %d initialize fail: %s", local_port_, lastError().c_str());
+        return false;
+    }
+
+    return true;
+}
+
+std::string TcpServer::lastError() const {
     std::lock_guard<std::mutex> lock(socket_mutex_);
-    if (!acceptor_) {
+    return last_error_;
+}
+
+void TcpServer::stopListen() {
+    if (!listening_.exchange(false)) {
         return;
     }
-    auto new_socket = std::make_shared<boost::asio::ip::tcp::socket>(*(resource_->io_context_ptr_));
-    std::weak_ptr<TcpServer> weak_self = shared_from_this();
-    // Accept call back
-    auto accept_cb = [weak_self, new_socket](boost::system::error_code ec) {
-        boost::system::error_code ignore_ec;
-        if (auto self = weak_self.lock()) {
-            if (!ec) {
-                std::lock_guard<std::mutex> lock(self->socket_mutex_);
-                // Close old connection
-                if (self->socket_ && self->socket_->is_open()) {
-                    auto local_point = self->socket_->local_endpoint(ignore_ec);
-                    auto remote_point = self->socket_->remote_endpoint(ignore_ec);
-                    self->closeSocket(self->socket_, ignore_ec);
-                    ELITE_LOG_INFO("TCP port %d has new connection and close old client: %s:%d %s", local_point.port(),
-                                   remote_point.address().to_string().c_str(), remote_point.port(),
-                                   boost::system::system_error(ignore_ec).what());
-                }
-                // Socket set option
-                new_socket->set_option(boost::asio::socket_base::reuse_address(true), ignore_ec);
-                new_socket->set_option(boost::asio::ip::tcp::no_delay(true), ignore_ec);
-                new_socket->set_option(boost::asio::socket_base::keep_alive(true), ignore_ec);
-#if defined(__linux) || defined(linux) || defined(__linux__)
-                new_socket->set_option(boost::asio::detail::socket_option::boolean<IPPROTO_TCP, TCP_QUICKACK>(true));
-                new_socket->set_option(boost::asio::detail::socket_option::integer<SOL_SOCKET, SO_PRIORITY>(6));
-#endif
-                // Update alive socket
-                self->socket_ = new_socket;
-                // If accept success, get local and remote endpoint
-                // Save endpoint info for log
-                self->local_endpoint_ = new_socket->local_endpoint(ignore_ec);
-                if (ignore_ec) {
-                    ELITE_LOG_WARN("Get local endpoint fail: %s", ignore_ec.message().c_str());
-                    ignore_ec = boost::system::error_code();
-                }
-                self->remote_endpoint_ = new_socket->remote_endpoint(ignore_ec);
-                if (ignore_ec) {
-                    ELITE_LOG_WARN("Get remote endpoint fail: %s", ignore_ec.message().c_str());
-                }
-                ELITE_LOG_INFO("TCP port %d accept client: %s:%d %s", self->local_endpoint_.port(),
-                               self->remote_endpoint_.address().to_string().c_str(), self->remote_endpoint_.port(),
-                               boost::system::system_error(ec).what());
-                // Start async read
-                self->doRead(new_socket);
-            } else {
-                std::lock_guard<std::mutex> lock(self->socket_mutex_);
-                // Close old connection
-                if (self->socket_ && self->socket_->is_open()) {
-                    auto local_point = self->socket_->local_endpoint(ignore_ec);
-                    auto remote_point = self->socket_->remote_endpoint(ignore_ec);
-                    self->closeSocket(self->socket_, ignore_ec);
-                    ELITE_LOG_ERROR("TCP port %d accept new connection fail(%s), and close old connection %s:%d %s",
-                                    local_point.port(), boost::system::system_error(ec).what(),
-                                    remote_point.address().to_string().c_str(), remote_point.port(),
-                                    boost::system::system_error(ignore_ec).what());
-                }
-                self->socket_.reset();
-            }
-            self->doAccept();
-        }
-    };
-
-    acceptor_->async_accept(*new_socket, accept_cb);
+    closeSocket(client_fd_);
+    closeSocket(listen_fd_);
 }
 
-void TcpServer::doRead(std::shared_ptr<boost::asio::ip::tcp::socket> sock) {
-    std::weak_ptr<TcpServer> weak_self = shared_from_this();
-    auto read_cb = [weak_self, sock](boost::system::error_code ec, std::size_t n) {
-        if (auto self = weak_self.lock()) {
-            if (!ec) {
-                self->callReceiveCallback(self->read_buffer_.data(), n);
-                // Continue read
-                self->doRead(sock);
-            } else {
-                if (sock->is_open()) {
-                    boost::system::error_code ignore_ec;
-                    self->closeSocket(sock, ignore_ec);
-                    ELITE_LOG_INFO("TCP port %d close client: %s:%d %s. Reason: %s", self->local_endpoint_.port(),
-                                   self->remote_endpoint_.address().to_string().c_str(), self->remote_endpoint_.port(),
-                                   boost::system::system_error(ignore_ec).what(), boost::system::system_error(ec).what());
-                }
-            }
+void TcpServer::onAcceptEvent() {
+    std::lock_guard<std::mutex> lock(socket_mutex_);
+    if (!listening_.load() || listen_fd_ == SOCKET_INVALID_HANDLE) {
+        return;
+    }
+
+    sockaddr_in remote_addr;
+    std::memset(&remote_addr, 0, sizeof(remote_addr));
+#if defined(_WIN32)
+    int addr_len = sizeof(remote_addr);
+#else
+    socklen_t addr_len = sizeof(remote_addr);
+#endif
+
+    SocketHandle new_client = static_cast<SocketHandle>(::accept(listen_fd_, reinterpret_cast<sockaddr*>(&remote_addr), &addr_len));
+    if (new_client == SOCKET_INVALID_HANDLE) {
+        const int ec = socketLastErrorCode();
+        if (!wouldBlockError(ec)) {
+            ELITE_LOG_ERROR("TCP port %d accept fail: %s", local_port_, socketErrorString(ec).c_str());
         }
-    };
-    boost::asio::async_read(*sock, boost::asio::buffer(read_buffer_), read_cb);
+        return;
+    }
+
+    if (client_fd_ != SOCKET_INVALID_HANDLE) {
+        ELITE_LOG_INFO("TCP port %d has new connection and close old client: %s:%d", local_port_, remote_ip_.c_str(), remote_port_);
+        closeSocket(client_fd_);
+    }
+
+    setSocketOptions(new_client, false);
+    setNonBlocking(new_client, true);
+    client_fd_ = new_client;
+    updateEndpointInfo(client_fd_, false);
+    ELITE_LOG_INFO("TCP port %d accept client: %s:%d", local_port_, remote_ip_.c_str(), remote_port_);
+}
+
+int TcpServer::readSocket(uint8_t read_buf[]) {
+    std::lock_guard<std::mutex> lock(socket_mutex_);
+    if (!listening_.load() || client_fd_ == SOCKET_INVALID_HANDLE) {
+        return -1;
+    }
+    int read_len = socketReceive(client_fd_, read_buf, recv_buf_size_);
+    if (read_len <= 0) {
+        const int ec = socketLastErrorCode();
+        if (!wouldBlockError(ec)) {
+            ELITE_LOG_INFO("TCP port %d close client: %s:%d. Reason: %s", local_port_, remote_ip_.c_str(), remote_port_,
+                           socketErrorString(ec).c_str());
+            closeSocket(client_fd_);
+            return read_len;
+        }
+    }
+    return read_len;
+}
+
+void TcpServer::onClientReadEvent() { 
+    std::vector<uint8_t> read_buf(recv_buf_size_); 
+    int read_len = readSocket(read_buf.data());
+    if (read_len > 0) {
+        callReceiveCallback(read_buf.data(), read_len);
+    }
 }
 
 int TcpServer::writeClient(void* data, int size) {
     std::lock_guard<std::mutex> lock(socket_mutex_);
-    if (socket_) {
-        try {
-            boost::system::error_code ec;
-            int wb = boost::asio::write(*socket_, boost::asio::buffer(data, size), ec);
-            if (ec) {
-                ELITE_LOG_DEBUG("Port %d write TCP client fail: %s", local_endpoint_.port(), ec.message().c_str());
-                return -1;
+    if (client_fd_ == SOCKET_INVALID_HANDLE || size <= 0) {
+        return -1;
+    }
+
+    int total = 0;
+    uint8_t* bytes = reinterpret_cast<uint8_t*>(data);
+    while (total < size) {
+        int n = socketWrite(client_fd_, bytes + total, size - total);
+        if (n <= 0) {
+            const int ec = socketLastErrorCode();
+            if (wouldBlockError(ec)) {
+                continue;
             }
-            return wb;
-        } catch (const boost::system::system_error& e) {
-            ELITE_LOG_DEBUG("Port %d write TCP client exception: %s", local_endpoint_.port(), e.what());
+            ELITE_LOG_INFO("Port %d write TCP client fail: %s", local_port_, socketErrorString(ec).c_str());
             return -1;
         }
+        total += n;
     }
-    return -1;
+    return total;
 }
 
 bool TcpServer::isClientConnected() {
     std::lock_guard<std::mutex> lock(socket_mutex_);
-    if (socket_) {
-        return socket_->is_open();
-    }
-    return false;
+    return client_fd_ != SOCKET_INVALID_HANDLE;
 }
 
-void TcpServer::closeSocket(std::shared_ptr<boost::asio::ip::tcp::socket> sock, boost::system::error_code& ec) {
-    if (sock->is_open()) {
-        sock->cancel(ec);
-        sock->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-        sock->close(ec);
+void TcpServer::closeSocket(SocketHandle& sock) {
+    if (sock == SOCKET_INVALID_HANDLE) {
+        return;
     }
+#if defined(_WIN32)
+    ::shutdown(sock, SD_BOTH);
+    ::closesocket(sock);
+#else
+    ::shutdown(sock, SHUT_RDWR);
+    ::close(sock);
+#endif
+    sock = SOCKET_INVALID_HANDLE;
+}
+
+bool TcpServer::setNonBlocking(SocketHandle sock, bool non_blocking) {
+#if defined(_WIN32)
+    u_long mode = non_blocking ? 1 : 0;
+    return (::ioctlsocket(sock, FIONBIO, &mode) == 0);
+#else
+    int flags = ::fcntl(sock, F_GETFL, 0);
+    if (flags < 0) {
+        return false;
+    }
+    if (non_blocking) {
+        flags |= O_NONBLOCK;
+    } else {
+        flags &= ~O_NONBLOCK;
+    }
+    return (::fcntl(sock, F_SETFL, flags) == 0);
+#endif
+}
+
+bool TcpServer::setSocketOptions(SocketHandle sock, bool is_server_socket) {
+    int yes = 1;
+    int keepalive = 1;
+
+    (void)::setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&yes), sizeof(yes));
+    if (!is_server_socket) {
+        (void)::setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<const char*>(&yes), sizeof(yes));
+        (void)::setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, reinterpret_cast<const char*>(&keepalive), sizeof(keepalive));
+#if defined(__linux__) || defined(linux)
+        (void)::setsockopt(sock, IPPROTO_TCP, TCP_QUICKACK, reinterpret_cast<const char*>(&yes), sizeof(yes));
+        int priority = 6;
+        (void)::setsockopt(sock, SOL_SOCKET, SO_PRIORITY, reinterpret_cast<const char*>(&priority), sizeof(priority));
+#endif
+    }
+    return true;
+}
+
+bool TcpServer::updateEndpointInfo(SocketHandle sock, bool is_local) {
+    sockaddr_in addr;
+    std::memset(&addr, 0, sizeof(addr));
+#if defined(_WIN32)
+    int len = sizeof(addr);
+#else
+    socklen_t len = sizeof(addr);
+#endif
+
+    int ret = is_local ? ::getsockname(sock, reinterpret_cast<sockaddr*>(&addr), &len)
+                       : ::getpeername(sock, reinterpret_cast<sockaddr*>(&addr), &len);
+    if (ret != 0) {
+        return false;
+    }
+
+    char ip[INET_ADDRSTRLEN] = {0};
+    if (::inet_ntop(AF_INET, &addr.sin_addr, ip, sizeof(ip)) == nullptr) {
+        return false;
+    }
+
+    if (is_local) {
+        local_ip_ = ip;
+        local_port_ = ntohs(addr.sin_port);
+    } else {
+        remote_ip_ = ip;
+        remote_port_ = ntohs(addr.sin_port);
+    }
+    return true;
+}
+
+bool TcpServer::wouldBlockError(int error_code) const {
+#if defined(_WIN32)
+    return (error_code == WSAEWOULDBLOCK || error_code == WSAEINPROGRESS || error_code == WSAEALREADY || error_code == WSAEINTR);
+#else
+    return (error_code == EAGAIN || error_code == EWOULDBLOCK || error_code == EINTR);
+#endif
 }
 
 void TcpServer::callReceiveCallback(const uint8_t data[], int size) {
@@ -212,55 +316,6 @@ void TcpServer::callReceiveCallback(const uint8_t data[], int size) {
     if (receive_cb_) {
         receive_cb_(data, size);
     }
-}
-
-TcpServer::StaticResource::StaticResource() {
-    if (server_thread_) {
-        return;
-    }
-    if (!io_context_ptr_) {
-        io_context_ptr_ = std::make_shared<boost::asio::io_context>();
-    }
-    work_guard_ptr_.reset(new boost::asio::executor_work_guard<boost::asio::io_context::executor_type>(
-        boost::asio::make_work_guard(*io_context_ptr_)));
-    auto io_ctx = io_context_ptr_;
-    server_thread_.reset(new std::thread([io_ctx]() {
-        try {
-            if (io_ctx->stopped()) {
-                io_ctx->restart();
-            }
-            io_ctx->run();
-            ELITE_LOG_INFO("TCP server exit thread");
-        } catch (const boost::system::system_error& e) {
-            ELITE_LOG_FATAL("TCP server thread error: %s", e.what());
-        }
-    }));
-
-    std::thread::native_handle_type thread_headle = server_thread_->native_handle();
-    RT_UTILS::setThreadFiFoScheduling(thread_headle, RT_UTILS::getThreadFiFoMaxPriority());
-}
-
-void TcpServer::StaticResource::shutdown() {
-    if (shutting_down_.exchange(true)) {
-        return;
-    }
-    work_guard_ptr_->reset();
-    io_context_ptr_->stop();
-    if (server_thread_ && server_thread_->joinable()) {
-        if (std::this_thread::get_id() != server_thread_->get_id()) {
-            server_thread_->join();
-        } else {
-            server_thread_->detach();
-            ELITE_LOG_WARN("TcpServer::StaticResource's thread is waiting for itself; setting it to detach.");
-        }
-    }
-    work_guard_ptr_.reset();
-    server_thread_.reset();
-    io_context_ptr_.reset();
-}
-
-TcpServer::StaticResource::~StaticResource() {
-    shutdown();
 }
 
 }  // namespace ELITE
