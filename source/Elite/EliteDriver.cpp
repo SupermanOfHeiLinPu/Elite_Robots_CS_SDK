@@ -198,7 +198,8 @@ void EliteDriver::init(const EliteDriverConfig& config) {
 
     impl_->tcp_server_poller_ = std::make_unique<TcpServerSharedPoller>();
 
-    // Create reverse interface server and start listening before sending script to ensure the server is ready when robot tries to connect.
+    // Create reverse interface server and start listening before sending script to ensure the server is ready when robot tries to
+    // connect.
     impl_->reverse_server_ = std::make_unique<ReverseInterface>(config.reverse_port);
     if (!impl_->reverse_server_->startListen()) {
         throw EliteException(EliteException::Code::SOCKET_SERVER_LISTEN_FAIL);
@@ -230,6 +231,12 @@ void EliteDriver::init(const EliteDriverConfig& config) {
     impl_->headless_mode_ = config.headless_mode;
 
     if (impl_->headless_mode_) {
+        // In headless mode, the driver will not start a script sender server, but directly send the control script to robot after
+        // starting the TCP server poller.
+        if (!impl_->tcp_server_poller_->start()) {
+            throw EliteException(EliteException::Code::SOCKET_SERVER_LISTEN_FAIL, "Failed to start TCP server poller.");
+        }
+
         impl_->robot_script_ += "def externalControl():\n";
         std::istringstream control_script_stream(control_script);
         std::string line;
@@ -254,9 +261,9 @@ void EliteDriver::init(const EliteDriverConfig& config) {
             throw EliteException(EliteException::Code::SOCKET_SERVER_LISTEN_FAIL, "Failed to register script sender to poller.");
         }
         ELITE_LOG_DEBUG("Created script sender");
-    }
-    if (!impl_->tcp_server_poller_->start()) {
-        throw EliteException(EliteException::Code::SOCKET_SERVER_LISTEN_FAIL, "Failed to start TCP server poller.");
+        if (!impl_->tcp_server_poller_->start()) {
+            throw EliteException(EliteException::Code::SOCKET_SERVER_LISTEN_FAIL, "Failed to start TCP server poller.");
+        }
     }
 
     ELITE_LOG_DEBUG("Initialization done");

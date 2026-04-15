@@ -46,7 +46,9 @@ int TcpServer::createBindListen() {
 
 bool TcpServer::createAndBindListenSocketWithRetry() {
     int last_error = 0;
-    for (int i = 0; i < BIND_RETRY_TIMES; i++) {
+    static constexpr int bind_retry_times = 30;
+    static constexpr auto bind_retry_interval = std::chrono::milliseconds(100);
+    for (int i = 0; i < bind_retry_times; i++) {
         int error_code = createBindListen();
         if (error_code == 0) {
             last_error = 0;
@@ -57,10 +59,10 @@ bool TcpServer::createAndBindListenSocketWithRetry() {
         if (last_error != error_code) {
             last_error = error_code;
             ELITE_LOG_WARN("TCP port %d bind fail %s, retry bind %d/%d", local_port_, socketErrorString(last_error), i,
-                           BIND_RETRY_TIMES);
+                           bind_retry_times);
         }
 
-        std::this_thread::sleep_for(BIND_RETRY_INTERVAL);
+        std::this_thread::sleep_for(bind_retry_interval);
     }
 
     if (last_error != 0 || listen_fd_ == SOCKET_INVALID_HANDLE) {

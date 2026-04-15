@@ -37,8 +37,6 @@ class TcpServer : public TcpServerBase {
     virtual void stopListen();
 
    private:
-    static constexpr int BIND_RETRY_TIMES = 30;
-    static constexpr auto BIND_RETRY_INTERVAL = std::chrono::milliseconds(100);
     
     int rev_msg_size_;
     ReceiveCallback receive_cb_;

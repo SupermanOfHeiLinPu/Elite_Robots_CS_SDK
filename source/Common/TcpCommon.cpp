@@ -56,7 +56,7 @@ std::string socketErrorString(int error_code) {
 
 int socketReceive(SocketHandle handle, void* buff, std::size_t size) {
 #if defined(_WIN32)
-    return ::recv(client_fd_, reinterpret_cast<char*>(buff), static_cast<int>(size), 0);
+    return ::recv(handle, reinterpret_cast<char*>(buff), static_cast<int>(size), 0);
 #else
     return static_cast<int>(::recv(handle, buff, size, 0));
 #endif
@@ -66,7 +66,11 @@ int socketWrite(SocketHandle handle, const void* buff, std::size_t size) {
 #if defined(_WIN32)
         return ::send(handle, reinterpret_cast<const char*>(buff), static_cast<int>(size), 0);
 #else
-        return static_cast<int>(::send(handle, buff, size, 0));
+    int flags = 0;
+#if defined(MSG_NOSIGNAL)
+    flags = MSG_NOSIGNAL;
+#endif
+    return static_cast<int>(::send(handle, buff, size, flags));
 #endif
 }
 
