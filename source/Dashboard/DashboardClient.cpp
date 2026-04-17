@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025, Elite Robots.
 #include "DashboardClient.hpp"
-#include <boost/asio.hpp>
-#include <iostream>
+#include "TcpClient.hpp"
+
+#include <mutex>
 #include <regex>
 #include <thread>
 #include "DataType.hpp"
@@ -14,9 +15,7 @@ using namespace std::chrono_literals;
 class DashboardClient::Impl {
    public:
     std::mutex socket_mutex_;
-    boost::asio::io_context io_context_;
-    std::unique_ptr<boost::asio::ip::tcp::socket> socket_ptr_;
-    std::unique_ptr<boost::asio::ip::tcp::resolver> resolver_ptr_;
+    std::unique_ptr<TcpClient> tcp_client_;
 
     void disconnect();
 };
@@ -26,48 +25,38 @@ DashboardClient::DashboardClient() { impl_ = std::make_unique<Impl>(); }
 DashboardClient::~DashboardClient() {}
 
 bool DashboardClient::connect(const std::string& ip, int port) {
-    bool ret_val = false;
-    try {
-        std::lock_guard<std::mutex> lock(impl_->socket_mutex_);
-        impl_->socket_ptr_.reset(new boost::asio::ip::tcp::socket(impl_->io_context_));
-        impl_->resolver_ptr_.reset(new boost::asio::ip::tcp::resolver(impl_->io_context_));
-        impl_->socket_ptr_->open(boost::asio::ip::tcp::v4());
-        boost::asio::ip::tcp::no_delay no_delay_option(true);
-        impl_->socket_ptr_->set_option(no_delay_option);
-        boost::asio::socket_base::reuse_address sol_reuse_option(true);
-        impl_->socket_ptr_->set_option(sol_reuse_option);
-#if defined(__linux) || defined(linux) || defined(__linux__)
-        boost::asio::detail::socket_option::boolean<IPPROTO_TCP, TCP_QUICKACK> quickack(true);
-        impl_->socket_ptr_->set_option(quickack);
-#endif
-        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address(ip), port);
-        boost::system::error_code ec = boost::asio::error::would_block;
-
-        impl_->socket_ptr_->async_connect(endpoint, [&](const boost::system::error_code& error) {
-            ec = error;
-            if (ec) {
-                ELITE_LOG_ERROR("Dashboard connect to robot fail: %s", boost::system::system_error(ec).what());
-                ret_val = false;
-            } else {
-                ret_val = true;
-            }
-        });
-
-        do {
-            impl_->io_context_.run_one();
-            // TODO: When all tasks in the io_context are completed, the io_context enters a 'stopped' state.
-            // How can we prevent the io_context from entering the 'stopped' state without using the 'restart' method?
-            if (impl_->io_context_.stopped()) {
-                impl_->io_context_.restart();
-            }
-        } while (ec == boost::asio::error::would_block);
-
-    } catch (const boost::system::system_error& error) {
-        ELITE_LOG_ERROR("Dashboard connect to robot fail: %s", error.what());
-        throw EliteException(EliteException::Code::SOCKET_CONNECT_FAIL, error.what());
+    std::lock_guard<std::mutex> lock(impl_->socket_mutex_);
+    impl_->disconnect();
+    impl_->tcp_client_ = std::make_unique<TcpClient>();
+    if (!impl_->tcp_client_->connect(ip, port)) {
+        ELITE_LOG_ERROR("Dashboard connect to robot fail: %s", impl_->tcp_client_->lastError().c_str());
+        impl_->disconnect();
+        return false;
     }
-    asyncReadLine();
-    return ret_val;
+
+    // Dashboard may send multiple welcome lines immediately after connect.
+    // Drain contiguous welcome lines, but bound the loop to avoid waiting forever.
+    constexpr std::size_t kMaxWelcomeLines = 32;
+    for (std::size_t i = 0; i < kMaxWelcomeLines; ++i) {
+        std::string line;
+        const SocketIOStatus status = impl_->tcp_client_->receiveLine(line, 100);
+        if (status == SocketIOStatus::OK) {
+            continue;
+        }
+        if (status == SocketIOStatus::TIMEOUT) {
+            break;
+        }
+        if (status == SocketIOStatus::CLOSED) {
+            ELITE_LOG_ERROR("Dashboard connection closed by peer");
+            impl_->disconnect();
+            throw EliteException(EliteException::Code::SOCKET_FAIL, "Dashboard connection closed");
+        }
+
+        ELITE_LOG_ERROR("Dashboard receive welcome line fail: %s", impl_->tcp_client_->lastError().c_str());
+        impl_->disconnect();
+        return false;
+    }
+    return true;
 }
 
 void DashboardClient::disconnect() {
@@ -75,7 +64,7 @@ void DashboardClient::disconnect() {
     impl_->disconnect();
 }
 
-void DashboardClient::Impl::disconnect() { socket_ptr_.reset(); }
+void DashboardClient::Impl::disconnect() { tcp_client_.reset(); }
 
 bool DashboardClient::brakeRelease() {
     std::string response = sendAndRequest("brakeRelease\n", "Brake (Releasing.*|is released).*");
@@ -133,13 +122,27 @@ bool DashboardClient::popup(const std::string& arg, const std::string& message) 
 }
 
 void DashboardClient::quit() {
-    sendAndRequest("quit\n");
-    impl_->disconnect();
+    try {
+        sendAndRequest("quit\n");
+    } catch (const EliteException& e) {
+        if (!(e == EliteException::Code::SOCKET_FAIL)) {
+            disconnect();
+            throw;
+        }
+    }
+    disconnect();
 }
 
 void DashboardClient::reboot() {
-    sendAndRequest("reboot\n");
-    impl_->disconnect();
+    try {
+        sendAndRequest("reboot\n");
+    } catch (const EliteException& e) {
+        if (!(e == EliteException::Code::SOCKET_FAIL)) {
+            disconnect();
+            throw;
+        }
+    }
+    disconnect();
 }
 
 std::string DashboardClient::robot() { return sendAndRequest("robot -t\n"); }
@@ -170,8 +173,15 @@ bool DashboardClient::powerOff() {
 }
 
 void DashboardClient::shutdown() {
-    sendAndRequest("shutdown\n");
-    impl_->disconnect();
+    try {
+        sendAndRequest("shutdown\n");
+    } catch (const EliteException& e) {
+        if (!(e == EliteException::Code::SOCKET_FAIL)) {
+            disconnect();
+            throw;
+        }
+    }
+    disconnect();
 }
 
 int DashboardClient::speedScaling() {
@@ -387,6 +397,7 @@ bool DashboardClient::isTaskSaved() {
 }
 
 std::string DashboardClient::sendAndReceive(const std::string& cmd) {
+    std::lock_guard<std::mutex> lock(impl_->socket_mutex_);
     if (cmd.back() != '\n') {
         sendCommand(cmd + "\n");
     } else {
@@ -396,37 +407,51 @@ std::string DashboardClient::sendAndReceive(const std::string& cmd) {
 }
 
 std::string DashboardClient::asyncReadLine(unsigned timeout_ms) {
-    boost::system::error_code ec = boost::asio::error::would_block;
-    boost::asio::streambuf stream_buffer;
-    boost::asio::async_read_until(*impl_->socket_ptr_, stream_buffer, '\n',
-                                  [&](const boost::system::error_code& error, std::size_t nb) { ec = error; });
-
-    do {
-        impl_->io_context_.run_for(std::chrono::milliseconds(timeout_ms));
-        // TODO: When all tasks in the io_context are completed, the io_context enters a 'stopped' state.
-        // How can we prevent the io_context from entering the 'stopped' state without using the 'restart' method?
-        if (impl_->io_context_.stopped()) {
-            impl_->io_context_.restart();
-        }
-    } while (ec == boost::asio::error::would_block);
-    if (ec) {
-        throw EliteException(EliteException::Code::SOCKET_FAIL, ec.message());
+    if (!impl_->tcp_client_) {
+        throw EliteException(EliteException::Code::SOCKET_FAIL, "Dashboard not connect to robot");
     }
-    std::string line(boost::asio::buffers_begin(stream_buffer.data()), boost::asio::buffers_end(stream_buffer.data()));
-    return line;
+
+    std::string line;
+    const SocketIOStatus read_status = impl_->tcp_client_->receiveLine(line, timeout_ms);
+    if (read_status == SocketIOStatus::OK) {
+        return line;
+    }
+
+    if (read_status == SocketIOStatus::TIMEOUT) {
+        throw EliteException(EliteException::Code::SOCKET_FAIL, "Dashboard receive timeout");
+    }
+    if (read_status == SocketIOStatus::CLOSED) {
+        throw EliteException(EliteException::Code::SOCKET_FAIL, "Dashboard connection closed");
+    }
+
+    const std::string error = impl_->tcp_client_->lastError();
+    throw EliteException(EliteException::Code::SOCKET_FAIL, error.empty() ? "Dashboard receive failed" : error);
 }
 
 void DashboardClient::sendCommand(const std::string& cmd) {
-    boost::system::error_code ec;
-    impl_->socket_ptr_->send(boost::asio::buffer(cmd), 0, ec);
-    if (ec) {
-        throw EliteException(EliteException::Code::SOCKET_FAIL, ec.message());
+    if (!impl_->tcp_client_ || !impl_->tcp_client_->isOpen()) {
+        throw EliteException(EliteException::Code::SOCKET_FAIL, "Dashboard not connect to robot");
     }
+
+    const SocketIOStatus write_status = impl_->tcp_client_->sendAll(cmd);
+    if (write_status == SocketIOStatus::OK) {
+        return;
+    }
+
+    if (write_status == SocketIOStatus::TIMEOUT) {
+        throw EliteException(EliteException::Code::SOCKET_FAIL, "Dashboard send timeout");
+    }
+    if (write_status == SocketIOStatus::CLOSED) {
+        throw EliteException(EliteException::Code::SOCKET_FAIL, "Dashboard connection closed");
+    }
+
+    const std::string error = impl_->tcp_client_->lastError();
+    throw EliteException(EliteException::Code::SOCKET_FAIL, error.empty() ? "Dashboard send failed" : error);
 }
 
 std::string DashboardClient::sendAndRequest(const std::string& cmd, const std::string& expected) {
     std::lock_guard<std::mutex> lock(impl_->socket_mutex_);
-    if (!impl_->socket_ptr_) {
+    if (!impl_->tcp_client_ || !impl_->tcp_client_->isOpen()) {
         ELITE_LOG_ERROR("Dashboard not connect to robot");
         return "";
     }
