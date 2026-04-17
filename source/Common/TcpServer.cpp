@@ -13,12 +13,10 @@
 #pragma comment(lib, "Ws2_32.lib")
 #else
 #include <arpa/inet.h>
-#include <fcntl.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <cerrno>
 #endif
 
 namespace ELITE {
@@ -31,7 +29,7 @@ int TcpServer::createBindListen() {
         return socketLastErrorCode();
     }
     setSocketOptions(listen_fd_, true);
-    setNonBlocking(listen_fd_, true);
+    (void)socketSetNonBlocking(listen_fd_, true);
     sockaddr_in addr;
     std::memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
@@ -54,7 +52,7 @@ bool TcpServer::createAndBindListenSocketWithRetry() {
             last_error = 0;
             break;
         }
-        closeSocket(listen_fd_);
+        socketClose(listen_fd_);
 
         if (last_error != error_code) {
             last_error = error_code;
@@ -87,7 +85,7 @@ bool TcpServer::initialize() {
     if (::listen(listen_fd_, 1) != 0) {
         const int ec = socketLastErrorCode();
         last_error_ = "TCP port " + std::to_string(local_port_) + " listen fail: " + socketErrorString(ec);
-        closeSocket(listen_fd_);
+        socketClose(listen_fd_);
         ELITE_LOG_FATAL("%s", last_error_.c_str());
         return false;
     }
@@ -133,8 +131,8 @@ void TcpServer::stopListen() {
     if (!listening_.exchange(false)) {
         return;
     }
-    closeSocket(client_fd_);
-    closeSocket(listen_fd_);
+    socketClose(client_fd_);
+    socketClose(listen_fd_);
 }
 
 void TcpServer::onAcceptEvent() {
@@ -145,16 +143,18 @@ void TcpServer::onAcceptEvent() {
 
     sockaddr_in remote_addr;
     std::memset(&remote_addr, 0, sizeof(remote_addr));
-#if defined(_WIN32)
-    int addr_len = sizeof(remote_addr);
-#else
-    socklen_t addr_len = sizeof(remote_addr);
-#endif
+    SockLenType addr_len = sizeof(remote_addr);
 
     SocketHandle new_client = static_cast<SocketHandle>(::accept(listen_fd_, reinterpret_cast<sockaddr*>(&remote_addr), &addr_len));
     if (new_client == SOCKET_INVALID_HANDLE) {
         const int ec = socketLastErrorCode();
-        if (!wouldBlockError(ec)) {
+        const bool interrupted =
+#if defined(_WIN32)
+            (ec == WSAEINTR);
+#else
+            (ec == EINTR);
+#endif
+        if (!interrupted && !socketWouldBlock(ec)) {
             ELITE_LOG_ERROR("TCP port %d accept fail: %s", local_port_, socketErrorString(ec).c_str());
         }
         return;
@@ -162,11 +162,11 @@ void TcpServer::onAcceptEvent() {
 
     if (client_fd_ != SOCKET_INVALID_HANDLE) {
         ELITE_LOG_INFO("TCP port %d has new connection and close old client: %s:%d", local_port_, remote_ip_.c_str(), remote_port_);
-        closeSocket(client_fd_);
+        socketClose(client_fd_);
     }
 
     setSocketOptions(new_client, false);
-    setNonBlocking(new_client, true);
+    (void)socketSetNonBlocking(new_client, true);
     client_fd_ = new_client;
     updateEndpointInfo(client_fd_, false);
     ELITE_LOG_INFO("TCP port %d accept client: %s:%d", local_port_, remote_ip_.c_str(), remote_port_);
@@ -177,17 +177,25 @@ int TcpServer::readSocket(uint8_t read_buf[]) {
     if (!listening_.load() || client_fd_ == SOCKET_INVALID_HANDLE) {
         return -1;
     }
-    int read_len = socketReceive(client_fd_, read_buf, recv_buf_size_);
-    if (read_len <= 0) {
-        const int ec = socketLastErrorCode();
-        if (!wouldBlockError(ec)) {
-            ELITE_LOG_INFO("TCP port %d close client: %s:%d. Reason: %s", local_port_, remote_ip_.c_str(), remote_port_,
-                           socketErrorString(ec).c_str());
-            closeSocket(client_fd_);
-            return read_len;
-        }
+    std::size_t read_len = 0;
+    const SocketIOStatus read_status = socketReceive(client_fd_, read_buf, static_cast<std::size_t>(recv_buf_size_), read_len);
+    if (read_status == SocketIOStatus::OK) {
+        return static_cast<int>(read_len);
     }
-    return read_len;
+    if (read_status == SocketIOStatus::TIMEOUT) {
+        return -1;
+    }
+    if (read_status == SocketIOStatus::CLOSED) {
+        ELITE_LOG_INFO("TCP port %d close client: %s:%d. Reason: peer closed", local_port_, remote_ip_.c_str(), remote_port_);
+        socketClose(client_fd_);
+        return 0;
+    }
+
+    const int ec = socketLastErrorCode();
+    ELITE_LOG_INFO("TCP port %d close client: %s:%d. Reason: %s", local_port_, remote_ip_.c_str(), remote_port_,
+                   socketErrorString(ec).c_str());
+    socketClose(client_fd_);
+    return -1;
 }
 
 void TcpServer::onClientReadEvent() { 
@@ -207,16 +215,26 @@ int TcpServer::writeClient(void* data, int size) {
     int total = 0;
     uint8_t* bytes = reinterpret_cast<uint8_t*>(data);
     while (total < size) {
-        int n = socketWrite(client_fd_, bytes + total, size - total);
-        if (n <= 0) {
+        std::size_t sent_now = 0;
+        const SocketIOStatus write_status =
+            socketWrite(client_fd_, bytes + total, static_cast<std::size_t>(size - total), sent_now);
+        if (write_status == SocketIOStatus::OK) {
+            total += static_cast<int>(sent_now);
+            continue;
+        }
+        if (write_status == SocketIOStatus::TIMEOUT) {
+            continue;
+        }
+        if (write_status == SocketIOStatus::CLOSED) {
+            ELITE_LOG_INFO("Port %d write TCP client fail: peer closed", local_port_);
+            return -1;
+        }
+
+        {
             const int ec = socketLastErrorCode();
-            if (wouldBlockError(ec)) {
-                continue;
-            }
             ELITE_LOG_INFO("Port %d write TCP client fail: %s", local_port_, socketErrorString(ec).c_str());
             return -1;
         }
-        total += n;
     }
     return total;
 }
@@ -224,38 +242,6 @@ int TcpServer::writeClient(void* data, int size) {
 bool TcpServer::isClientConnected() {
     std::lock_guard<std::mutex> lock(socket_mutex_);
     return client_fd_ != SOCKET_INVALID_HANDLE;
-}
-
-void TcpServer::closeSocket(SocketHandle& sock) {
-    if (sock == SOCKET_INVALID_HANDLE) {
-        return;
-    }
-#if defined(_WIN32)
-    ::shutdown(sock, SD_BOTH);
-    ::closesocket(sock);
-#else
-    ::shutdown(sock, SHUT_RDWR);
-    ::close(sock);
-#endif
-    sock = SOCKET_INVALID_HANDLE;
-}
-
-bool TcpServer::setNonBlocking(SocketHandle sock, bool non_blocking) {
-#if defined(_WIN32)
-    u_long mode = non_blocking ? 1 : 0;
-    return (::ioctlsocket(sock, FIONBIO, &mode) == 0);
-#else
-    int flags = ::fcntl(sock, F_GETFL, 0);
-    if (flags < 0) {
-        return false;
-    }
-    if (non_blocking) {
-        flags |= O_NONBLOCK;
-    } else {
-        flags &= ~O_NONBLOCK;
-    }
-    return (::fcntl(sock, F_SETFL, flags) == 0);
-#endif
 }
 
 bool TcpServer::setSocketOptions(SocketHandle sock, bool is_server_socket) {
@@ -278,11 +264,7 @@ bool TcpServer::setSocketOptions(SocketHandle sock, bool is_server_socket) {
 bool TcpServer::updateEndpointInfo(SocketHandle sock, bool is_local) {
     sockaddr_in addr;
     std::memset(&addr, 0, sizeof(addr));
-#if defined(_WIN32)
-    int len = sizeof(addr);
-#else
-    socklen_t len = sizeof(addr);
-#endif
+    SockLenType len = sizeof(addr);
 
     int ret = is_local ? ::getsockname(sock, reinterpret_cast<sockaddr*>(&addr), &len)
                        : ::getpeername(sock, reinterpret_cast<sockaddr*>(&addr), &len);
@@ -303,14 +285,6 @@ bool TcpServer::updateEndpointInfo(SocketHandle sock, bool is_local) {
         remote_port_ = ntohs(addr.sin_port);
     }
     return true;
-}
-
-bool TcpServer::wouldBlockError(int error_code) const {
-#if defined(_WIN32)
-    return (error_code == WSAEWOULDBLOCK || error_code == WSAEINPROGRESS || error_code == WSAEALREADY || error_code == WSAEINTR);
-#else
-    return (error_code == EAGAIN || error_code == EWOULDBLOCK || error_code == EINTR);
-#endif
 }
 
 void TcpServer::callReceiveCallback(const uint8_t data[], int size) {

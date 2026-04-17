@@ -44,21 +44,14 @@ class TcpServer : public TcpServerBase {
     std::atomic<bool> initialized_{false};
     std::string last_error_;
 
-    private:
     bool initialize();
-    void closeSocket(SocketHandle& sock);
     int createBindListen();
     bool createAndBindListenSocketWithRetry();
 
-    bool setNonBlocking(SocketHandle sock, bool non_blocking);
     bool setSocketOptions(SocketHandle sock, bool is_server_socket);
     bool updateEndpointInfo(SocketHandle sock, bool is_local);
     void callReceiveCallback(const uint8_t data[], int size);
     int readSocket(uint8_t data[]);
-
-    bool wouldBlockError(int error_code) const;
-
-    
 
     friend class TcpServerSharedPoller;
 };

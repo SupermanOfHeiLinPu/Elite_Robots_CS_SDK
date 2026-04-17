@@ -40,6 +40,7 @@ configure_file(
 set(
     ELITE_LIB_SOURCE_FILE
     source/Common/StringUtils.cpp
+    source/Common/TcpClient.cpp
     source/Common/TcpServer.cpp
     source/Common/TcpServerSharedPoller.cpp
     source/Common/TcpCommon.cpp
