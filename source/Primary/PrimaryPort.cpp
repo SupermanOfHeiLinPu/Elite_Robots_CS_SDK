@@ -4,13 +4,20 @@
 #include "Log.hpp"
 #include "TcpClient.hpp"
 #include "Utils.hpp"
+#if defined(_WIN32)
+#include <WinSock2.h>
+#include <Ws2tcpip.h>
+#pragma comment(lib, "Ws2_32.lib")
+#elif defined(__linux__)
+#include <netinet/in.h>
+#endif
 
 using namespace std::chrono;
 
 namespace ELITE {
 using namespace std::chrono;
 
-PrimaryPort::PrimaryPort() : message_head_received_(0) { message_head_.resize(HEAD_LENGTH); }
+PrimaryPort::PrimaryPort() {}
 
 PrimaryPort::~PrimaryPort() { disconnect(); }
 
@@ -70,32 +77,23 @@ bool PrimaryPort::parserMessage() {
     if (!tcp_client_ || !tcp_client_->isOpen()) {
         return false;
     }
-
+    std::vector<uint8_t> msg_head(HEAD_LENGTH);
     // Receive package head without dropping partial data in non-blocking mode.
-    while (message_head_received_ < message_head_.size()) {
-        SocketIOStatus read_status = tcp_client_->receiveAll(&message_head_[message_head_received_], 1, 0);
-        if (read_status == SocketIOStatus::OK) {
-            ++message_head_received_;
-            continue;
-        }
-        if (read_status == SocketIOStatus::TIMEOUT) {
-            return true;
-        }
-        ELITE_LOG_ERROR("Primary port receive package head had expection: %s", tcp_client_->lastError().c_str());
-        message_head_received_ = 0;
+    SocketIOStatus read_status = tcp_client_->receiveAll(msg_head.data(), HEAD_LENGTH, MAX_RECEIVE_TIMEOUT);
+    if (read_status != SocketIOStatus::OK) {
+        // No data received, just return and wait for the next loop to receive data.
+        ELITE_LOG_ERROR("Primary port receive package head had exception: %s", tcp_client_->lastError().c_str());
         return false;
     }
 
-    message_head_received_ = 0;
-
     uint32_t package_len = 0;
-    EndianUtils::unpack(message_head_.begin(), package_len);
+    EndianUtils::unpack(msg_head.begin(), package_len);
     if (package_len <= HEAD_LENGTH) {
         ELITE_LOG_ERROR("Primary port package len error: %d", package_len);
         return false;
     }
-
-    return parserMessageBody(message_head_[4], package_len);
+    // The type of the package is at the 5th byte of the head.
+    return parserMessageBody(msg_head[4], package_len);
 }
 
 RobotErrorSharedPtr PrimaryPort::parserRobotError(uint64_t timestamp, RobotError::Source source,
@@ -202,14 +200,10 @@ bool PrimaryPort::parserMessageBody(int type, int package_len) {
     }
 
     int body_len = package_len - HEAD_LENGTH;
-    message_body_.resize(body_len);
+    std::vector<uint8_t> message_body(body_len);
 
     // Receive package body
-    const SocketIOStatus read_status = tcp_client_->receiveAll(message_body_.data(), message_body_.size(), 500);
-    if (read_status == SocketIOStatus::TIMEOUT) {
-        ELITE_LOG_ERROR("Primary port receive package body timeout");
-        return false;
-    }
+    const SocketIOStatus read_status = tcp_client_->receiveAll(message_body.data(), message_body.size(), MAX_RECEIVE_TIMEOUT);
     if (read_status != SocketIOStatus::OK) {
         ELITE_LOG_ERROR("Primary port receive package body had expection: %s", tcp_client_->lastError().c_str());
         return false;
@@ -218,7 +212,7 @@ bool PrimaryPort::parserMessageBody(int type, int package_len) {
     // If RobotState message parser others don't do anything.
     if (type == ROBOT_STATE_MSG_TYPE) {
         uint32_t sub_len = 0;
-        for (auto iter = message_body_.begin(); iter < message_body_.end(); iter += sub_len) {
+        for (auto iter = message_body.begin(); iter < message_body.end(); iter += sub_len) {
             EndianUtils::unpack(iter, sub_len);
             int sub_type = *(iter + 4);
 
@@ -232,7 +226,7 @@ bool PrimaryPort::parserMessageBody(int type, int package_len) {
         }
     } else if (type == ROBOT_EXCEPTION_MSG_TYPE) {
         if (robot_exception_cb_) {
-            RobotExceptionSharedPtr ex = parserException(message_body_);
+            RobotExceptionSharedPtr ex = parserException(message_body);
             if (ex) {
                 robot_exception_cb_(ex);
             }
@@ -276,15 +270,12 @@ bool PrimaryPort::socketConnect(const std::string& ip, int port, bool is_last_co
             ELITE_LOG_ERROR("Connect to robot primary port fail: %s", tcp_client_->lastError().c_str());
         }
         tcp_client_.reset();
-        message_head_received_ = 0;
         return false;
     }
-    message_head_received_ = 0;
     return true;
 }
 
 void PrimaryPort::socketDisconnect() {
-    message_head_received_ = 0;
     if (tcp_client_) {
         tcp_client_->close();
     }

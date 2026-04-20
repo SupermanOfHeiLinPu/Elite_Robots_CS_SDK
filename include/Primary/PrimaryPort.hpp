@@ -30,17 +30,13 @@ class PrimaryPort {
     static constexpr int ROBOT_STATE_MSG_TYPE = 16;
     // The type of 'RobotException' package
     static constexpr int ROBOT_EXCEPTION_MSG_TYPE = 20;
+    // The maximum timeout for receiving a complete package, in milliseconds
+    static constexpr int MAX_RECEIVE_TIMEOUT = 1000;
 
     std::mutex socket_mutex_;
     std::unique_ptr<TcpClient> tcp_client_;
 
     std::function<void(RobotExceptionSharedPtr)> robot_exception_cb_;
-
-    // The buffer of package head
-    std::vector<uint8_t> message_head_;
-    std::size_t message_head_received_;
-    // The buffer of package body
-    std::vector<uint8_t> message_body_;
 
     // When getPackage() be called, insert a sub-package data to get
     std::unordered_map<int, std::shared_ptr<PrimaryPackage>> parser_sub_msg_;
