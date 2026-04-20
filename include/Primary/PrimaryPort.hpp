@@ -9,8 +9,8 @@
 #include "DataType.hpp"
 #include "PrimaryPackage.hpp"
 #include "RobotException.hpp"
+#include "TcpClient.hpp"
 
-#include <boost/asio.hpp>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -20,6 +20,7 @@
 #include <vector>
 
 namespace ELITE {
+
 
 class PrimaryPort {
    private:
@@ -31,13 +32,13 @@ class PrimaryPort {
     static constexpr int ROBOT_EXCEPTION_MSG_TYPE = 20;
 
     std::mutex socket_mutex_;
-    boost::asio::io_context io_context_;
-    std::unique_ptr<boost::asio::ip::tcp::socket> socket_ptr_;
+    std::unique_ptr<TcpClient> tcp_client_;
 
     std::function<void(RobotExceptionSharedPtr)> robot_exception_cb_;
 
     // The buffer of package head
     std::vector<uint8_t> message_head_;
+    std::size_t message_head_received_;
     // The buffer of package body
     std::vector<uint8_t> message_body_;
 
