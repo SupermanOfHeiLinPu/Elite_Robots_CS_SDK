@@ -1,4 +1,5 @@
 #include "TcpCommon.hpp"
+#include <chrono>
 #include <cstdint>
 #include <cstring>
 #include <limits>
@@ -135,20 +136,13 @@ SocketIOStatus socketWaitWritable(SocketHandle handle, unsigned timeout_ms) {
     }
 }
 
-SocketIOStatus socketReceive(SocketHandle handle, void* buff, std::size_t size, std::size_t& received_size, int timeout_ms) {
+SocketIOStatus socketReceive(SocketHandle handle, void* buff, std::size_t size, std::size_t& received_size) {
     received_size = 0;
     if (size == 0) {
         return SocketIOStatus::OK;
     }
     if (buff == nullptr) {
         return SocketIOStatus::ERROR;
-    }
-
-    if (timeout_ms >= 0) {
-        const SocketIOStatus wait_status = socketWaitReadable(handle, static_cast<unsigned>(timeout_ms));
-        if (wait_status != SocketIOStatus::OK) {
-            return wait_status;
-        }
     }
 
 #if defined(_WIN32)
@@ -173,6 +167,101 @@ SocketIOStatus socketReceive(SocketHandle handle, void* buff, std::size_t size, 
     }
 
     return SocketIOStatus::ERROR;
+}
+
+SocketIOStatus socketReceiveAll(SocketHandle handle, void* buff, std::size_t size, std::size_t& received_size, int timeout_ms) {
+    received_size = 0;
+    if (timeout_ms <= 0) {
+        return SocketIOStatus::ERROR;
+    }
+    if (!buff) {
+        return SocketIOStatus::ERROR;
+    }
+
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms);
+    while (received_size < size) {
+        const auto now = std::chrono::steady_clock::now();
+        const auto remaining_ms = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now).count();
+        if (remaining_ms <= 0) {
+            return SocketIOStatus::TIMEOUT;
+        }
+
+        auto wait_ret = socketWaitReadable(handle, static_cast<unsigned>(remaining_ms));
+        if(wait_ret != SocketIOStatus::OK) {
+            return wait_ret;
+        }
+
+        int remaining_size = static_cast<int>(size - received_size);
+        if (remaining_size <= 0) {
+            break;
+        }
+        
+#if defined(_WIN32)
+        const int n = ::recv(handle, reinterpret_cast<char*>(buff) + received_size, static_cast<int>(remaining_size), 0);
+#else
+        const ssize_t n = ::recv(handle, static_cast<char*>(buff) + received_size, remaining_size, 0);
+#endif
+
+        if (n == 0) {
+            // peer has performed an orderly shutdown
+            return SocketIOStatus::CLOSED;
+        } else if (n < 0) {
+            const int ec = socketLastErrorCode();
+            if (ec == PLATFORM_EINTR || socketWouldBlock(ec)) {
+                continue;
+            }
+            return SocketIOStatus::ERROR;
+        }
+
+        received_size += n;
+    }
+
+    return SocketIOStatus::OK;
+}
+
+SocketIOStatus socketReceiveLine(SocketHandle handle, std::string& line, int timeout_ms) {
+    if (timeout_ms <= 0) {
+        return SocketIOStatus::ERROR;
+    }
+
+    line.clear();
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout_ms);
+    while (true) {
+        const auto now = std::chrono::steady_clock::now();
+        const auto remaining_ms = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now).count();
+        if (remaining_ms <= 0) {
+            return SocketIOStatus::TIMEOUT;
+        }
+
+        auto wait_ret = socketWaitReadable(handle, static_cast<unsigned>(remaining_ms));
+        if(wait_ret != SocketIOStatus::OK) {
+            return wait_ret;
+        }
+        char c = 0;
+#if defined(_WIN32)
+        const int n = ::recv(handle, &c, 1, 0);
+#else
+        const ssize_t n = ::recv(handle, &c, 1, 0);
+#endif
+
+        if (n == 0) {
+            // peer has performed an orderly shutdown
+            return SocketIOStatus::CLOSED;
+        } else if (n < 0) {
+            const int ec = socketLastErrorCode();
+            if (ec == PLATFORM_EINTR || socketWouldBlock(ec)) {
+                continue;
+            }
+            return SocketIOStatus::ERROR;
+        }
+
+        line.push_back(c);
+        if (c == '\n') {
+            return SocketIOStatus::OK;
+        }
+    }
+
+    return SocketIOStatus::OK;
 }
 
 SocketIOStatus socketWrite(SocketHandle handle, const void* buff, std::size_t size, std::size_t& sent_size) {

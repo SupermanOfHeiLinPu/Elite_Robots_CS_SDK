@@ -2,7 +2,6 @@
 // Copyright (c) 2025, Elite Robots.
 #include "TcpClient.hpp"
 
-#include <chrono>
 #include <cstring>
 
 #if defined(_WIN32)
@@ -143,7 +142,7 @@ SocketIOStatus TcpClient::sendAll(const uint8_t* data, std::size_t size) {
 SocketIOStatus TcpClient::receiveAll(uint8_t* data, std::size_t size, unsigned timeout_ms) {
     if (!isOpen()) {
         setLastError("Socket is not open");
-        return SocketIOStatus::ERROR;
+        return SocketIOStatus::CLOSED;
     }
     if (size == 0) {
         return SocketIOStatus::OK;
@@ -153,40 +152,15 @@ SocketIOStatus TcpClient::receiveAll(uint8_t* data, std::size_t size, unsigned t
         return SocketIOStatus::ERROR;
     }
 
-    const auto start = std::chrono::steady_clock::now();
     std::size_t total_received = 0;
-    while (total_received < size) {
-        int wait_ms = 0;
-        if (timeout_ms == 0) {
-            wait_ms = 0;
-        } else {
-            const auto now = std::chrono::steady_clock::now();
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
-            if (elapsed >= static_cast<long long>(timeout_ms)) {
-                setLastError("Socket receive timeout");
-                return SocketIOStatus::TIMEOUT;
-            }
-            wait_ms = static_cast<int>(timeout_ms - static_cast<unsigned>(elapsed));
-        }
-
-        std::size_t chunk_received = 0;
-        const SocketIOStatus read_status =
-            socketReceive(socket_fd_, data + total_received, size - total_received, chunk_received, wait_ms);
-        if (read_status == SocketIOStatus::OK) {
-            total_received += chunk_received;
-            continue;
-        }
-        if (read_status == SocketIOStatus::TIMEOUT) {
-            setLastError("Socket receive timeout");
-            return read_status;
-        }
-        if (read_status == SocketIOStatus::ERROR) {
-            setLastError("Socket receive failed: " + socketErrorString(socketLastErrorCode()));
-        }
-        return read_status;
+    const SocketIOStatus read_status = socketReceiveAll(socket_fd_, data, size, total_received, timeout_ms);
+    if (read_status == SocketIOStatus::TIMEOUT || total_received < size) {
+        setLastError("Socket receive timeout");
     }
-
-    return SocketIOStatus::OK;
+    if (read_status == SocketIOStatus::ERROR) {
+        setLastError("Socket receive failed: " + socketErrorString(socketLastErrorCode()));
+    }
+    return read_status;
 }
 
 SocketIOStatus TcpClient::sendAll(const std::string& data) {
@@ -194,50 +168,17 @@ SocketIOStatus TcpClient::sendAll(const std::string& data) {
 }
 
 SocketIOStatus TcpClient::receiveLine(std::string& line, unsigned timeout_ms) {
-    line.clear();
     if (!isOpen()) {
         setLastError("Socket is not open");
-        return SocketIOStatus::ERROR;
+        return SocketIOStatus::CLOSED;
     }
-
-    const auto start = std::chrono::steady_clock::now();
-    while (true) {
-        int wait_ms = 0;
-        if (timeout_ms == 0) {
-            wait_ms = 0;
-        } else {
-            const auto now = std::chrono::steady_clock::now();
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
-            if (elapsed >= static_cast<long long>(timeout_ms)) {
-                setLastError("Socket receive line timeout");
-                return SocketIOStatus::TIMEOUT;
-            }
-            wait_ms = static_cast<int>(timeout_ms - static_cast<unsigned>(elapsed));
-        }
-
-        char c = 0;
-        std::size_t received_size = 0;
-        const SocketIOStatus read_status = socketReceive(socket_fd_, &c, 1, received_size, wait_ms);
-        if (read_status == SocketIOStatus::OK) {
-            if (received_size == 0) {
-                return SocketIOStatus::CLOSED;
-            }
-            line.push_back(c);
-            if (c == '\n') {
-                return SocketIOStatus::OK;
-            }
-            continue;
-        }
-
-        if (read_status == SocketIOStatus::TIMEOUT) {
-            setLastError("Socket receive line timeout");
-            return read_status;
-        }
-        if (read_status == SocketIOStatus::ERROR) {
-            setLastError("Socket receive line failed: " + socketErrorString(socketLastErrorCode()));
-        }
-        return read_status;
+    const SocketIOStatus read_status = socketReceiveLine(socket_fd_, line, timeout_ms);
+    if (read_status == SocketIOStatus::TIMEOUT) {
+        setLastError("Socket receive line timeout");
+    } else if (read_status == SocketIOStatus::ERROR) {
+        setLastError("Socket receive line failed: " + socketErrorString(socketLastErrorCode()));
     }
+    return read_status;
 }
 
 bool TcpClient::createSocket() {

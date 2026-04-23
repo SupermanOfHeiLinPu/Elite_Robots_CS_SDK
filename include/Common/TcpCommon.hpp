@@ -128,11 +128,32 @@ SocketIOStatus socketWaitWritable(SocketHandle handle, unsigned timeout_ms);
  * @param buff The buffer to store received data.
  * @param size The size of the buffer.
  * @param received_size The number of bytes actually received.
- * @param timeout_ms Receive timeout in milliseconds. Use a negative value to wait indefinitely.
  * @return SocketIOStatus The status of the receive operation.
  */
-SocketIOStatus socketReceive(SocketHandle handle, void* buff, std::size_t size, std::size_t& received_size,
-                             int timeout_ms = -1);
+SocketIOStatus socketReceive(SocketHandle handle, void* buff, std::size_t size, std::size_t& received_size);
+
+/**
+ * @brief Receive data from a socket.
+ *
+ * @param handle The socket handle.
+ * @param buff The buffer to store received data.
+ * @param size The size of the buffer.
+ * @param received_size The number of bytes actually received.
+ * @param timeout_ms Receive timeout in milliseconds.
+ * @return SocketIOStatus The status of the receive operation.
+ */
+SocketIOStatus socketReceiveAll(SocketHandle handle, void* buff, std::size_t size, std::size_t& received_size,
+                             int timeout_ms);
+
+/**
+ * @brief Receive a line of text from a socket.
+ *
+ * @param handle The socket handle.
+ * @param line The string to store the received line.
+ * @param timeout_ms Receive timeout in milliseconds.
+ * @return SocketIOStatus The status of the receive operation.
+ */
+SocketIOStatus socketReceiveLine(SocketHandle handle, std::string& line, int timeout_ms);
 
 /**
  * @brief Write data to a socket.
