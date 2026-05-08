@@ -9,6 +9,7 @@
 #include <Elite/EliteOptions.hpp>
 #include <memory>
 #include <string>
+#include <mutex>
 
 namespace ELITE {
 /**
@@ -65,24 +66,18 @@ class SerialConfig {
  *
  */
 class SerialCommunication {
-   private:
-    class Impl;
-    std::unique_ptr<Impl> impl_;
-
    public:
     /**
      * @brief Construct a new Serial Communication object
      *
-     * @param ip IP address of the RS485 TCP server
-     * @param port Port number of the RS485 TCP server
      */
-    ELITE_EXPORT SerialCommunication(const std::string& ip, int port);
+    ELITE_EXPORT explicit SerialCommunication() = default;
 
     /**
      * @brief Destroy the Serial Communication object
      *
      */
-    ELITE_EXPORT ~SerialCommunication();
+    ELITE_EXPORT virtual ~SerialCommunication() = default;
 
     /**
      * @brief Connect to the RS485 TCP server.
@@ -91,13 +86,13 @@ class SerialCommunication {
      * @return true success
      * @return false fail
      */
-    ELITE_EXPORT bool connect(int timeout_ms);
+    ELITE_EXPORT virtual bool connect(int timeout_ms) = 0;
 
     /**
      * @brief Disconnect from the RS485 TCP server.
      *
      */
-    ELITE_EXPORT void disconnect();
+    ELITE_EXPORT virtual void disconnect() = 0;
 
     /**
      * @brief Write data to the RS485 TCP server.
@@ -106,7 +101,7 @@ class SerialCommunication {
      * @param size data size
      * @return int success write size, -1 fail
      */
-    ELITE_EXPORT int write(const uint8_t* data, size_t size);
+    ELITE_EXPORT virtual int write(const uint8_t* data, size_t size) = 0;
 
     /**
      * @brief Read data from the RS485 TCP server.
@@ -116,7 +111,7 @@ class SerialCommunication {
      * @param timeout_ms timeout in milliseconds
      * @return int success read size, -1 fail
      */
-    ELITE_EXPORT int read(uint8_t* data, size_t size, int timeout_ms);
+    ELITE_EXPORT virtual int read(uint8_t* data, size_t size, int timeout_ms) = 0;
 
     /**
      * @brief Check if connected to the RS485 TCP server.
@@ -124,7 +119,14 @@ class SerialCommunication {
      * @return true connected
      * @return false disconnect
      */
-    ELITE_EXPORT bool isConnected();
+    ELITE_EXPORT virtual bool isConnected() = 0;
+
+    /**
+     * @brief Get the Socat PID
+     * 
+     * @return int socat pid 
+     */
+    ELITE_EXPORT virtual int getSocatPid() const = 0;
 };
 
 using SerialCommunicationSharedPtr = std::shared_ptr<SerialCommunication>;

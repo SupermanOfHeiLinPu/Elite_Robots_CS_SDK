@@ -2,6 +2,24 @@
 
 ## [Unrelease]
 
+### 新增
+- 引入运动学插件基础设施，新增 `ClassLoader` 模块、注册宏、文档，并通过 `ELITE_COMPILE_KIN_PLUGIN` CMake 选项控制插件编译。
+- 为 `EliteDriverConfig` 添加可配置的 servo 外推和保持参数（`servoj_extrapolate_max_time`、`servoj_decelerate_time`、`servoj_hold_velocity_threshold`、`servoj_hold_stable_time` 以及更正后的 `servoj_lookahead_time`），并将其通到脚本与调优文档中。
+- 新增 `EliteDriverReconstructTest` 用于测试结构体重构场景。
+- 新增 `TcpServerPortOccupyTest` 用于测试 TCP 服务器端口占用处理。
+
+### 更改
+- 在构建指南中说明插件编译选项及其依赖（如 `orocos-kdl`、`Eigen3`），并提高配置输出的可见度，方便用户启用运动学插件。
+- 更新 `external_control.script`，使用新的外推/保持逻辑参数、关节稳定性辅助函数，并保持脚本与驱动配置一致以提升鲁棒性。
+- 将结构体重构场景移至测试套件，以获得更好的覆盖。
+
+### 修复
+- 修正 `servoj_lookahead_time` 参数拼写错误，文档与代码均同步更新。
+- 修复了部分编译器下，`EliteDriver::writeTrajectoryPoint()` 和 `EliteDriver::writeJointServoj()` 关节角为负数时变为0的问题。
+- 增强 TCP 服务器端口复用覆盖：添加绑定重试机制，当 TCP 端口被占用时重试绑定（最多重试 30 次，间隔 10ms）。
+
+## [v1.3.0] - 2025-01-27
+  
 ### Added
 - 新增一个带速度规划的“servoj”示例。
 - `RtsiIOInterface` 
@@ -15,6 +33,8 @@
   - 新增获取机器人ID接口：`robotID()`
 - 默认的日志句柄增加时间戳信息。
 - 新增串口通讯相关接口。
+- 添加了一个启动docker仿真的脚本。
+- 添加此项目为一个ROS2的包
 
 ### Changed
 - 调整 `external_control.script` 中 “trajectory_socket” 的“timeout”值。
@@ -28,6 +48,7 @@
 - 修复`TcpServer`中静态资源析构顺序提前的问题。
 - 修复`EliteDriver::registerRobotExceptionCallback()`接口没有实现的问题。
 - 修复析构时会崩溃的问题。
+- 修复`EliteDriver::startForceMode()`不生效的问题。
 
 ### Deprecated
 - 弃用 `DashboardClient::robot()` 未来版本将移除，请改用 `DashboardClient::robotType()`
@@ -35,6 +56,9 @@
   - `RtsiIOInterface::getAcutalTCPPose()` -> `RtsiIOInterface::getActualTCPPose()`
   - `RtsiIOInterface::getAcutalTCPVelocity()` -> `RtsiIOInterface::getActualTCPVelocity()`
   - `RtsiIOInterface::getAcutalTCPForce()` -> `RtsiIOInterface::getActualTCPForce()`
+
+### Removed
+- 移除`EliteDriver::writeServoj()`的`queue_mode`参数
 
 ## [v1.2.0] - 2025-08-14
 

@@ -128,7 +128,7 @@ bool DashboardClient::popup(const std::string& arg, const std::string& message) 
     } else {
         throw EliteException(EliteException::Code::ILLEGAL_PARAM, "dashboard popup command");
     }
-    std::string response = sendAndRequest(send_string, "Closing popup\r\n|Showing popup with text:.*\\s**");
+    std::string response = sendAndRequest(send_string, "Closing popup\r\n|Showing popup with text:.*\\s*");
     return !response.empty();
 }
 

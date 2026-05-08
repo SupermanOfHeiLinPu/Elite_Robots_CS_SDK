@@ -331,7 +331,7 @@ bool uploadFile(const std::string& server, const std::string& user, const std::s
 
 #if defined(_WIN32) || defined(_WIN64)
 #define FILE_PERMISSIONS (S_IREAD | S_IWRITE)
-#elif defined(__linux) || defined(linux) || defined(__linux__) || defined(__APPLE__)
+#elif defined(__linux) || defined(linux) || defined(__linux__)
 #define FILE_PERMISSIONS (S_IRUSR | S_IWUSR)
 #endif
     // File's infomation

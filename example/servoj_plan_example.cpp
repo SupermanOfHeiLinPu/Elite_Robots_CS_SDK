@@ -224,7 +224,7 @@ int main(int argc, char** argv) {
         
         for (auto& point: plan_joint) {
             target_joint[5] = point.pos;
-            if (!s_driver->writeServoj(target_joint, 100)) {
+            if (!s_driver->writeServoj(target_joint, 100, false)) {
                 ELITE_LOG_FATAL("Send servoj command to robot fail");
                 goto end;
             }

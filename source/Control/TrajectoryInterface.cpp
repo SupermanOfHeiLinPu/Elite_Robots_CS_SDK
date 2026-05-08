@@ -14,7 +14,9 @@ TrajectoryInterface::TrajectoryInterface(int port, std::shared_ptr<TcpServer::St
         if (nb != sizeof(TrajectoryMotionResult)) {
             return;
         }
-        TrajectoryMotionResult motion_result = (TrajectoryMotionResult)htonl(*((const uint32_t*)data));
+        int32_t receive_value = *((const int32_t*)data);
+        receive_value = ::ntohl(receive_value);
+        TrajectoryMotionResult motion_result = static_cast<TrajectoryMotionResult>(receive_value);
         if (motion_result_func_) {
             motion_result_func_(motion_result);
         }
@@ -25,9 +27,10 @@ TrajectoryInterface::TrajectoryInterface(int port, std::shared_ptr<TcpServer::St
 TrajectoryInterface::~TrajectoryInterface() {}
 
 bool TrajectoryInterface::writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_radius, bool cartesian) {
-    int32_t buffer[TRAJECTORY_MESSAGE_LEN] = {0};
+    int32_t buffer[TRAJECTORY_MESSAGE_LEN] = {0};    
     for (size_t i = 0; i < 6; i++) {
-        buffer[i] = htonl(round(positions[i] * CONTROL::POS_ZOOM_RATIO));
+        int32_t rounded_pos = static_cast<int32_t>(::round(positions[i] * CONTROL::POS_ZOOM_RATIO));
+        buffer[i] = ::htonl(rounded_pos);
     }
     buffer[18] = htonl(round(time * CONTROL::TIME_ZOOM_RATIO));
     buffer[19] = htonl(round(blend_radius * CONTROL::POS_ZOOM_RATIO));

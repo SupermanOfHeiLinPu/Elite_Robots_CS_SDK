@@ -298,9 +298,6 @@ bool moveTrajectory(const std::vector<vector6d_t>& target_points, float point_ti
         auto result = move_done_future.get();
         ELITE_LOG_INFO("Trajectory motion completed with result: %d", result);
 
-        std::promise<TrajectoryMotionResult> cancel_done_promise;
-        driver_->setTrajectoryResultCallback([&](TrajectoryMotionResult result) { cancel_done_promise.set_value(result); });
-
         if(!driver_->writeIdle(0)) {
             ELITE_LOG_ERROR("Failed to write idle command");
             return false;
@@ -367,16 +364,8 @@ bool moveTrajectory(const std::vector<vector6d_t>& target_points, float point_ti
 5. 运动结束，让机器人回归空闲
 
     ```cpp
-    std::promise<TrajectoryMotionResult> cancel_done_promise;
-    driver_->setTrajectoryResultCallback([&](TrajectoryMotionResult result) { cancel_done_promise.set_value(result); });
     if(!driver_->writeIdle(0)) {
         ELITE_LOG_ERROR("Failed to write idle command");
-        return false;
-    }
-
-    auto cancel_done_future = cancel_done_promise.get_future();
-    if (cancel_done_future.wait_for(std::chrono::seconds(10)) != std::future_status::ready) {
-        ELITE_LOG_ERROR("Failed to wait for cancel done");
         return false;
     }
     ```

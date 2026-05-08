@@ -1,23 +1,57 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025, Elite Robots.
 #include "TcpServer.hpp"
+#include <chrono>
 #include <iostream>
+#include <thread>
 #include "Common/RtUtils.hpp"
 #include "EliteException.hpp"
 #include "Log.hpp"
 
 namespace ELITE {
 
+namespace {
+constexpr int BIND_RETRY_TIMES = 30;
+constexpr auto BIND_RETRY_INTERVAL = std::chrono::milliseconds(10);
+}
+
 TcpServer::TcpServer(int port, int recv_buf_size, std::shared_ptr<StaticResource> resource) : read_buffer_(recv_buf_size) {
     resource_ = resource;
-    try {
-        acceptor_ = std::make_unique<boost::asio::ip::tcp::acceptor>(
-            *(resource_->io_context_ptr_), boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port), true);
-    } catch (const boost::system::system_error& error) {
-        ELITE_LOG_FATAL("Create TCP server on port %d fail: %s", port, error.what());
-        throw EliteException(EliteException::Code::SOCKET_FAIL, error.what());
+    boost::system::error_code ec;
+    bool logged_address_in_use = false;
+    for (int i = 0; i < BIND_RETRY_TIMES; ++i) {
+        try {
+            acceptor_ = std::make_unique<boost::asio::ip::tcp::acceptor>(
+                *(resource_->io_context_ptr_), boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port), true);
+            ec = boost::system::error_code();
+            break;
+        } catch (const boost::system::system_error& error) {
+            ec = error.code();
+            acceptor_.reset();
+
+            if (ec != boost::asio::error::address_in_use || i == BIND_RETRY_TIMES - 1) {
+                break;
+            }
+
+            if (!logged_address_in_use) {
+                ELITE_LOG_WARN("TCP port %d is in use, retry bind for up to %lld ms", port,
+                               static_cast<long long>(BIND_RETRY_INTERVAL.count() * (BIND_RETRY_TIMES - 1)));
+                logged_address_in_use = true;
+            }
+            std::this_thread::sleep_for(BIND_RETRY_INTERVAL);
+        }
     }
-    acceptor_->listen(1);
+
+    if (ec) {
+        ELITE_LOG_FATAL("Create TCP server on port %d fail: %s", port, ec.message().c_str());
+        throw EliteException(EliteException::Code::SOCKET_FAIL, ec.message());
+    }
+
+    acceptor_->listen(1, ec);
+    if (ec) {
+        ELITE_LOG_FATAL("TCP port %d listen fail: %s", port, ec.message().c_str());
+        throw EliteException(EliteException::Code::SOCKET_FAIL, ec.message());
+    }
 }
 
 TcpServer::~TcpServer() {
@@ -189,12 +223,13 @@ TcpServer::StaticResource::StaticResource() {
     }
     work_guard_ptr_.reset(new boost::asio::executor_work_guard<boost::asio::io_context::executor_type>(
         boost::asio::make_work_guard(*io_context_ptr_)));
-    server_thread_.reset(new std::thread([&]() {
+    auto io_ctx = io_context_ptr_;
+    server_thread_.reset(new std::thread([io_ctx]() {
         try {
-            if (io_context_ptr_->stopped()) {
-                io_context_ptr_->restart();
+            if (io_ctx->stopped()) {
+                io_ctx->restart();
             }
-            io_context_ptr_->run();
+            io_ctx->run();
             ELITE_LOG_INFO("TCP server exit thread");
         } catch (const boost::system::system_error& e) {
             ELITE_LOG_FATAL("TCP server thread error: %s", e.what());
@@ -205,15 +240,27 @@ TcpServer::StaticResource::StaticResource() {
     RT_UTILS::setThreadFiFoScheduling(thread_headle, RT_UTILS::getThreadFiFoMaxPriority());
 }
 
-TcpServer::StaticResource::~StaticResource() {
+void TcpServer::StaticResource::shutdown() {
+    if (shutting_down_.exchange(true)) {
+        return;
+    }
     work_guard_ptr_->reset();
     io_context_ptr_->stop();
     if (server_thread_ && server_thread_->joinable()) {
-        server_thread_->join();
+        if (std::this_thread::get_id() != server_thread_->get_id()) {
+            server_thread_->join();
+        } else {
+            server_thread_->detach();
+            ELITE_LOG_WARN("TcpServer::StaticResource's thread is waiting for itself; setting it to detach.");
+        }
     }
     work_guard_ptr_.reset();
     server_thread_.reset();
     io_context_ptr_.reset();
+}
+
+TcpServer::StaticResource::~StaticResource() {
+    shutdown();
 }
 
 }  // namespace ELITE

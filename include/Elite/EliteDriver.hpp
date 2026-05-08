@@ -57,15 +57,17 @@ class EliteDriverConfig {
     // Acceleration [rad/s^2]. The acceleration of stopj motion.
     float stopj_acc = 8;
 
-    // When using the `writeServoj()` and the `queue_mode` parameter is true, the timeout duration for the queue waiting for. (For
-    // detailed descriptions of the queue mode, please refer to the description of this interface in the API documentation.)
-    int servoj_queue_pre_recv_size = 10;
+    // Maximum duration [S] for constant-velocity extrapolation when no new servoj point arrives.
+    float servoj_extrapolate_max_time = 0.08;
 
-    // When using the `writeServoj()` and the `queue_mode` parameter is true, the timeout duration for the queue waiting for
-    // pre-stored points. If the value is less than or equal to 0, the timeout duration will be calculated based on
-    // `servoj_queue_pre_recv_size * servoj_time`.(For detailed descriptions of the queue mode, please refer to the description of
-    // this interface in the API documentation.)
-    float servoj_queue_pre_recv_timeout = -1;
+    // Deceleration duration [S] used to linearly ramp extrapolation speed down to zero.
+    float servoj_decelerate_time = 0.01;
+
+    // Joint velocity threshold [rad/s] used to decide whether joints are stable enough to lock hold position.
+    float servoj_hold_velocity_threshold = 0.05;
+
+    // Stable duration [S] required before locking hold position after extrapolation speed reaches zero.
+    float servoj_hold_stable_time = 0.04;
 
     EliteDriverConfig() = default;
     ~EliteDriverConfig() = default;
@@ -109,6 +111,10 @@ class EliteDriver {
      * @param servoj_lookahead_time Time [S], range [0.03,0.2] smoothens the trajectory with this lookahead time
      * @param servoj_gain servo gain.
      * @param stopj_acc acceleration [rad/s^2]. The acceleration of stopj motion.
+     * @param servoj_extrapolate_max_time Maximum duration [S] for constant-velocity extrapolation.
+     * @param servoj_decelerate_time Deceleration duration [S] used to ramp extrapolation speed to zero.
+     * @param servoj_hold_velocity_threshold Joint velocity threshold [rad/s] for hold lock decision.
+     * @param servoj_hold_stable_time Stable duration [S] required before locking hold position.
      */
     [[deprecated(
         "Construct a EliteDriver object with an argument list is deprecated. Please use"
@@ -116,7 +122,9 @@ class EliteDriver {
     EliteDriver(const std::string& robot_ip, const std::string& local_ip, const std::string& script_file,
                 bool headless_mode = false, int script_sender_port = 50002, int reverse_port = 50001, int trajectory_port = 50003,
                 int script_command_port = 50004, float servoj_time = 0.008, float servoj_lookahead_time = 0.1,
-                int servoj_gain = 300, float stopj_acc = 8.0);
+                int servoj_gain = 300, float stopj_acc = 8.0, float servoj_extrapolate_max_time = 0.08,
+                float servoj_decelerate_time = 0.01, float servoj_hold_velocity_threshold = 0.05,
+                float servoj_hold_stable_time = 0.04);
 
     /**
      * @brief Destroy the Elite Driver object
@@ -130,12 +138,10 @@ class EliteDriver {
      * @param pos points
      * @param timeout_ms The read timeout configuration for the reverse socket running in the external control script on the robot.
      * @param cartesian True if the point sent is cartesian, false if joint-based
-     * @param queue_mode True if use queue mode, false if normal mode. (For detailed descriptions of the queue mode, please refer to
-     * the description of this interface in the API documentation.)
      * @return true Joint angles sent successfully.
      * @return false Fail to send joint angles.
      */
-    ELITE_EXPORT bool writeServoj(const vector6d_t& pos, int timeout_ms, bool cartesian = false, bool queue_mode = false);
+    ELITE_EXPORT bool writeServoj(const vector6d_t& pos, int timeout_ms, bool cartesian = false);
 
     /**
      * @brief Write speedl() velocity to robot
@@ -359,41 +365,54 @@ class EliteDriver {
     /**
      * @brief Start tool RS485 communication.
      * This function will start a socat process on the robot control cabinet, mapping the serial port to the TCP port you specified.
-     *
+     * If you want to use this feature, it is recommended to install libssh. If you are using it on a non-Linux system, you must
+     * install the libssh library.
      *
      * @param config Serial configuration
+     * @param ssh_password SSH password for robot control cabinet
      * @param tcp_port Socat TCP port
      * @return SerialCommunicationSharedPtr A TCP communication object for RS485 communication. nullptr if start fail.
      */
-    ELITE_EXPORT SerialCommunicationSharedPtr startToolRs485(const SerialConfig& config, int tcp_port = 54321);
+    ELITE_EXPORT SerialCommunicationSharedPtr startToolRs485(const SerialConfig& config, const std::string& ssh_password,
+                                                             int tcp_port = 54321);
 
     /**
      * @brief End tool RS485 communication
-     *
-     * @param comm_ptr TCP communication object for RS485 communication. If not nullptr, it will be disconnected.
+     * If you want to use this feature, it is recommended to install libssh. If you are using it on a non-Linux system, you must
+     * install the libssh library.
+     * 
+     * @param com TCP communication object for RS485 communication.
+     * @param ssh_password SSH password for robot control cabinet
      * @return true success
      * @return false fail
      */
-    ELITE_EXPORT bool endToolRs485(SerialCommunicationSharedPtr comm_ptr);
+    ELITE_EXPORT bool endToolRs485(SerialCommunicationSharedPtr com, const std::string& ssh_password);
 
     /**
      * @brief Start board RS485 communication.
      * This function will start a socat process on the robot control cabinet, mapping the serial port to the TCP port you specified.
+     * If you want to use this feature, it is recommended to install libssh. If you are using it on a non-Linux system, you must
+     * install the libssh library.
      *
      * @param config Serial configuration
+     * @param ssh_password SSH password for robot control cabinet
      * @param tcp_port Socat TCP port
      * @return SerialCommunicationSharedPtr A TCP communication object for RS485 communication. nullptr if start fail.
      */
-    ELITE_EXPORT SerialCommunicationSharedPtr startBoardRs485(const SerialConfig& config, int tcp_port = 54322);
+    ELITE_EXPORT SerialCommunicationSharedPtr startBoardRs485(const SerialConfig& config, const std::string& ssh_password,
+                                                              int tcp_port = 54322);
 
     /**
      * @brief End board RS485 communication
+     * If you want to use this feature, it is recommended to install libssh. If you are using it on a non-Linux system, you must
+     * install the libssh library.
      *
-     * @param comm_ptr TCP communication object for RS485 communication. If not nullptr, it will be disconnected.
+     * @param com TCP communication object for RS485 communication.
+     * @param ssh_password SSH password for robot control cabinet
      * @return true success
      * @return false fail
      */
-    ELITE_EXPORT bool endBoardRs485(SerialCommunicationSharedPtr comm_ptr);
+    ELITE_EXPORT bool endBoardRs485(SerialCommunicationSharedPtr com, const std::string& ssh_password);
 };
 
 }  // namespace ELITE

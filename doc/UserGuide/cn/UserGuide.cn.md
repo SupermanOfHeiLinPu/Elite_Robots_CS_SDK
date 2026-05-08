@@ -21,3 +21,7 @@
 7. [自定义日志](./Log.cn.md)
 
 8. [RS485 串口通讯](./Serial-Communication.cn.md)
+
+9. [插件系统：ClassLoader](./ClassLoader-Plugin.cn.md)
+
+10. [运动学插件](./Kinematics-Plugin.cn.md)

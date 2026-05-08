@@ -39,17 +39,17 @@ public:
 
 class ScriptSenderTest : public ::testing::Test {
 protected:
+    std::shared_ptr<TcpServer::StaticResource> tcp_resource_ = std::make_shared<TcpServer::StaticResource>();
     void SetUp() {
-        TcpServer::start();
-        script_sender_.reset(new ScriptSender(TEST_PORT, program_));
+        script_sender_.reset(new ScriptSender(TEST_PORT, program_, tcp_resource_));
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         tcp_client_.reset(new TcpClient("127.0.0.1", TEST_PORT));
     }
 
     void TearDown() {
+        tcp_resource_->shutdown();
         tcp_client_.reset();
         script_sender_.reset();
-        TcpServer::stop();
     }
 
     std::unique_ptr<TcpClient> tcp_client_;

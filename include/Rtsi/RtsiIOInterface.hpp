@@ -317,7 +317,7 @@ class RtsiIOInterface : protected RtsiClientInterface {
     ELITE_EXPORT vector3d_t getElbowVelocity();
 
     /**
-     * @return uint32_t Robot status. bits 0-3: is power on | is program running | is freedrive button pressed
+     * @return uint32_t Robot status. bits 0-2: is power on | is program running | is freedrive button pressed
      */
     ELITE_EXPORT uint32_t getRobotStatus();
 
@@ -492,7 +492,7 @@ class RtsiIOInterface : protected RtsiClientInterface {
     }
 
    private:
-    volatile bool input_new_cmd_;
+    std::atomic_bool input_new_cmd_;
     std::vector<std::string> input_recipe_string_;
     std::vector<std::string> output_recipe_string_;
     double target_frequency_;

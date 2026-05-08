@@ -631,8 +631,469 @@ Gets the real-time velocity of the robot's elbow.
 
 ---
 
-### Get the Robot Status
+### Get Robot Status
 ```cpp
 uint32_t getRobotStatus()
 ```
-- ***
+- ***Description***
+
+    Get robot status.
+
+- ***Return Value***：
+    - bits 0-2: Power on | Program running | Freedrive button pressed
+
+---
+
+### Get Safety Status Bits
+```cpp
+uint32_t getSafetyStatusBits()
+```
+- ***Description***
+
+    Get robot safety status bits.
+
+- ***Return Value***：
+    - bits 0-10: Normal mode | Reduced mode | Protective stop | Recovery mode | Safeguard stop | System emergency stop | Robot emergency stop | Emergency stop | Violation | Fault | Safety stop
+
+---
+
+### Get Analog IO Types
+```cpp
+uint32_t getAnalogIOTypes()
+```
+- ***Description***
+
+    Get analog IO types.
+
+- ***Return Value***：
+    - bits 0-3: Analog input 0(bit 0), analog input 1(bit 1), analog output 0(bit 2), analog output 1(bit 3)
+    - 0: Current mode; 1: Voltage mode
+
+---
+
+### Get Analog Input
+```cpp
+double getAnalogInput(int index)
+```
+- ***Description***
+
+    Get standard analog input value.
+
+- ***Parameters***
+
+    - index: Standard analog input index[0,1]
+
+- ***Return Value***: Analog input value (unit: A or V)
+
+---
+
+### Get Analog Output
+```cpp
+double getAnalogOutput(int index)
+```
+- ***Description***
+
+    Get standard analog output value.
+
+- ***Parameters***
+
+    - index: Standard analog output index[0,1]
+
+- ***Return Value***: Analog output value (unit: A or V)
+
+---
+
+### Get IO Current
+```cpp
+double getIOCurrent()
+```
+- ***Description***
+
+    Get mainboard IO current.
+
+- ***Return Value***: Current value (unit: A)
+
+---
+
+### Get Tool Mode
+```cpp
+ToolMode getToolMode()
+```
+- ***Description***
+
+    Get tool mode.
+
+- ***Return Value***: ToolMode enumeration value
+
+---
+
+### Get Tool Analog Input Type
+```cpp
+uint32_t getToolAnalogInputType()
+```
+- ***Description***
+
+    Get tool analog input IO mode.
+
+- ***Return Value***: 0: Current mode, 1: Voltage mode
+
+---
+
+### Get Tool Analog Output Type
+```cpp
+uint32_t getToolAnalogOutputType()
+```
+- ***Description***
+
+    Get tool analog output IO mode.
+
+- ***Return Value***: 0: Current mode, 1: Voltage mode
+
+---
+
+### Get Tool Analog Input
+```cpp
+double getToolAnalogInput()
+```
+- ***Description***
+
+    Get tool analog input value.
+
+- ***Return Value***：
+    - Current mode range[0.004-0.02]A
+    - Voltage mode range[0-10]V
+
+---
+
+### Get Tool Analog Output
+```cpp
+double getToolAnalogOutput()
+```
+- ***Description***
+
+    Get tool analog output value.
+
+- ***Return Value***：
+    - Current mode range[0.004-0.02]A
+    - Voltage mode range[0-10]V
+
+---
+
+### Get Tool Output Voltage
+```cpp
+double getToolOutputVoltage()
+```
+- ***Description***
+
+    Get tool output voltage.
+
+- ***Return Value***: Voltage value (unit: V)
+
+---
+
+### Get Tool Output Current
+```cpp
+double getToolOutputCurrent()
+```
+- ***Description***
+
+    Get tool output current.
+
+- ***Return Value***: Current value (unit: A)
+
+---
+
+### Get Tool Output Temperature
+```cpp
+double getToolOutputTemperature()
+```
+- ***Description***
+
+    Get tool output temperature.
+
+- ***Return Value***: Temperature value (unit: Celsius)
+
+---
+
+### Get Tool Digital Mode
+```cpp
+ToolDigitalMode getToolDigitalMode()
+```
+- ***Description***
+
+    Get tool digital mode.
+
+- ***Return Value***: Single pin, Dual pin mode 1, Dual pin mode 2, Triple pin
+
+---
+
+### Get Tool Digital Output Mode
+```cpp
+ToolDigitalOutputMode getToolDigitalOutputMode(int index)
+```
+- ***Description***
+
+    Get tool digital output mode.
+
+- ***Parameters***
+
+    - index: Tool digital index
+
+- ***Return Value***: Push/Pull, NPN, PNP
+
+---
+
+### Get Output Boolean Registers 0-31
+```cpp
+uint32_t getOutBoolRegisters0To31()
+```
+- ***Description***
+
+    Get output values of boolean registers 0-31.
+
+- ***Return Value***: Register value
+
+---
+
+### Get Output Boolean Registers 32-63
+```cpp
+uint32_t getOutBoolRegisters32To63()
+```
+- ***Description***
+
+    Get output values of boolean registers 32-63.
+
+- ***Return Value***: Register value
+
+---
+
+### Get Input Boolean Registers 0-31
+```cpp
+uint32_t getInBoolRegisters0To31()
+```
+- ***Description***
+
+    Get input values of boolean registers 0-31.
+
+- ***Return Value***: Register value
+
+---
+
+### Get Input Boolean Registers 32-63
+```cpp
+uint32_t getInBoolRegisters32To63()
+```
+- ***Description***
+
+    Get input values of boolean registers 32-63.
+
+- ***Return Value***: Register value
+
+---
+
+### Get Input Boolean Register
+```cpp
+bool getInBoolRegister(int index)
+```
+- ***Description***
+
+    Get input value of a specified boolean register.
+
+- ***Parameters***
+
+    - index: Boolean register index[64,127]
+
+- ***Return Value***: Register value
+
+---
+
+### Get Output Boolean Register
+```cpp
+bool getOutBoolRegister(int index)
+```
+- ***Description***
+
+    Get output value of a specified boolean register.
+
+- ***Parameters***
+
+    - index: Boolean register index
+
+- ***Return Value***: Register value
+
+---
+
+### Get Input Integer Register
+```cpp
+int32_t getInIntRegister(int index)
+```
+- ***Description***
+
+    Get input value of a specified integer register.
+
+- ***Parameters***
+
+    - index: Integer register index
+
+- ***Return Value***: Register value
+
+---
+
+### Get Output Integer Register
+```cpp
+int32_t getOutIntRegister(int index)
+```
+- ***Description***
+
+    Get output value of a specified integer register.
+
+- ***Parameters***
+
+    - index: Integer register index
+
+- ***Return Value***: Register value
+
+---
+
+### Get Input Double Register
+```cpp
+double getInDoubleRegister(int index)
+```
+- ***Description***
+
+    Get input value of a specified double register.
+
+- ***Parameters***
+
+    - index: Double register index
+
+- ***Return Value***: Register value
+
+---
+
+### Get Output Double Register
+```cpp
+double getOutDoubleRegister(int index)
+```
+- ***Description***
+
+    Get output value of a specified double register.
+
+- ***Parameters***
+
+    - index: Double register index
+
+- ***Return Value***: Register value
+
+---
+
+### Get Output Recipe Value
+```cpp
+template<typename T>
+bool getRecipeValue(const std::string& name, T& out_value);
+```
+- ***Description***
+
+    Get the value of a specified subscription item in the output recipe.
+
+- ***Parameters***
+    - name: Subscription item name
+
+    - out_value: Output value. Note that the type of this value must match the type specified in the RTSI documentation.
+
+- ***Return Value***: Returns true on success, false on failure.
+
+---
+
+### Set Input Recipe Value
+```cpp
+template <typename T>
+bool setInputRecipeValue(const std::string& name, const T& value)
+```
+- ***Description***
+
+    Set the value of a specified subscription item in the input recipe.
+
+- ***Parameters***
+    - name: Subscription item name
+
+    - value: Input value. Note that the type of this value must match the type specified in the RTSI documentation.
+
+- ***Return Value***: Returns true on success, false on failure.
+
+---
+
+# RtsiRecipe Class
+
+## Introduction
+
+This interface provides basic operations for RTSI recipes. The `RtsiRecipe` class can only be obtained through the `RtsiClientInterface::setupOutputRecipe()` and `RtsiClientInterface::setupInputRecipe()` interfaces.
+
+## Header File
+```cpp
+#include <Elite/RtsiRecipe.hpp>
+```
+
+## Interface
+
+### ***Get Value***
+```cpp
+template<typename T>
+bool getValue(const std::string& name, T& out_value)
+```
+- ***Description***
+
+    Get the value of a subscription item in the recipe.
+
+- ***Parameters***
+
+    - name: Subscription item name.
+
+    - out_value: Output value of the subscription item. Note that the type of this value must match the type specified in the RTSI documentation.
+
+- ***Return Value***: Returns true on success, false on failure.
+
+---
+
+### ***Set Value***
+```cpp
+template<typename T>
+bool setValue(const std::string& name, const T& value)
+```
+- ***Description***
+
+    Set the value of a subscription item in the recipe.
+
+- ***Parameters***
+
+    - name: Subscription item name.
+
+    - value: Value to set for the subscription item. Note that the type of this value must match the type specified in the RTSI documentation.
+
+- ***Return Value***: Returns true on success, false on failure.
+
+---
+
+### Get Recipe
+```cpp
+const std::vector<std::string>& getRecipe()
+```
+- ***Description***
+    
+    Get the list of recipe subscription item names.
+
+- ***Return Value***: List of recipe subscription item names.
+
+---
+
+### Get Recipe ID
+```cpp
+int getID()
+```
+- ***Description***
+    
+    Get the recipe ID.
+
+- ***Return Value***: Recipe ID.
+
+---

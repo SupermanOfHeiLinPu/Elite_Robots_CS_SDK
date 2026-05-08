@@ -125,3 +125,17 @@ bool isConnected()
 - ***返回值***：如果连接到服务端，则返回true
 
 ---
+
+### ***获取socat PID***
+```cpp
+int getSocatPid() const
+```
+
+- ***功能***
+    
+    获取机器人控制柜上进行端口映射socat的进程号
+
+    
+- ***返回值***：socat的进程号。如果小于0，则是无效的PID。
+
+--- 

@@ -6,20 +6,20 @@ file(GLOB SOURCES *.cpp)
 
 find_package(Boost REQUIRED COMPONENTS program_options)
 
-# On Windows systems, when using CMake in the main directory, 
-# the ELITE_EXPORT_LIBRARY macro definition must be removed to avoid compilation errors.
-if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    add_definitions(-DELITE_STATIC_LIBRARY)
+if(ELITE_COMPILE_KIN_PLUGIN)
+    add_definitions(-DELITE_COMPILE_KIN_PLUGIN)
 endif()
 
-find_package(Boost REQUIRED)
+# Examples link the SDK shared library; ELITE_STATIC_LIBRARY must NOT be defined
+# for shared builds. If static linking is introduced in the future, gate
+# ELITE_STATIC_LIBRARY on that configuration.
 
 foreach(SOURCE ${SOURCES})
     get_filename_component(ELITE_SDK_EXAMPLE_NAME ${SOURCE} NAME_WE)
     add_executable(${ELITE_SDK_EXAMPLE_NAME} ${SOURCE})
     target_link_libraries(
         ${ELITE_SDK_EXAMPLE_NAME} 
-        elite-cs-series-sdk::static
+        elite_cs_series_sdk::shared
         ${SYSTEM_LIB}
         Boost::program_options
     )
@@ -34,6 +34,15 @@ foreach(SOURCE ${SOURCES})
         PRIVATE 
         ${Boost_INCLUDE_DIRS}
     )
+    if(WIN32)
+        add_custom_command(
+            TARGET ${ELITE_SDK_EXAMPLE_NAME}
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    $<TARGET_FILE:elite_cs_series_sdk_SHARED>
+                    $<TARGET_FILE_DIR:${ELITE_SDK_EXAMPLE_NAME}>
+        )
+    endif()
 endforeach()
 
 
