@@ -53,10 +53,13 @@ class TrajectoryInterface : public ReversePort {
      * @param time Time for the robot to reach this point
      * @param blend_radius The radius to be used for blending between control points
      * @param cartesian True, if the point sent is cartesian, false if joint-based
+     * @param speed Joint speed for movej or TCP speed for movel when time is 0
+     * @param acceleration Joint acceleration for movej or TCP acceleration for movel when time is 0
      * @return true
      * @return false
      */
-    bool writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_radius, bool cartesian);
+    bool writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_radius, bool cartesian, float speed = 0.0f,
+                              float acceleration = 0.0f);
 
    private:
     std::function<void(TrajectoryMotionResult)> motion_result_func_;

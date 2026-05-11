@@ -14,10 +14,10 @@
 #include "ReverseInterface.hpp"
 #include "ScriptCommandInterface.hpp"
 #include "ScriptSender.hpp"
-#include "TcpServer.hpp"
-#include "TrajectoryInterface.hpp"
 #include "SerialCommunicationImpl.hpp"
 #include "SshUtils.hpp"
+#include "TcpServer.hpp"
+#include "TrajectoryInterface.hpp"
 
 using namespace ELITE;
 using namespace std::chrono;
@@ -118,8 +118,7 @@ void EliteDriver::Impl::scriptParamWrite(std::string& file_string, const EliteDr
     }
 
     while (file_string.find(SERVOJ_EXTRAPOLATE_MAX_TIME_REPLACE) != std::string::npos) {
-        file_string.replace(file_string.find(SERVOJ_EXTRAPOLATE_MAX_TIME_REPLACE),
-                            SERVOJ_EXTRAPOLATE_MAX_TIME_REPLACE.length(),
+        file_string.replace(file_string.find(SERVOJ_EXTRAPOLATE_MAX_TIME_REPLACE), SERVOJ_EXTRAPOLATE_MAX_TIME_REPLACE.length(),
                             std::to_string(config.servoj_extrapolate_max_time));
     }
 
@@ -130,8 +129,7 @@ void EliteDriver::Impl::scriptParamWrite(std::string& file_string, const EliteDr
 
     while (file_string.find(SERVOJ_HOLD_VELOCITY_THRESHOLD_REPLACE) != std::string::npos) {
         file_string.replace(file_string.find(SERVOJ_HOLD_VELOCITY_THRESHOLD_REPLACE),
-                            SERVOJ_HOLD_VELOCITY_THRESHOLD_REPLACE.length(),
-                            std::to_string(config.servoj_hold_velocity_threshold));
+                            SERVOJ_HOLD_VELOCITY_THRESHOLD_REPLACE.length(), std::to_string(config.servoj_hold_velocity_threshold));
     }
 
     while (file_string.find(SERVOJ_HOLD_STABLE_TIME_REPLACE) != std::string::npos) {
@@ -236,8 +234,8 @@ EliteDriver::EliteDriver(const EliteDriverConfig& config) { init(config); }
 EliteDriver::EliteDriver(const std::string& robot_ip, const std::string& local_ip, const std::string& script_file,
                          bool headless_mode, int script_sender_port, int reverse_port, int trajectory_port, int script_command_port,
                          float servoj_time, float servoj_lookahead_time, int servoj_gain, float stopj_acc,
-                         float servoj_extrapolate_max_time, float servoj_decelerate_time,
-                         float servoj_hold_velocity_threshold, float servoj_hold_stable_time) {
+                         float servoj_extrapolate_max_time, float servoj_decelerate_time, float servoj_hold_velocity_threshold,
+                         float servoj_hold_stable_time) {
     EliteDriverConfig config;
     config.robot_ip = robot_ip;
     config.local_ip = local_ip;
@@ -260,7 +258,7 @@ EliteDriver::EliteDriver(const std::string& robot_ip, const std::string& local_i
 
 EliteDriver::~EliteDriver() { impl_.reset(); }
 
-bool EliteDriver::writeServoj(const vector6d_t& pos, int timeout_ms, bool cartesian){
+bool EliteDriver::writeServoj(const vector6d_t& pos, int timeout_ms, bool cartesian) {
     if (cartesian) {
         return impl_->reverse_server_->writeJointCommand(pos, ControlMode::MODE_POSE, timeout_ms);
     } else {
@@ -280,8 +278,9 @@ void EliteDriver::setTrajectoryResultCallback(std::function<void(TrajectoryMotio
     impl_->trajectory_server_->setMotionResultCallback(cb);
 }
 
-bool EliteDriver::writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_radius, bool cartesian) {
-    return impl_->trajectory_server_->writeTrajectoryPoint(positions, time, blend_radius, cartesian);
+bool EliteDriver::writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_radius, bool cartesian, float speed,
+                                       float acceleration) {
+    return impl_->trajectory_server_->writeTrajectoryPoint(positions, time, blend_radius, cartesian, speed, acceleration);
 }
 
 bool EliteDriver::writeTrajectoryControlAction(TrajectoryControlAction action, const int point_number, int robot_receive_timeout) {
@@ -372,15 +371,15 @@ void EliteDriver::registerRobotExceptionCallback(std::function<void(RobotExcepti
 }
 
 int EliteDriver::Impl::getSocatPid(const std::string& ssh_password, int port) {
-    auto ps_result =
-        SSH_UTILS::executeCommand(robot_ip_, "root", ssh_password, "ps| grep \"[s]ocat tcp-l:"+ std::to_string(port) + "\" | awk '{print $1}'");
+    auto ps_result = SSH_UTILS::executeCommand(robot_ip_, "root", ssh_password,
+                                               "ps| grep \"[s]ocat tcp-l:" + std::to_string(port) + "\" | awk '{print $1}'");
     ELITE_LOG_DEBUG("Socat port %d PID:  %s", port, ps_result.c_str());
     if (ps_result.empty()) {
         return -1;
     } else {
         try {
             return std::stoi(ps_result);
-        } catch(const std::exception& e) {
+        } catch (const std::exception& e) {
             ELITE_LOG_ERROR("Convert socat PID fail 'ps' string: %s. exception: %s", ps_result.c_str(), e.what());
             return -1;
         }
@@ -438,7 +437,7 @@ bool EliteDriver::endToolRs485(SerialCommunicationSharedPtr com, const std::stri
 }
 
 SerialCommunicationSharedPtr EliteDriver::startBoardRs485(const SerialConfig& config, const std::string& ssh_password,
-                                                         int tcp_port) {
+                                                          int tcp_port) {
     if (!impl_->primary_port_) {
         ELITE_LOG_ERROR("Not connect to robot primary port");
         return nullptr;

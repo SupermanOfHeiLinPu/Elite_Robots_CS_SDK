@@ -16,7 +16,6 @@ TRAJECTORY_ACTION_START = 1
 
 TRAJECTORY_MOTION_JOINT = 0
 TRAJECTORY_MOTION_CARTESIAN = 1
-
 POS_ZOOM_RATIO = {{POS_ZOOM_RATIO_REPLACE}}
 TIME_ZOOM_RATIO = {{TIME_ZOOM_RATIO_REPLACE}}
 COMMON_ZOOM_RATIO = {{COMMON_ZOOM_RATIO_REPLACE}}
@@ -166,14 +165,26 @@ def trajectoryThread():
             point = [raw_point[1] / POS_ZOOM_RATIO, raw_point[2] / POS_ZOOM_RATIO, raw_point[3] / POS_ZOOM_RATIO, raw_point[4] / POS_ZOOM_RATIO, raw_point[5] / POS_ZOOM_RATIO, raw_point[6] / POS_ZOOM_RATIO]
             cmd_trajectory_point = point
 
+            speed = raw_point[7] / COMMON_ZOOM_RATIO
+            acceleration = raw_point[8] / COMMON_ZOOM_RATIO
             time = raw_point[19] / TIME_ZOOM_RATIO
             
             motion_type = raw_point[21]
             
             if motion_type == TRAJECTORY_MOTION_JOINT:
-                movej(point, t = time, r = blend_radius)
+                if time > 0:
+                    movej(point, t = time, r = blend_radius)
+                elif speed > 0 and acceleration > 0:
+                    movej(point, a = acceleration, v = speed, r = blend_radius)
+                else:
+                    movej(point, r = blend_radius)
             elif motion_type == TRAJECTORY_MOTION_CARTESIAN:
-                movel(point, t = time, r = blend_radius)
+                if time > 0:
+                    movel(point, t = time, r = blend_radius)
+                elif speed > 0 and acceleration > 0:
+                    movel(point, a = acceleration, v = speed, r = blend_radius)
+                else:
+                    movel(point, r = blend_radius)
     
     socket_send_int(TRAJECTORY_RESULT_SUCCESS, "trajectory_socket")
 

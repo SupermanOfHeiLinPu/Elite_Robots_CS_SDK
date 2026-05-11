@@ -180,10 +180,13 @@ class EliteDriver {
      * @param time Time for the robot to reach this point
      * @param blend_radius The radius to be used for blending between control points
      * @param cartesian True, if the point sent is cartesian, false if joint-based
+     * @param speed Joint speed for movej or TCP speed for movel when time is 0
+     * @param acceleration Joint acceleration for movej or TCP acceleration for movel when time is 0
      * @return true Trajectory point sent successfully.
      * @return false Fail to send trajectory point.
      */
-    ELITE_EXPORT bool writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_radius, bool cartesian);
+    ELITE_EXPORT bool writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_radius, bool cartesian,
+                                           float speed = 0.0f, float acceleration = 0.0f);
 
     /**
      * @brief Writes a control message in trajectory forward mode.
@@ -380,7 +383,7 @@ class EliteDriver {
      * @brief End tool RS485 communication
      * If you want to use this feature, it is recommended to install libssh. If you are using it on a non-Linux system, you must
      * install the libssh library.
-     * 
+     *
      * @param com TCP communication object for RS485 communication.
      * @param ssh_password SSH password for robot control cabinet
      * @return true success
