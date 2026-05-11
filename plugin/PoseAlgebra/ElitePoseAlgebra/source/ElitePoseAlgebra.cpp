@@ -10,8 +10,8 @@ bool validatePoseMatrix(const ELITE::PoseMatrix& pose, ELITE::PoseAlgebraResult&
         return false;
     }
 
-    if (std::fabs(pose.data[3][0]) > ELITE::PoseAlgebraBase::kRotationTolerance || std::fabs(pose.data[3][1]) > ELITE::PoseAlgebraBase::kRotationTolerance ||
-        std::fabs(pose.data[3][2]) > ELITE::PoseAlgebraBase::kRotationTolerance || std::fabs(pose.data[3][3] - 1.0) > ELITE::PoseAlgebraBase::kRotationTolerance) {
+    if (std::fabs(pose.data[3][0]) > ELITE::PoseAlgebraBase::ZERO_TOLERANCE || std::fabs(pose.data[3][1]) > ELITE::PoseAlgebraBase::ZERO_TOLERANCE ||
+        std::fabs(pose.data[3][2]) > ELITE::PoseAlgebraBase::ZERO_TOLERANCE || std::fabs(pose.data[3][3] - 1.0) > ELITE::PoseAlgebraBase::ZERO_TOLERANCE) {
         ELITE::PoseAlgebraBase::setError(result, ELITE::PoseAlgebraError::INVALID_INPUT, name + " is not a valid homogeneous pose matrix");
         return false;
     }
@@ -24,7 +24,7 @@ bool validatePoseMatrix(const ELITE::PoseMatrix& pose, ELITE::PoseAlgebraResult&
             }
 
             const double expected = (i == j) ? 1.0 : 0.0;
-            if (std::fabs(dot - expected) > ELITE::PoseAlgebraBase::kRotationTolerance) {
+            if (std::fabs(dot - expected) > ELITE::PoseAlgebraBase::ZERO_TOLERANCE) {
                 ELITE::PoseAlgebraBase::setError(result, ELITE::PoseAlgebraError::INVALID_ROTATION_MATRIX,
                                                  name + " contains a non-orthonormal rotation matrix");
                 return false;
@@ -33,13 +33,13 @@ bool validatePoseMatrix(const ELITE::PoseMatrix& pose, ELITE::PoseAlgebraResult&
     }
 
     const double det = ELITE::PoseAlgebraBase::determinant3x3(pose);
-    if (std::fabs(det) < ELITE::PoseAlgebraBase::kZeroTolerance) {
+    if (std::fabs(det) < ELITE::PoseAlgebraBase::ZERO_TOLERANCE) {
         ELITE::PoseAlgebraBase::setError(result, ELITE::PoseAlgebraError::SINGULAR_MATRIX,
                                          name + " rotation matrix is singular and cannot be inverted");
         return false;
     }
 
-    if (std::fabs(det - 1.0) > ELITE::PoseAlgebraBase::kRotationTolerance) {
+    if (std::fabs(det - 1.0) > ELITE::PoseAlgebraBase::ZERO_TOLERANCE) {
         ELITE::PoseAlgebraBase::setError(result, ELITE::PoseAlgebraError::INVALID_ROTATION_MATRIX,
                                          name + " rotation determinant is not close to +1");
         return false;
@@ -106,7 +106,7 @@ ELITE::vector6d_t toPoseVectorUnchecked(const ELITE::PoseMatrix& pose_matrix) {
     double roll = 0.0;
     double yaw = 0.0;
 
-    if (std::fabs(cp) > ELITE::PoseAlgebraBase::kZeroTolerance) {
+    if (std::fabs(cp) > ELITE::PoseAlgebraBase::ZERO_TOLERANCE) {
         yaw = std::atan2(ny, nx);
         roll = std::atan2(oz, az);
     } else {

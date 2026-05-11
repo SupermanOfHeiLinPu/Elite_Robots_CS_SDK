@@ -32,20 +32,20 @@ ELITE::PoseMatrix toPoseMatrix(const Eigen::Matrix4d& matrix) {
 bool validateRotation(const Eigen::Matrix3d& rotation, ELITE::PoseAlgebraResult& result, const std::string& name) {
     const Eigen::Matrix3d should_be_identity = rotation.transpose() * rotation;
     const double orthonormal_error = (should_be_identity - Eigen::Matrix3d::Identity()).cwiseAbs().maxCoeff();
-    if (orthonormal_error > ELITE::PoseAlgebraBase::kRotationTolerance) {
+    if (orthonormal_error > ELITE::PoseAlgebraBase::ZERO_TOLERANCE) {
         ELITE::PoseAlgebraBase::setError(result, ELITE::PoseAlgebraError::INVALID_ROTATION_MATRIX,
                                          name + " contains a non-orthonormal rotation matrix");
         return false;
     }
 
     const double determinant = rotation.determinant();
-    if (std::fabs(determinant) < ELITE::PoseAlgebraBase::kZeroTolerance) {
+    if (std::fabs(determinant) < ELITE::PoseAlgebraBase::ZERO_TOLERANCE) {
         ELITE::PoseAlgebraBase::setError(result, ELITE::PoseAlgebraError::SINGULAR_MATRIX,
                                          name + " rotation matrix is singular and cannot be inverted");
         return false;
     }
 
-    if (std::fabs(determinant - 1.0) > ELITE::PoseAlgebraBase::kRotationTolerance) {
+    if (std::fabs(determinant - 1.0) > ELITE::PoseAlgebraBase::ZERO_TOLERANCE) {
         ELITE::PoseAlgebraBase::setError(result, ELITE::PoseAlgebraError::INVALID_ROTATION_MATRIX,
                                          name + " rotation determinant is not close to +1");
         return false;
@@ -60,8 +60,8 @@ bool validatePoseMatrix(const ELITE::PoseMatrix& pose, ELITE::PoseAlgebraResult&
     }
 
     const Eigen::Matrix4d matrix = toEigenMatrix(pose);
-    if (std::fabs(matrix(3, 0)) > ELITE::PoseAlgebraBase::kRotationTolerance || std::fabs(matrix(3, 1)) > ELITE::PoseAlgebraBase::kRotationTolerance ||
-        std::fabs(matrix(3, 2)) > ELITE::PoseAlgebraBase::kRotationTolerance || std::fabs(matrix(3, 3) - 1.0) > ELITE::PoseAlgebraBase::kRotationTolerance) {
+    if (std::fabs(matrix(3, 0)) > ELITE::PoseAlgebraBase::ZERO_TOLERANCE || std::fabs(matrix(3, 1)) > ELITE::PoseAlgebraBase::ZERO_TOLERANCE ||
+        std::fabs(matrix(3, 2)) > ELITE::PoseAlgebraBase::ZERO_TOLERANCE || std::fabs(matrix(3, 3) - 1.0) > ELITE::PoseAlgebraBase::ZERO_TOLERANCE) {
         ELITE::PoseAlgebraBase::setError(result, ELITE::PoseAlgebraError::INVALID_INPUT, name + " is not a valid homogeneous pose matrix");
         return false;
     }

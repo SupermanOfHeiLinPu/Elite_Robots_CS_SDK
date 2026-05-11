@@ -51,8 +51,7 @@ class PoseAlgebraBase {
     virtual ~PoseAlgebraBase() = default;
 
     // Helper constants
-    static constexpr double kZeroTolerance = 1e-9;
-    static constexpr double kRotationTolerance = 1e-6;
+    static constexpr double ZERO_TOLERANCE = 1e-6;
 
     // Static helper functions shared by all implementations
     static void setSuccess(PoseAlgebraResult& result) {
@@ -65,10 +64,22 @@ class PoseAlgebraBase {
         result.message = message;
     }
 
-    static double clamp(double value, double low, double high) {
-        return std::max(low, std::min(value, high));
-    }
+    /**
+     * @brief Clamp a value between a lower and upper bound.
+     * 
+     * @param value The value to be clamped.
+     * @param low The lower bound.
+     * @param high The upper bound.
+     * @return double The clamped value.
+     */
+    static double clamp(double value, double low, double high) { return std::max(low, std::min(value, high)); }
 
+    /**
+     * @brief Safely compute the arc cosine of a value, clamping it to the valid range [-1, 1].
+     * 
+     * @param cos_theta The cosine value.
+     * @return double The arc cosine of the clamped value.
+     */
     static double safeAcos(double cos_theta) {
         double safe_value = clamp(cos_theta, -1.0, 1.0);
         if (safe_value > 1.0) {
@@ -79,6 +90,14 @@ class PoseAlgebraBase {
         return std::acos(safe_value);
     }
 
+    /**
+     * @brief Validate that all elements of a 6D vector are finite.
+     * 
+     * @param pose The 6D vector to be validated.
+     * @param result Detailed result of the validation, including error code and message.
+     * @param name Name of the vector for error reporting.
+     * @return true if all elements are finite, false otherwise.
+     */
     static bool validateVectorFinite(const vector6d_t& pose, PoseAlgebraResult& result, const std::string& name) {
         for (size_t i = 0; i < pose.size(); ++i) {
             if (!std::isfinite(pose[i])) {
@@ -90,6 +109,14 @@ class PoseAlgebraBase {
         return true;
     }
 
+    /**
+     * @brief Validate that all elements of a pose matrix are finite.
+     * 
+     * @param pose The pose matrix to be validated.
+     * @param result Detailed result of the validation, including error code and message.
+     * @param name Name of the matrix for error reporting.
+     * @return true if all elements are finite, false otherwise.
+     */
     static bool validateMatrixFinite(const PoseMatrix& pose, PoseAlgebraResult& result, const std::string& name) {
         for (size_t i = 0; i < pose.data.size(); ++i) {
             for (size_t j = 0; j < pose.data[i].size(); ++j) {
@@ -103,6 +130,12 @@ class PoseAlgebraBase {
         return true;
     }
 
+    /**
+     * @brief Compute the determinant of a 3x3 pose matrix.
+     *
+     * @param pose The 3x3 pose matrix.
+     * @return double The determinant of the matrix.
+     */
     static double determinant3x3(const PoseMatrix& pose) {
         const double r00 = pose.data[0][0];
         const double r01 = pose.data[0][1];
@@ -277,7 +310,7 @@ class PoseAlgebraBase {
      * error details.
      */
     ELITE_EXPORT virtual bool distance(const vector6d_t& pose_a, const vector6d_t& pose_b, PoseDistance& out_distance,
-                                       PoseAlgebraResult& result) const = 0;
+                                       PoseAlgebraResult& result) const = 0;    
 };
 
 using PoseAlgebraBaseSharedPtr = std::shared_ptr<PoseAlgebraBase>;
