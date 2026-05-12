@@ -157,6 +157,7 @@ void setTrajectoryResultCallback(std::function<void(TrajectoryMotionResult)> cb)
 ### ***写入轨迹路点***
 ```cpp
 bool writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_radius, bool cartesian)
+bool writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_radius, bool cartesian, float speed, float acceleration)
 ```
 - ***功能***
 
@@ -170,6 +171,16 @@ bool writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_r
     - blend_radius：两个路点的转接半径
 
     - cartesian：如果发送的点是笛卡尔的，则为true，如果是基于关节的，则为false
+
+    - speed：仅第二个重载接口使用，当 `time == 0` 时生效。关节轨迹时表示 `movej` 的关节速度，笛卡尔轨迹时表示 `movel` 的工具速度
+
+    - acceleration：仅第二个重载接口使用，当 `time == 0` 时生效。关节轨迹时表示 `movej` 的关节加速度，笛卡尔轨迹时表示 `movel` 的工具加速度
+
+- ***说明***
+
+    - 当 `time > 0` 时，机器人按给定时间规划运动，`speed` 和 `acceleration` 被忽略
+    - 当 `time == 0` 且 `speed > 0`、`acceleration > 0` 时，机器人按给定速度和加速度规划运动
+    - 当 `time == 0` 且未提供有效的 `speed` / `acceleration` 时，机器人使用控制器默认的 `movej` / `movel` 参数
 
 - ***返回值***：指令发送成功返回 true，失败返回 false。
 
@@ -444,6 +455,4 @@ bool endBoardRs485(SerialCommunicationSharedPtr com, const std::string& ssh_pass
 - ***注意***：如果要使用此功能，建议安装 libssh ，如果在非Linux系统下使用，则必须安装 libssh 库。
 
 ---
-
-
 
