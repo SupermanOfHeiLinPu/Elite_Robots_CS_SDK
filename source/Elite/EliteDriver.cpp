@@ -282,9 +282,9 @@ bool EliteDriver::writeTrajectoryPoint(const vector6d_t& positions, float time, 
     return impl_->trajectory_server_->writeTrajectoryPoint(positions, time, blend_radius, cartesian);
 }
 
-bool EliteDriver::writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_radius, bool cartesian, float speed,
+bool EliteDriver::writeTrajectoryPoint(const vector6d_t& positions, float blend_radius, bool cartesian, float speed,
                                        float acceleration) {
-    return impl_->trajectory_server_->writeTrajectoryPoint(positions, time, blend_radius, cartesian, speed, acceleration);
+    return impl_->trajectory_server_->writeTrajectoryPoint(positions, blend_radius, cartesian, speed, acceleration);
 }
 
 bool EliteDriver::writeTrajectoryControlAction(TrajectoryControlAction action, const int point_number, int robot_receive_timeout) {
