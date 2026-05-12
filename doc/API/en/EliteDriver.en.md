@@ -145,17 +145,18 @@ One way to control the robot is to send all the waypoints to the robot at once. 
 ### ***Write Trajectory Waypoint***
 ```cpp
 bool writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_radius, bool cartesian)
-bool writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_radius, bool cartesian, float speed, float acceleration)
+bool writeTrajectoryPoint(const vector6d_t& positions, float blend_radius, bool cartesian, float speed, float acceleration)
 ```
 - ***Function***
 Writes a trajectory waypoint to a specific socket.
 - ***Parameters***
     - positions: The waypoint.
-    - time: The time to reach the waypoint.
+    - time: Used only by the first overload. The time to reach the waypoint.
     - blend_radius: The transition radius between two waypoints.
     - cartesian: If the sent point is Cartesian, it is True. If it is joint-based, it is false.
-    - speed: Used only by the second overload and only when `time == 0`. Joint speed for `movej` or TCP speed for `movel`.
-    - acceleration: Used only by the second overload and only when `time == 0`. Joint acceleration for `movej` or TCP acceleration for `movel`.
+    - speed: Used only by the second overload. Joint speed for `movej` or TCP speed for `movel`.
+    - acceleration: Used only by the second overload. Joint acceleration for `movej` or TCP acceleration for `movel`.
+- ***Note***: The second overload fixes `time` to `0`, so the robot plans the motion with the provided speed and acceleration.
 - ***Return Value***: Returns true if the instruction is sent successfully, and false if it fails.
 
 ---
