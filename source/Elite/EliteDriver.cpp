@@ -278,6 +278,10 @@ void EliteDriver::setTrajectoryResultCallback(std::function<void(TrajectoryMotio
     impl_->trajectory_server_->setMotionResultCallback(cb);
 }
 
+bool EliteDriver::writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_radius, bool cartesian) {
+    return impl_->trajectory_server_->writeTrajectoryPoint(positions, time, blend_radius, cartesian);
+}
+
 bool EliteDriver::writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_radius, bool cartesian, float speed,
                                        float acceleration) {
     return impl_->trajectory_server_->writeTrajectoryPoint(positions, time, blend_radius, cartesian, speed, acceleration);

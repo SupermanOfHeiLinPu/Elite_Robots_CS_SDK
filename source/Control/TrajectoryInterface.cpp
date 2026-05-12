@@ -26,6 +26,10 @@ TrajectoryInterface::TrajectoryInterface(int port, std::shared_ptr<TcpServer::St
 
 TrajectoryInterface::~TrajectoryInterface() {}
 
+bool TrajectoryInterface::writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_radius, bool cartesian) {
+    return writeTrajectoryPoint(positions, time, blend_radius, cartesian, 0.0f, 0.0f);
+}
+
 bool TrajectoryInterface::writeTrajectoryPoint(const vector6d_t& positions, float time, float blend_radius, bool cartesian,
                                                float speed, float acceleration) {
     int32_t buffer[TRAJECTORY_MESSAGE_LEN] = {0};
