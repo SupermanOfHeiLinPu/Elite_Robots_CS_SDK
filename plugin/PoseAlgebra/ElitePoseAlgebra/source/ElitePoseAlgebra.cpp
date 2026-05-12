@@ -425,6 +425,59 @@ bool ElitePoseAlgebra::distance(const vector6d_t& pose_a, const vector6d_t& pose
     return true;
 }
 
+bool ElitePoseAlgebra::worldToLocal(const PoseMatrix& world_ref_pose, const PoseMatrix& world_pose, PoseMatrix& local_pose,
+                                 PoseAlgebraResult& result) const {
+    PoseMatrix inverse_world_ref_pose;
+    if (!inverse(world_ref_pose, inverse_world_ref_pose, result)) {
+        return false;
+    }
+
+    return multiply(inverse_world_ref_pose, world_pose, local_pose, result);
+}
+
+bool ElitePoseAlgebra::worldToLocal(const vector6d_t& world_ref_pose, const vector6d_t& world_pose, vector6d_t& local_pose,
+                                 PoseAlgebraResult& result) const {
+    PoseMatrix world_ref_pose_matrix;
+    PoseMatrix world_pose_matrix;
+    PoseMatrix local_pose_matrix;
+
+    if (!vectorToMatrix(world_ref_pose, world_ref_pose_matrix, result)) {
+        return false;
+    }
+    if (!vectorToMatrix(world_pose, world_pose_matrix, result)) {
+        return false;
+    }
+    if (!worldToLocal(world_ref_pose_matrix, world_pose_matrix, local_pose_matrix, result)) {
+        return false;
+    }
+
+    return matrixToVector(local_pose_matrix, local_pose, result);
+}
+
+bool ElitePoseAlgebra::localToWorld(const PoseMatrix& world_ref_pose, const PoseMatrix& local_pose, PoseMatrix& world_pose,
+                                 PoseAlgebraResult& result) const {
+    return multiply(world_ref_pose, local_pose, world_pose, result);
+}
+
+bool ElitePoseAlgebra::localToWorld(const vector6d_t& world_ref_pose, const vector6d_t& local_pose, vector6d_t& world_pose,
+                                 PoseAlgebraResult& result) const {
+    PoseMatrix world_ref_pose_matrix;
+    PoseMatrix local_pose_matrix;
+    PoseMatrix world_pose_matrix;
+
+    if (!vectorToMatrix(world_ref_pose, world_ref_pose_matrix, result)) {
+        return false;
+    }
+    if (!vectorToMatrix(local_pose, local_pose_matrix, result)) {
+        return false;
+    }
+    if (!localToWorld(world_ref_pose_matrix, local_pose_matrix, world_pose_matrix, result)) {
+        return false;
+    }
+
+    return matrixToVector(world_pose_matrix, world_pose, result);
+}
+
 }  // namespace ELITE
 
 #include <Elite/ClassRegisterMacro.hpp>

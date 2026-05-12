@@ -115,6 +115,19 @@ int main(int argc, const char** argv) {
         return 1;
     }
 
+    PoseMatrix tool_in_base_matrix;
+    if (!checkResult("worldToLocal(base_matrix, composed_matrix)",
+                     pose_algebra->worldToLocal(base_matrix, composed_matrix, tool_in_base_matrix, result), result)) {
+        return 1;
+    }
+
+    PoseMatrix recovered_world_matrix;
+    if (!checkResult("localToWorld(base_matrix, tool_in_base_matrix)",
+                     pose_algebra->localToWorld(base_matrix, tool_in_base_matrix, recovered_world_matrix, result),
+                     result)) {
+        return 1;
+    }
+
     PoseMatrix inverse_base_matrix;
     if (!checkResult("inverse(base_matrix)", pose_algebra->inverse(base_matrix, inverse_base_matrix, result), result)) {
         return 1;
@@ -129,6 +142,18 @@ int main(int argc, const char** argv) {
     vector6d_t composed_pose;
     if (!checkResult("matrixToVector(composed_matrix)",
                      pose_algebra->matrixToVector(composed_matrix, composed_pose, result), result)) {
+        return 1;
+    }
+
+    vector6d_t tool_in_base_pose;
+    if (!checkResult("worldToLocal(base_pose, composed_pose)",
+                     pose_algebra->worldToLocal(base_pose, composed_pose, tool_in_base_pose, result), result)) {
+        return 1;
+    }
+
+    vector6d_t recovered_world_pose;
+    if (!checkResult("localToWorld(base_pose, tool_in_base_pose)",
+                     pose_algebra->localToWorld(base_pose, tool_in_base_pose, recovered_world_pose, result), result)) {
         return 1;
     }
 
@@ -154,8 +179,12 @@ int main(int argc, const char** argv) {
     printVector6d("tool_offset", tool_offset);
     printPoseMatrix("base_matrix", base_matrix);
     printPoseMatrix("composed_matrix", composed_matrix);
+    printPoseMatrix("tool_in_base_matrix", tool_in_base_matrix);
+    printPoseMatrix("recovered_world_matrix", recovered_world_matrix);
     printPoseMatrix("identity_check", identity_check);
     printVector6d("composed_pose", composed_pose);
+    printVector6d("tool_in_base_pose", tool_in_base_pose);
+    printVector6d("recovered_world_pose", recovered_world_pose);
     printVector6d("added_pose", added_pose);
     printVector6d("recovered_pose", recovered_pose);
     std::cout << "distance.linear_distance  = " << std::fixed << std::setprecision(6) << dist_pose.linear_distance

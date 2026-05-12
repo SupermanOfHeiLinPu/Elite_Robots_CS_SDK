@@ -44,6 +44,18 @@ class EigenPoseAlgebra : public PoseAlgebraBase {
 
     ELITE_EXPORT bool distance(const vector6d_t& pose_a, const vector6d_t& pose_b, PoseDistance& out_distance,
                                PoseAlgebraResult& result) const override;
+
+      ELITE_EXPORT bool worldToLocal(const PoseMatrix& world_ref_pose, const PoseMatrix& world_pose,
+                              PoseMatrix& local_pose, PoseAlgebraResult& result) const override;
+
+      ELITE_EXPORT bool worldToLocal(const vector6d_t& world_ref_pose, const vector6d_t& world_pose,
+                              vector6d_t& local_pose, PoseAlgebraResult& result) const override;
+
+      ELITE_EXPORT bool localToWorld(const PoseMatrix& world_ref_pose, const PoseMatrix& local_pose,
+                              PoseMatrix& world_pose, PoseAlgebraResult& result) const override;
+
+      ELITE_EXPORT bool localToWorld(const vector6d_t& world_ref_pose, const vector6d_t& local_pose,
+                              vector6d_t& world_pose, PoseAlgebraResult& result) const override;
 };
 
 }  // namespace ELITE

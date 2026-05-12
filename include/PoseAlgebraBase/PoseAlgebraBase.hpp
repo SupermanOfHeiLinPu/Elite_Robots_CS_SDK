@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2025, Elite Robots.
-//
-// PoseAlgebraBase.hpp
-// Provides basic pose algebra operations, such as pose composition, inverse, interpolation, etc.
+
+/**
+ * @file PoseAlgebraBase.hpp
+ * @brief Core pose algebra interface for matrix/vector operations and frame conversion.
+ */
 #ifndef __ELITE__POSE_ALGEBRA_BASE_HPP__
 #define __ELITE__POSE_ALGEBRA_BASE_HPP__
 
@@ -16,19 +18,33 @@
 
 namespace ELITE {
 
-// 4x4 Pose Matrix
+/**
+ * @brief 4x4 homogeneous pose matrix.
+ *
+ * The matrix uses the standard rigid transform layout:
+ * [ R(3x3) t(3x1) ]
+ * [ 0 0 0   1    ]
+ */
 struct PoseMatrix {
+    /// Raw matrix storage in row-major indexing [row][col].
     std::array<std::array<double, 4>, 4> data{
         {{1.0, 0.0, 0.0, 0.0}, {0.0, 1.0, 0.0, 0.0}, {0.0, 0.0, 1.0, 0.0}, {0.0, 0.0, 0.0, 1.0}}};
 };
 
-// Distance components between two poses
+/**
+ * @brief Linear and angular distance components between two poses.
+ */
 struct PoseDistance {
-    double linear_distance{0.0};   // Translation distance
-    double angular_distance{0.0};  // Rotation distance (radian)
+    /// Translation distance in meters.
+    double linear_distance{0.0};
+
+    /// Orientation distance in radians.
+    double angular_distance{0.0};
 };
 
-// Pose algebra error code
+/**
+ * @brief Error codes for pose algebra operations.
+ */
 enum class PoseAlgebraError {
     SUCCESS = 0,              // Operation completed successfully.
     INVALID_INPUT,            // Input is invalid, e.g. NaN/Inf or malformed pose data.
@@ -39,26 +55,54 @@ enum class PoseAlgebraError {
     INTERNAL_ERROR,           // Unexpected internal failure.
 };
 
-// Result details for pose algebra operations
+/**
+ * @brief Detailed status for pose algebra operations.
+ */
 struct PoseAlgebraResult {
+    /// Operation status code.
     PoseAlgebraError error{PoseAlgebraError::SUCCESS};
+
+    /// Human-readable details for failures or diagnostics.
     std::string message;
 };
 
+/**
+ * @brief Abstract base interface for pose algebra plugins.
+ *
+ * Supported pose representations:
+ * - PoseMatrix: 4x4 homogeneous transform
+ * - vector6d_t: [x, y, z, roll, pitch, yaw]
+ *
+ * Concrete implementations should report detailed status through PoseAlgebraResult.
+ */
 class PoseAlgebraBase {
    public:
+    /// Default constructor.
     PoseAlgebraBase() = default;
+
+    /// Virtual destructor for safe polymorphic use.
     virtual ~PoseAlgebraBase() = default;
 
-    // Helper constants
+    /// Numerical tolerance used by validation and rotation checks.
     static constexpr double ZERO_TOLERANCE = 1e-6;
 
-    // Static helper functions shared by all implementations
+    /**
+     * @brief Mark an operation as successful.
+     *
+     * @param result Result object to update.
+     */
     static void setSuccess(PoseAlgebraResult& result) {
         result.error = PoseAlgebraError::SUCCESS;
         result.message.clear();
     }
 
+    /**
+     * @brief Mark an operation as failed with details.
+     *
+     * @param result Result object to update.
+     * @param error Error code to set.
+     * @param message Human-readable failure detail.
+     */
     static void setError(PoseAlgebraResult& result, PoseAlgebraError error, const std::string& message) {
         result.error = error;
         result.message = message;
@@ -156,6 +200,8 @@ class PoseAlgebraBase {
      * @param pose Input pose matrix to be inverted.
      * @param inverse_pose Output inverted pose matrix.
      * @param result Detailed result of the operation, including error code and message.
+        * @return true if the operation is successful, false otherwise. In case of failure, the `result` parameter will contain the
+        * error details.
      */
     ELITE_EXPORT virtual bool inverse(const PoseMatrix& pose, PoseMatrix& inverse_pose, PoseAlgebraResult& result) const = 0;
 
@@ -310,7 +356,59 @@ class PoseAlgebraBase {
      * error details.
      */
     ELITE_EXPORT virtual bool distance(const vector6d_t& pose_a, const vector6d_t& pose_b, PoseDistance& out_distance,
-                                       PoseAlgebraResult& result) const = 0;    
+                                       PoseAlgebraResult& result) const = 0;
+
+    /**
+     * @brief Convert a pose from world coordinates to local coordinates.
+     *
+     * @param world_ref_pose The local reference frame pose expressed in world coordinates.
+     * @param world_pose The target pose expressed in world coordinates.
+     * @param local_pose The output target pose expressed in the local reference frame.
+     * @param result Detailed result of the operation, including error code and message.
+     * @return true if the operation is successful, false otherwise. In case of failure, the `result` parameter will contain the
+     * error details.
+     */
+    ELITE_EXPORT virtual bool worldToLocal(const PoseMatrix& world_ref_pose, const PoseMatrix& world_pose,
+                                           PoseMatrix& local_pose, PoseAlgebraResult& result) const = 0;
+
+    /**
+     * @brief Convert a 6D pose from world coordinates to local coordinates.
+     *
+     * @param world_ref_pose The local reference frame pose (xyz + rpy) expressed in world coordinates.
+     * @param world_pose The target pose (xyz + rpy) expressed in world coordinates.
+     * @param local_pose The output target pose (xyz + rpy) expressed in the local reference frame.
+     * @param result Detailed result of the operation, including error code and message.
+     * @return true if the operation is successful, false otherwise. In case of failure, the `result` parameter will contain the
+     * error details.
+     */
+    ELITE_EXPORT virtual bool worldToLocal(const vector6d_t& world_ref_pose, const vector6d_t& world_pose,
+                                           vector6d_t& local_pose, PoseAlgebraResult& result) const = 0;
+
+    /**
+     * @brief Convert a pose from local coordinates to world coordinates.
+     *
+     * @param world_ref_pose The local reference frame pose expressed in world coordinates.
+     * @param local_pose The target pose expressed in the local reference frame.
+     * @param world_pose The output target pose expressed in world coordinates.
+     * @param result Detailed result of the operation, including error code and message.
+     * @return true if the operation is successful, false otherwise. In case of failure, the `result` parameter will contain the
+     * error details.
+     */
+    ELITE_EXPORT virtual bool localToWorld(const PoseMatrix& world_ref_pose, const PoseMatrix& local_pose,
+                                           PoseMatrix& world_pose, PoseAlgebraResult& result) const = 0;
+
+    /**
+     * @brief Convert a 6D pose from local coordinates to world coordinates.
+     *
+     * @param world_ref_pose The local reference frame pose (xyz + rpy) expressed in world coordinates.
+     * @param local_pose The target pose (xyz + rpy) expressed in the local reference frame.
+     * @param world_pose The output target pose (xyz + rpy) expressed in world coordinates.
+     * @param result Detailed result of the operation, including error code and message.
+     * @return true if the operation is successful, false otherwise. In case of failure, the `result` parameter will contain the
+     * error details.
+     */
+    ELITE_EXPORT virtual bool localToWorld(const vector6d_t& world_ref_pose, const vector6d_t& local_pose,
+                                           vector6d_t& world_pose, PoseAlgebraResult& result) const = 0;
 };
 
 using PoseAlgebraBaseSharedPtr = std::shared_ptr<PoseAlgebraBase>;
