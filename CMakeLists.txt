@@ -6,6 +6,7 @@ option(ELITE_COMPILE_TESTS "Compile tests" OFF)
 option(ELITE_COMPILE_DOC "Compile documentation" OFF)
 option(ELITE_COMPILE_EXAMPLES "Compile examples" OFF)
 option(ELITE_COMPILE_KIN_PLUGIN "Compile kinematics plugin" OFF)
+option(ELITE_COMPILE_POSE_ALG_PLUGIN "Compile pose algebra plugin" OFF)
 
 include(cmake/utils.cmake)
 
@@ -107,6 +108,7 @@ set(
     Common/StringUtils.hpp
     Common/SharedLibrary.hpp
     KinematicsBase/KinematicsBase.hpp
+    PoseAlgebraBase/PoseAlgebraBase.hpp
     ClassLoader/ClassRegistry.hpp
     ClassLoader/ClassLoader.hpp
     ClassLoader/ClassRegisterMacro.hpp
@@ -197,6 +199,12 @@ if(ELITE_COMPILE_KIN_PLUGIN)
     add_subdirectory(plugin/kinematics ${CMAKE_BINARY_DIR}/kin_plugin/)
 endif()
 
+# Compile pose algebra plugin
+if(ELITE_COMPILE_POSE_ALG_PLUGIN)
+    message(STATUS "Compile the pose algebra plugin")
+    add_subdirectory(plugin/PoseAlgebra ${CMAKE_BINARY_DIR}/pose_alg_plugin/)
+endif()
+
 string(COMPARE EQUAL "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" is_top_level)
 option(ELITE_INSTALL "Include packaging rules" "${is_top_level}")
 
@@ -248,6 +256,7 @@ message(STATUS "ELITE_COMPILE_TESTS                 ${ELITE_COMPILE_TESTS}")
 message(STATUS "ELITE_COMPILE_DOC                   ${ELITE_COMPILE_DOC}")
 message(STATUS "ELITE_COMPILE_EXAMPLES              ${ELITE_COMPILE_EXAMPLES}")
 message(STATUS "ELITE_COMPILE_KIN_PLUGIN            ${ELITE_COMPILE_KIN_PLUGIN}")
+message(STATUS "ELITE_COMPILE_POSE_ALG_PLUGIN       ${ELITE_COMPILE_POSE_ALG_PLUGIN}")
 
 find_package(ament_cmake QUIET)
 option(ELITE_ROS2_BUILD "Build as a ROS 2 (ament_cmake) package" ${ament_cmake_FOUND})
